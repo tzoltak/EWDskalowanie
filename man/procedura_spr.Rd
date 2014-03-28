@@ -1,0 +1,32 @@
+\name{procedura_spr}
+\alias{procedura_spr}
+\title{Procedury skalowania egzaminow.}
+\usage{
+procedura_spr(nazwyZmiennych, nazwaKonstruktu = "s", processors = 3)
+}
+\arguments{
+  \item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z
+  danymi, na których ma być prowadzona estymacja}
+
+  \item{nazwaKonstruktu}{nazwa zmiennej opisującej
+  mierzony konstrukt}
+
+  \item{processors}{liczba rdzeni do wykorzystania przy
+  estymacji}
+}
+\value{
+lista, która zostanie użyta jako argument
+\code{opisProcedury} funkcji \code{\link{skaluj}}
+}
+\description{
+Procedura skalowania sprawdzianu. Funkcja przygotowuj opis
+procedury skalowania do użycia przez funkcję
+\code{\link{skaluj}}.
+}
+\examples{
+# chwilowo brak
+}
+\seealso{
+\code{\link{skaluj}}
+}
+

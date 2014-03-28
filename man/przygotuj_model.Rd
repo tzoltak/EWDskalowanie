@@ -1,0 +1,23 @@
+\name{przygotuj_model}
+\alias{przygotuj_model}
+\title{Przygotowywanie polecen Mplusa.}
+\usage{
+przygotuj_model(opisModelu)
+}
+\arguments{
+  \item{opisModelu}{lista opisująca konstrukty, typowo
+  element listy \code{opisProcedury}}
+}
+\value{
+lista wektorów tekstowych
+}
+\description{
+Funkcja na podstawie elementu listy \code{opisProcedury}
+przygotowuje blok 'MODEL' do pliku poleceń Mplusa.
+}
+\details{
+Warto pamiętać, że ustawienia opisywane elementami
+'rasch', 'var1' i 'e0' są nadpisywane przez wpisy z
+elementu wartosciZakotwiczone.
+}
+

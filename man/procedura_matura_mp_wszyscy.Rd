@@ -1,0 +1,37 @@
+\name{procedura_matura_mp_wszyscy}
+\alias{procedura_matura_mp_wszyscy}
+\title{Procedury skalowania egzaminow.}
+\usage{
+procedura_matura_mp_wszyscy(nazwyZmiennych, parametryMat, parametryMatPrzyr,
+  processors = 3)
+}
+\arguments{
+  \item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z
+  danymi, na których ma być prowadzona estymacja}
+
+  \item{parametryMat}{data.frame z parametrami zadań z
+  matematyki}
+
+  \item{parametryMatPrzyr}{data.frame z parametrami zadań
+  z przedmiotów matematyczno-przyrodniczych}
+
+  \item{processors}{liczba rdzeni do wykorzystania przy
+  estymacji}
+}
+\value{
+lista, która zostanie użyta jako argument
+\code{opisProcedury} funkcji \code{\link{skaluj}}
+}
+\description{
+Procedura skalowania matury - przedmioty
+matematyczno-przyrodnicze z uwzględnieniem laureatów.
+Funkcja przygotowuj opis procedury skalowania do użycia
+przez funkcję \code{\link{skaluj}}.
+}
+\examples{
+# chwilowo brak
+}
+\seealso{
+\code{\link{skaluj}}
+}
+

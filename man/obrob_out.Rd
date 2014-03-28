@@ -1,0 +1,24 @@
+\name{obrob_out}
+\alias{obrob_out}
+\title{Parsowanie pliku wynikow Mplusa.}
+\usage{
+obrob_out(output)
+}
+\arguments{
+  \item{output}{wektor tekstowy - wczytany plik poleceń
+  Mplusa}
+}
+\value{
+lista
+}
+\description{
+Funkcja parsuje plik poleceń .out Mplusa i wyciąga z
+niego użyteczne informacje.
+}
+\details{
+W elementach zwracanej listy znajdują się: \itemize{
+\item \code{podsumowanie} - , \item \code{dopasowanie} - ,
+\item \code{parametry} - , \item \code{zapis} - . \item
+\code{czas} - . }
+}
+

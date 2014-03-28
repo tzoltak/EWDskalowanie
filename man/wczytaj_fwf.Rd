@@ -1,0 +1,33 @@
+\name{wczytaj_fwf}
+\alias{wczytaj_fwf}
+\title{Wczytywanie plikow tekstowych.}
+\usage{
+wczytaj_fwf(nazwaPliku, szerokosciKolumn, nazwyKolumn)
+}
+\arguments{
+  \item{nazwaPliku}{nazwa pliku, który ma być wczytany}
+
+  \item{szerokosciKolumn}{wektor liczbowy podający
+  szerokość kolumn}
+
+  \item{nazwyKolumn}{wektor tekstowy podający nazwy
+  kolumn}
+}
+\value{
+data frame, w którym wszystkie kolumny są typu
+\code{character}
+}
+\description{
+Funkcja w miarę efektywnie wczytuje plik tekstowy zapisany
+w formacie o stałej szerokości kolumn.
+}
+\details{
+Funkcja działa względnie szybko, bo nie próbuje
+rozpoznawać typów kolumn, tylko wszystko zwraca jako
+tekst. Jeżeli potrzebujesz skonwertować kolumny np. na
+liczby, musisz to zrobić już we własnym zakresie.
+}
+\seealso{
+\code{\link[utils]{read.fwf}}
+}
+

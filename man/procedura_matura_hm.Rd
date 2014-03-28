@@ -1,0 +1,29 @@
+\name{procedura_matura_hm}
+\alias{procedura_matura_hm}
+\title{Procedury skalowania egzaminow.}
+\usage{
+procedura_matura_hm(nazwyZmiennych, processors = 3)
+}
+\arguments{
+  \item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z
+  danymi, na których ma być prowadzona estymacja}
+
+  \item{processors}{liczba rdzeni do wykorzystania przy
+  estymacji}
+}
+\value{
+lista, która zostanie użyta jako argument
+\code{opisProcedury} funkcji \code{\link{skaluj}}
+}
+\description{
+Procedura skalowania matury - przedmioty humanistyczne bez
+lauratów. Funkcja przygotowuj opis procedury skalowania do
+użycia przez funkcję \code{\link{skaluj}}.
+}
+\examples{
+# chwilowo brak
+}
+\seealso{
+\code{\link{skaluj}}
+}
+

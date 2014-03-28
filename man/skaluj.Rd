@@ -1,0 +1,54 @@
+\name{skaluj}
+\alias{skaluj}
+\title{Skalowanie modeli IRT.}
+\usage{
+skaluj(dane, opisProcedury, idObs, tytul = "", zmienneCiagle = NULL,
+  zmienneSpecjalne = NULL, zwrocOszacowania = TRUE, usunFWF = FALSE)
+}
+\arguments{
+  \item{dane}{data.frame z danymi}
+
+  \item{opisProcedury}{p. szczegóły}
+
+  \item{idObs}{ciąg znaków z nazwą zmiennej będącej
+  unikalnym identyfikatorem obserwacji (w \code{dane})}
+
+  \item{tytul}{ciąg znaków, który będzie wstawiany w
+  sekcji TITLE plików poleceń Mplusa, a jego 12
+  pierwszych znaków zostanie wykorzystane do tworzenia
+  nazw plików z poleceniami Mplus}
+
+  \item{zmienneCiagle}{wektor tekstowy podający nazwy
+  zmiennych, które mają być w analizie traktowane jako
+  ciągłe (domyślnie wszystkie zmienne traktowane są
+  jako porządkowe)}
+
+  \item{zmienneSpecjalne}{lista - na obecnym etapie rozwoju
+  nie wykorzystywana}
+
+  \item{zwrocOszacowania}{wartość logiczna - czy
+  estymować (i zwrócić) również oszacowania
+  natężenia badanych cech dla poszczególnych jednostek
+  obserwacji?}
+
+  \item{usunFWF}{wartość logiczna - czy usuwać pliki o
+  stałej szerokości, w których zapisywane są dane dla
+  Mplusa?}
+}
+\value{
+lista
+}
+\description{
+Funkcja służąca do przeprowadzania potencjalnie
+złożonych procedur skalowania (typowo egzaminów) z
+wykorzystaniem Mplusa (a docelowo również pakietu
+\code{mirt}).
+}
+\details{
+Poniżej trzeba będzie dodać wyczerpujący opis parametru
+\code{opisProcedury} \itemize{ \item \item . }
+}
+\examples{
+# chwilowo brak
+}
+

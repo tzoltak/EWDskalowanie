@@ -1,0 +1,34 @@
+\name{procedura_gmp_sf_matura_rasch}
+\alias{procedura_gmp_sf_matura_rasch}
+\title{Procedury skalowania egzaminow.}
+\usage{
+procedura_gmp_sf_matura_rasch(nazwyZmiennych, parametry = NULL,
+  processors = 3)
+}
+\arguments{
+  \item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z
+  danymi, na których ma być prowadzona estymacja}
+
+  \item{parametry}{data.frame z parametrami zadań z
+  części mat.-przyr. egzaminu gimnazjalnego}
+
+  \item{processors}{liczba rdzeni do wykorzystania przy
+  estymacji}
+}
+\value{
+lista, która zostanie użyta jako argument
+\code{opisProcedury} funkcji \code{\link{skaluj}}
+}
+\description{
+Procedura skalowania cżęści mat.-przyr. egzaminu
+gimnazjalnego - w formule do 2011 r. na potrzeby
+Kalkulatora maturalnego. Funkcja przygotowuj opis procedury
+skalowania do użycia przez funkcję \code{\link{skaluj}}.
+}
+\examples{
+# chwilowo brak
+}
+\seealso{
+\code{\link{skaluj}}
+}
+

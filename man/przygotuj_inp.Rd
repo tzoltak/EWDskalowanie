@@ -1,0 +1,46 @@
+\name{przygotuj_inp}
+\alias{przygotuj_inp}
+\title{Przygotowywanie polecen Mplusa.}
+\usage{
+przygotuj_inp(title = "", data, variable, analysis = list(), model,
+  output = list("STANDARDIZED", "TECH4", "TECH8"), savedata = list())
+}
+\arguments{
+  \item{title}{tytuł pliku poleceń - tekst}
+
+  \item{data}{polecenia do bloku 'DATA' - lista wektorów
+  tekstowych z elementem 'file' i opcjonalnie 'format'}
+
+  \item{variable}{polecenia do bloku 'VARIABLE' - lista
+  wektorów tekstowych z elmentami 'names', 'usevariables',
+  'categorical' i 'idvariable' oraz opcjonalnie 'missing'
+  i/lub 'useobservations'}
+
+  \item{analysis}{polecenie do bloku 'ANAlYSIS' - lista
+  wektorów tekstowych z opcjonalnymi elementami
+  'estimator', 'processors', 'integration'}
+
+  \item{model}{polecenia do bloku 'MODEL' - lista wektorów
+  tekstowych, typowo będących wynikiem działania funkcji
+  \code{\link{przygotuj_model}}}
+
+  \item{output}{polecenia do bloku 'OUTPUT' - lista
+  wektorów tekstowych}
+
+  \item{savedata}{polecenia do bloku 'SAVEDATA' - lista
+  wektorów tekstowych z opcjonalnymi elementami 'file' i
+  'save'}
+}
+\value{
+wektorów tekstowy
+}
+\description{
+Funkcja przygotowuje plik poleceń .inp Mplusa.
+}
+\details{
+Elementy poszczególnych list, będących parametrami tej
+funkcji, są dosyć bezpośrednio wklejane do poleceń
+Mplusa. Jeśli chcesz zrozumieć, co to się dzieje, pewnie
+będziesz musiał posiłkować się manualem do Mplusa.
+}
+

@@ -1,0 +1,37 @@
+\name{procedura_matura_hm_wszyscy}
+\alias{procedura_matura_hm_wszyscy}
+\title{Procedury skalowania egzaminow.}
+\usage{
+procedura_matura_hm_wszyscy(nazwyZmiennych, parametryJpol, parametryHum,
+  processors = 3)
+}
+\arguments{
+  \item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z
+  danymi, na których ma być prowadzona estymacja}
+
+  \item{parametryJpol}{data.frame z parametrami zadań z
+  przedmiotów humanistycznych}
+
+  \item{parametryHum}{data.frame z parametrami zadań z
+  języka polskiego}
+
+  \item{processors}{liczba rdzeni do wykorzystania przy
+  estymacji}
+}
+\value{
+lista, która zostanie użyta jako argument
+\code{opisProcedury} funkcji \code{\link{skaluj}}
+}
+\description{
+Procedura skalowania matury - przedmioty humanistyczne z
+uwzględnieniem laureatów. Funkcja przygotowuj opis
+procedury skalowania do użycia przez funkcję
+\code{\link{skaluj}}.
+}
+\examples{
+# chwilowo brak
+}
+\seealso{
+\code{\link{skaluj}}
+}
+
