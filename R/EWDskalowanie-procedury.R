@@ -662,12 +662,13 @@ procedura_matura_m_rasch = function(nazwyZmiennych, processors=3) return(list(
   "mat." = list(
     czescPomiarowa = list(
       mat_rsch = list(
-        zmienne = nazwyZmiennych[grep("^mat_[pr]", nazwyZmiennych)],
+        zmienne = nazwyZmiennych[grep("^mat_[pr]|^s_mat", nazwyZmiennych)],
         var1 = TRUE,
         rasch = TRUE,
         kryteriaUsuwania = list(
           dyskryminacjaPonizej = NULL,
-          istotnoscPowyzej = 1
+          istotnoscPowyzej = 1,
+          nigdyNieUsuwaj = "^s_"
         ),
         wartosciStartowe = NULL,
         wartosciZakotwiczone = NULL
