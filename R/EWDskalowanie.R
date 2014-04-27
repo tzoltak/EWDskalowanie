@@ -1,3 +1,4 @@
+# Funkcje pomocnicze ------------------------------------------------------
 #' @title Wczytywanie plikow tekstowych.
 #' @description
 #' Funkcja w miarę efektywnie wczytuje plik tekstowy zapisany w formacie o stałej szerokości kolumn.
@@ -51,6 +52,7 @@ wczytaj_fwf = function(nazwaPliku, szerokosciKolumn, nazwyKolumn) {
 #' @param maxDl maksymalna liczba znaków w linii (uwzględniając wcięcie)
 #' @param srednikNaKoncu wartość logiczna - czy na końcu ostatniego elementu wynikowego wektora ma być dopisany średnik (o ile go tam nie ma)? 
 #' @param sep spearator używany przy złączaniu elementów \code{x} w jeden ciąg znaków
+#' @param lamNaNawiasachOkraglych wartość logiczna - czy dodatkowo łamać wiersze za zamykającymi nawiasami okrągłymi: ')'?
 #' @return lista
 #' @seealso \code{\link[base]{strwrap}}
 #' @examples
@@ -58,26 +60,30 @@ wczytaj_fwf = function(nazwaPliku, szerokosciKolumn, nazwyKolumn) {
 #' write(lam_wiersze(x), "")
 #' write(lam_wiersze(x, wciecie=4, maxDl=30), "")
 #' @export
-lam_wiersze = function(x, wciecie=2, maxDl=90, srednikNaKoncu=TRUE, sep=" ") {
+lam_wiersze = function(x, wciecie=2, maxDl=90, srednikNaKoncu=TRUE, sep=" ", lamNaNawiasachOkraglych=TRUE) {
   stopifnot(is.character(x), is.numeric(wciecie), length(wciecie) == 1,
             is.numeric(maxDl), length(maxDl) == 1, wciecie < (maxDl - 8),
             is.logical(srednikNaKoncu), length(srednikNaKoncu) == 1,
-            is.character(sep) & length(sep) == 1
+            is.character(sep) & length(sep) == 1,
+            is.logical(lamNaNawiasachOkraglych), length(lamNaNawiasachOkraglych) == 1
   )
   wciecie=paste0(rep(" ", wciecie), collapse="")  # przygotowanie wcięcia
   x[1] = paste0(wciecie, x[1])  # i dopisanie na początku pierwszego wiersza
-  if (length(x) > 1) x = paste0(x, collapse=sep)  # scalamy w jeden ciąg znaków
-  while (nchar(x[length(x)]) > maxDl) {  # jak długo ostatni element jest dłuższy, niż może być, tnij dalej
-    spacje = gregexpr("[ ]", substr(x[length(x)], 1, maxDl))[[1]]  # położenie spacji
-    x=c(
-      x[(1:length(x)) < length(x)],
-      substr(x[length(x)], 1, spacje[length(spacje)]-1),
-      paste0(
-        wciecie,
-        substr(x[length(x)], spacje[length(spacje)] + 1, nchar(x[length(x)]))
-      )
-    )
+  if (length(x) > 1) {
+    if (!lamNaNawiasachOkraglych) {
+      x = paste0(x, collapse=sep)  # po prostu scalamy w jeden ciąg znaków
+    } else {
+      for (i in 2:length(x)) {
+        ostatniNieNA = max((1:(i-1))[!is.na(x[1:(i-1)])])  # ostatni element, który nie jest pusty
+        if (!grepl(" [(].*[)]$", x[ostatniNieNA])) {  # jeśli ostatnie niepusty nie ma na końcu ')'
+          x[ostatniNieNA] = paste0(x[ostatniNieNA], sep, x[i])  # to przyłącz do niego
+          x[i] = NA  # a ten ustaw na NA
+        }
+      }
+      x = x[!is.na(x)]
+    }
   }
+  x = paste0(wciecie, strwrap(x, maxDl - nchar(wciecie)))
   if (srednikNaKoncu & !grepl(";$", x[length(x)])) x[length(x)]=paste0(x[length(x)], ";")
   return(x)
 }

@@ -658,30 +658,40 @@ procedura_matura_mp_wszyscy = function(nazwyZmiennych, parametryMat, parametryMa
 #' @examples
 #' # chwilowo brak
 #' @export
-procedura_matura_m_rasch = function(nazwyZmiennych, processors=3) return(list(
-  "mat." = list(
-    czescPomiarowa = list(
-      mat_rsch = list(
-        zmienne = nazwyZmiennych[grep("^mat_[pr]|^s_mat", nazwyZmiennych)],
-        var1 = TRUE,
-        rasch = TRUE,
-        kryteriaUsuwania = list(
-          dyskryminacjaPonizej = NULL,
-          istotnoscPowyzej = 1,
-          nigdyNieUsuwaj = "^s_"
-        ),
-        wartosciStartowe = NULL,
-        wartosciZakotwiczone = NULL
-      )
-    ),
-    parametry = list(
-      estimator = "MLR",
-      processors = processors,
-      integration = "STANDARD (20)",
-      fscores = TRUE
-    )
+procedura_matura_m_rasch = function(nazwyZmiennych, processors=3) {
+  lZmP = sum(grepl("^mat_p", nazwyZmiennych))
+  lZmR = sum(grepl("^mat_r", nazwyZmiennych))
+  zmienne = c(
+    nazwyZmiennych[grep("^mat_p", nazwyZmiennych)],
+    nazwyZmiennych[grep("^mat_r", nazwyZmiennych)],
+    nazwyZmiennych[grep("^s_mat", nazwyZmiennych)]
   )
-))
+  return(list(
+    "mat." = list(
+      czescPomiarowa = list(
+        mat_rsch = list(
+          zmienne = zmienne,
+          var1 = TRUE,
+          rasch = FALSE,
+          kryteriaUsuwania = list(
+            dyskryminacjaPonizej = NULL,
+            istotnoscPowyzej = 1,
+            nigdyNieUsuwaj = "^s_"
+          ),
+          wartosciStartowe = NULL,
+          wartosciZakotwiczone = NULL,
+          ograniczeniaWartosci = data.frame(typ=rep("by", lZmP + lZmR), zmienna1=rep("mat_rsch", lZmP + lZmR), zmienna2=zmienne[grep("^mat_[pr]", zmienne)], wartosc=c(rep("dyskr_p", lZmP), rep("dyskr_r", lZmR)), stringsAsFactors=FALSE)
+        )
+      ),
+      parametry = list(
+        estimator = "MLR",
+        processors = processors,
+        integration = "STANDARD (20)",
+        fscores = TRUE
+      )
+    )
+  ))
+}
 #' @title Procedury skalowania egzaminow.
 #' @description
 #' Procedura skalowania matury - matematyka modelem Rascha na potrzeby Kalkulatora z uwzględnieniem laureatów.

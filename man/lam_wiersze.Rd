@@ -3,7 +3,7 @@
 \title{Funkcja lamie dluzsze ciagi znakow na wiersze.}
 \usage{
 lam_wiersze(x, wciecie = 2, maxDl = 90, srednikNaKoncu = TRUE,
-  sep = " ")
+  sep = " ", lamNaNawiasachOkraglych = TRUE)
 }
 \arguments{
   \item{x}{wektor tekstowy do pocięcia}
@@ -20,6 +20,10 @@ lam_wiersze(x, wciecie = 2, maxDl = 90, srednikNaKoncu = TRUE,
 
   \item{sep}{spearator używany przy złączaniu elementów
   \code{x} w jeden ciąg znaków}
+
+  \item{lamNaNawiasachOkraglych}{wartość logiczna - czy
+  dodatkowo łamać wiersze za zamykającymi nawiasami
+  okrągłymi: ')'?}
 }
 \value{
 lista
