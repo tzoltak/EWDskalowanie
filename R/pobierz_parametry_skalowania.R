@@ -1,8 +1,7 @@
-#' @title Pobieranie parametrów skalowań.
+#' @title Pobieranie parametrow skalowan.
 #' @description
 #' Funkcja pobiera parametry skalowań o podanej nazwie skali i numerze testu oraz których
 #' opis skalowań spełnia podane wyrażenie regularne.
-
 #' @param nazwa_skali nazwa skali. Kiedy nazwa skali przymuje wartość NULL nie jest brana pod 
 #' uwagę w wyszukiwaniu. Wartość domyślna to NULL.
 #' @param id_testu id testu.Kiedy id testu przymuje wartość NULL nie jest brana pod 
@@ -28,7 +27,6 @@
 #' @export
 pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, 
                                          opis_skalowania='.*', zrodloDanychODB = 'ewd_grzes'){
-  
   if(is.null(nazwa_skali) & is.null(id_testu)  ){
     stop("Nazwa skali oraz id testu nie mogą mieć jednocześnie wartości null.")
   }
@@ -56,12 +54,12 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL,
   zapytanie1 = paste0("
                 select  
                 id_kryterium, id_pseudokryterium,
-                SAE.model,SAE.parametr,SAE.wartosc, SA.skalowanie
+                SAE.model, SAE.parametr, SAE.wartosc, SA.skalowanie
                       ", joiny , where, '\n ORDER BY skalowanie, kolejnosc, parametr')
   
   zapytanie2 = paste0("
                 select distinct 
-                SA.skalowanie,SA.opis,SA.estymacja
+                SA.skalowanie, SA.opis, SA.estymacja
                       ", joiny , where)
   
   zapytanie3 = paste0("
@@ -73,17 +71,16 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL,
   require(RODBC)
   P = odbcConnect(zrodloDanychODB)
   tryCatch({
-    
-    tablicaDanych = sqlQuery(P, gsub(" ", " ", zapytanie1))
-    opisSkalowan =  sqlQuery(P, gsub(" ", " ", zapytanie2))
-    skale =  sqlQuery(P, gsub(" ", " ", zapytanie3))
-    odbcClose(P)
-    
-  },
-  error=function(e){
-    odbcClose(P)
-    stop(e)
-  })
+	    tablicaDanych = sqlQuery(P, gsub(" ", " ", zapytanie1))
+	    opisSkalowan  = sqlQuery(P, gsub(" ", " ", zapytanie2))
+	    skale         = sqlQuery(P, gsub(" ", " ", zapytanie3))
+	    odbcClose(P)
+  	},
+  	error=function(e) {
+    	odbcClose(P)
+    	stop(e)
+  	}
+  )
   
   if(nrow(tablicaDanych)==0){
     warning("Nie znalezniono danych spełniających kryteria wyszukiwania")
@@ -107,7 +104,7 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL,
     cat("Skale spełniające kryteria wyszukiwania: \n")
     print(skale)
     
-    stop("Więcej niż jedna skala przpisana do wyników.")
+    stop("Więcej niż jedna skala przypisana do wyników.")
   }
   
   for( k in 1:ncol(skale) ){

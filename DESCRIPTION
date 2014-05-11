@@ -2,7 +2,6 @@ Encoding: UTF-8
 Package: EWDskalowanie
 Version: 0.2
 Date: 2014-04-27
-Type: Package
 Title: Functions to assist IRT calibrations developed while working on Polish
     Educational Value-Added indicators.
 Author: Tomasz Zoltak <tomek@zozlak.org>
