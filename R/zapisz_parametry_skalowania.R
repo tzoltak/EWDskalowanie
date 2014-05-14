@@ -147,13 +147,13 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
               bezpieczne_sqlQuery(P, insSkalowania)
               
               indTres = which(kryteriaTres==kryt)
-              srednia = mean(parTreshold[indTres, s"wartosc"]) / parBy$wartosc[kryteriaBy==kryt])
+              srednia = mean(parTreshold[indTres, "wartosc"]) / parBy$wartosc[kryteriaBy==kryt]
               
               insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu, id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi) 
                                      VALUES (nextval('skalowania_elementy_id_elementu_seq'),",idSkali,
                                      ",", kolejnoscTemp, ",",
                                      numerSkalowania,
-                                     " , 'trudność' ,", "'GRM'", s", ",
+                                     " , 'trudność' ,", "'GRM'", ", ",
                                      srednia,
                                      ",'')"
                                      )
