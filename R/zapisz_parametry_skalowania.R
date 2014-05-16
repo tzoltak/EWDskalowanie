@@ -29,6 +29,15 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
             }
             skaleZap = bezpieczne_sqlQuery(P, zapytanie)
             
+            if( length(na.omit(skaleZap))==0 ){
+              odbcClose(P)
+              stop("Nie ma skali w bazie danych.")
+            } else if(length(skaleZap)!=1){
+              odbcClose(P)
+              stop("Skala określona niejednoznacznie.")
+            }
+            idSkali = skaleZap$id_skali[1]
+            
             zapytanie = paste0("SELECT count(*) FROM sl_estymacje_parametrow where estymacja = '", estymacja, "'")
             estymacjeNumZap = bezpieczne_sqlQuery(P, zapytanie)
             
@@ -50,12 +59,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           }
         )
   
-  if( length(na.omit(skaleZap))==0 ){
-    stop("Nie ma skali w bazie danych.")
-  } else if(length(skaleZap)!=1){
-    stop("Skala określona niejednoznacznie.")
-  }
-  idSkali = skaleZap$id_skali[1]
+  
   
   if( estymacjeNumZap == 0 ){
     stop("Podanej estymacji nie ma w bazie danych.")
@@ -103,13 +107,13 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           
           for(k in 1:length(liczbaParam)){
             
-            kryt = as.numeric(names(liczbaParam)[k])
+            krytNum = as.numeric(names(liczbaParam)[k])
             
             kolejnoscTemp = NULL
-            if(kryt %in% kryteriaBaza){
-              kolejnoscTemp = skaleElementy[ grepl(TRUE, skaleElementy[, "id_kryterium"] == kryt), ][1]
-            } else if(kryt %in% pseudokryteriaBaza){
-              kolejnoscTemp = skaleElementy[ grepl(TRUE, skaleElementy[, "id_pseudokryterium"] == kryt), ][1]
+            if(krytNum %in% kryteriaBaza){
+              kolejnoscTemp = skaleElementy[ grepl(TRUE, skaleElementy[, "id_kryterium"] == krytNum), ][1]
+            } else if(krytNum %in% pseudokryteriaBaza){
+              kolejnoscTemp = skaleElementy[ grepl(TRUE, skaleElementy[, "id_pseudokryterium"] == krytNum), ][1]
             }
             
             # model 2PL
@@ -120,34 +124,35 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
                                       VALUES (nextval('skalowania_elementy_id_elementu_seq'),", idSkali,
                                       ",", kolejnoscTemp,",", numerSkalowania,
                                       " , 'dyskryminacja' ,", "'2PL'", ", ",
-                                      parBy[kryteriaBy==kryt,"wartosc"], ",'',", parBy[kryteriaBy==kryt, "S.E."], ")"
+                                      parBy[kryteriaBy==krytNum,"wartosc"], ",'',", parBy[kryteriaBy==krytNum, "S.E."], ")"
                                       )
               bezpieczne_sqlQuery(P, insSkalowania)
+              
               
               insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu,id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi,bl_std) 
                                      VALUES (nextval('skalowania_elementy_id_elementu_seq'),",idSkali,
                                      ",",kolejnoscTemp, ",",
                                      numerSkalowania,
                                      " , 'trudność' ,","'2PL'",", ",
-                                     parTreshold[kryteriaTres==kryt,"wartosc"]/parBy[kryteriaBy==kryt, "wartosc"],
-                                     ",'',", parTreshold[kryteriaTres==kryt,"S.E."]/parBy[kryteriaBy==kryt, "wartosc"] ,")"
+                                     parTreshold[kryteriaTres==krytNum,"wartosc"]/parBy[kryteriaBy==krytNum, "wartosc"],
+                                     ",'',", parTreshold[kryteriaTres==krytNum,"S.E."]/parBy[kryteriaBy==krytNum, "wartosc"] ,")"
                                      )
               bezpieczne_sqlQuery(P, insSkalowania)
               
             } else if ( liczbaParam[k] > 1 ){ # model GRM
               
-              dyskryminacja = parBy[kryteriaBy==kryt,"wartosc"]
+              dyskryminacja = parBy[kryteriaBy==krytNum,"wartosc"]
               insSkalowania =  paste0("INSERT INTO skalowania_elementy  (id_elementu,id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi,bl_std)
                                       VALUES (nextval('skalowania_elementy_id_elementu_seq'),", idSkali,
                                       ",",kolejnoscTemp,",",
                                       numerSkalowania,
                                       " , 'dyskryminacja' ,","'GRM'",", ",
-                                      dyskryminacja, ",'',", parBy[kryteriaBy==kryt,"S.E."],")"
+                                      dyskryminacja, ",'',", parBy[kryteriaBy==krytNum,"S.E."],")"
                                       )
               bezpieczne_sqlQuery(P, insSkalowania)
               
-              indTres = which(kryteriaTres==kryt)
-              srednia = mean(parTreshold[indTres, "wartosc"]) / parBy$wartosc[kryteriaBy==kryt]
+              indTres = which(kryteriaTres==krytNum)
+              srednia = mean(parTreshold[indTres, "wartosc"]) / parBy$wartosc[kryteriaBy==krytNum]
               
               insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu, id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi) 
                                      VALUES (nextval('skalowania_elementy_id_elementu_seq'),",idSkali,
@@ -172,8 +177,8 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
                                        ",", kolejnoscTemp, ",",
                                        numerSkalowania,
                                        " , '", nazwaPar, "' ,", "'GRM'", ", ",
-                                       parTreshold[m,"wartosc"]/parBy[kryteriaBy==kryt,"wartosc"] - srednia,
-                                       ",'',",parTreshold[m,"S.E."]/parBy[kryteriaBy==kryt, "wartosc"], ")"
+                                       parTreshold[m,"wartosc"]/parBy[kryteriaBy==krytNum,"wartosc"] - srednia,
+                                       ",'',",parTreshold[m,"S.E."]/parBy[kryteriaBy==krytNum, "wartosc"], ")"
                                        )
                 bezpieczne_sqlQuery(P, insSkalowania)
               }
