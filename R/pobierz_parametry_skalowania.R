@@ -192,16 +192,16 @@ pobierz_parametry_mplus <- function(nazwa_skali=NULL, id_testu=NULL,
     by = dwaPL$wartosc[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="dyskryminacja" ]
     byStd = dwaPL$bl_std[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="dyskryminacja" ]
     
-    zmienna1 = ifelse(czyKryterium,"k_id","p_id")
+    zmienna1 = ifelse(czyKryterium,"k","p")
     zmienna2 = paste0(zmienna1,"_",krytNum)
     
-    ret2PL = rbind(ret2PL, data.frame(typ="by", zmienna1, zmienna2, wartosc = by, S.E.= byStd, EstSE = by/byStd ))
+    ret2PL = rbind(ret2PL, data.frame(typ="by", zmienna1, zmienna2, wartosc = by, S.E.= byStd ))
     
     tres = dwaPL$wartosc[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="trudność" ]
     tresStd = dwaPL$bl_std[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="trudność" ]
     
     ret2PL = rbind(ret2PL, data.frame(typ="treshold", zmienna1=zmienna2,zmienna2=zmienna1,
-                                      wartosc = tres*by, S.E.=tresStd*by, EstSE = tres / tresStd  ))
+                                      wartosc = tres*by, S.E.=tresStd*by ))
   }
   
   #GRM
@@ -220,19 +220,18 @@ pobierz_parametry_mplus <- function(nazwa_skali=NULL, id_testu=NULL,
     srednia = grm$wartosc[ grm$parametr=="trudność" & kryt == krytNum] * by$wartosc
     kPar = grm[ grepl("^k[[:digit:]+]$", grm$parametr) & kryt == krytNum , c("wartosc","bl_std")]  
     
-    zmienna1 = ifelse(czyKryterium,"k_id","p_id")
+    zmienna1 = ifelse(czyKryterium,"k","p")
     zmienna2 = paste0(zmienna1,"_",krytNum)
     retGRM = rbind(retGRM, 
                    data.frame(typ ='by', zmienna1=zmienna1, zmienna2=zmienna2, wartosc = by$wartosc, 
-                              S.E.=by$bl_std, EstSE=by$wartosc /by$bl_std  ) )
+                              S.E.=by$bl_std  ) )
     
     retGRM = rbind(retGRM, 
-                   data.frame(typ ='treshold', zmienna1=zmienna2, zmienna2=zmienna1, wartosc = kPar$wartosc*by$wartosc + srednia, S.E.=kPar$bl_std*by$wartosc,
-                              EstSE=(kPar$wartosc*by$wartosc + srednia)/(kPar$bl_std*by$wartosc)  ) )
+                   data.frame(typ ='treshold', zmienna1=zmienna2, zmienna2=zmienna1, wartosc = kPar$wartosc*by$wartosc + srednia, S.E.=kPar$bl_std*by$wartosc ) )
   }
   
   ret = rbind(ret2PL,retGRM)
-  colnames(ret)[ colnames(ret) == "EstSE" ] = "Est./S.E."
+  #colnames(ret)[ colnames(ret) == "EstSE" ] = "Est./S.E."
   
   ret = ret[order(ret$typ,ret$zmienna1,ret$zmienna2),] 
   
