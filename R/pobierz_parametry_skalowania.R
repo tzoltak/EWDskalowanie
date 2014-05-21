@@ -29,12 +29,10 @@
 #' attributes(ret[[1]])
 #' str(ret[[1]])
 #' @export
-pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, 
-                                         opis_skalowania='.*', zrodloDanychODB = 'ewd_grzes', parametryzacja = "baza"){
+pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_skalowania='.*', 
+                                         zrodloDanychODB = 'ewd_grzes', parametryzacja = "baza"){
   
-  if(parametryzacja=="mplus"){
-    return (pobierz_parametry_mplus(nazwa_skali, id_testu,opis_skalowania, zrodloDanychODB) )
-  } else if(parametryzacja != "baza"){
+  if(!parametryzacja %in% c("baza","mplus")){
     stop("Niepoprawna wartość parametru 'parametryzacja': ",parametryzacja)
   }
   
@@ -64,7 +62,7 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL,
   zapytanie1 = paste0("
                       select  
                       id_kryterium, id_pseudokryterium,
-                      SAE.model, SAE.parametr, SAE.wartosc, SA.skalowanie
+                      SAE.model, SAE.parametr, SAE.wartosc, SA.skalowanie, bl_std
                       ", joiny , where, '\n ORDER BY skalowanie, kolejnosc, parametr')
   
   zapytanie2 = paste0("
@@ -121,73 +119,37 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL,
     attr(ret, colnames(skale)[k]) = as.character(skale[1, k])
   }
   
+  if( parametryzacja=="mplus" ){
+    for(ilist in 1:length(ret)){
+      ret[[ilist]] = zmien_na_mplus(ret[[ilist]])
+    }
+  }
+  
   return(ret)
 }
-#' @title Pobieranie parametrow skalowan zapisanych do bazy w formacie funkcji skaluj()
+#' @title Zmiana tablicy do formatu funkcji skaluj()
 #' @description
-#' Funkcja pobiera parametry skalowań o podanej nazwie skali i numerze testu oraz których
-#' opis skalowań spełnia podane wyrażenie regularne. Funkcja zakłada, że parametry zostały zapisane przez 
-#' funkcje zapisz_parametry_skalowania().
-#' @param nazwa_skali nazwa skali. Kiedy nazwa skali przymuje wartość NULL nie jest brana pod 
-#' uwagę w wyszukiwaniu. Wartość domyślna to NULL.
-#' @param id_testu id testu.Kiedy id testu przymuje wartość NULL nie jest brana pod 
-#' uwagę w wyszukiwaniu. artość domyślna to NULL.
-#' @param opis_skalowania wyrażenie regularne określające opis skalowania. Domyślna wartość to '\%'. 
-#' @param zrodloDanychODB string określający źródło danych. docelowa wartość domyślna to 'EWD'. Obecnie 'ewd_grzes'.
+#' Funkcja przekształca tablicę zwracaną w liście przez funkcję pobierz_parametry_skalowania() z parametrem 'baza'
+#' do postaci mplusa
+#' @param tablicaDanych tablica w formacie zwracanym przez funkcję pobierz_parametry_skalowania().
 #' @return
 #' Funkcja zwraca ramkę danych, która jest zgodna z postacią ramek zwracanych przez funkcję skaluj().
-pobierz_parametry_mplus <- function(nazwa_skali=NULL, id_testu=NULL, 
-                                    opis_skalowania='.*', zrodloDanychODB = 'ewd_grzes'){
-  
-  where = "where"
-  if( !is.null(nazwa_skali) ){
-    where = paste0(where," nazwa = '", nazwa_skali, "'" )
-    
-    if(!is.null(id_testu)){
-      where = paste0(where, " and id_testu = ", id_testu, "")
-    }
-  } else {
-    where = paste0(where, " id_testu = ", id_testu, "")
-  }
-  where = paste0(where, " and SA.opis ~* '", opis_skalowania, "'")
-  
-  joiny =       "
-                from skale AS S
-                JOIN skale_elementy AS SE USING(id_skali)
-                JOIN skalowania_elementy AS SAE USING(id_skali,kolejnosc)
-                JOIN skalowania AS SA USING(id_skali,skalowanie)
-                "
-  zapytanie1 = paste0("
-                      select  
-                      parametr, model, wartosc, bl_std, id_kryterium, id_pseudokryterium
-                      ", joiny , where, '\n ORDER BY skalowanie, kolejnosc, parametr')
-  
-  require(RODBC)
-  P = odbcConnect(zrodloDanychODB)
-  tryCatch({
-            tablicaDanych = sqlQuery(P, zapytanie1)
-            odbcClose(P)
-          },
-          error=function(e) {
-            odbcClose(P)
-            stop(e)
-          }
-          )
+zmien_na_mplus <- function(tablicaDanych){
   
   # 2PL
-  dwaPL = tablicaDanych[tablicaDanych[,"model"]=="2PL",]
+  dwaPL = tablicaDanych[tablicaDanych$model=="2PL",]
   
-  if( length ( errInds <- which( ! dwaPL[, "parametr"] %in% c("dyskryminacja","trudność")  ) ) != 0 ){
+  if( length ( errInds <- which( ! dwaPL$parametr %in% c("dyskryminacja","trudność")  ) ) != 0 ){
     stop("Niepoprawne rodzaje parametrów dla modelu 2PL: \n", paste(errInds,collapse="\n"))
   }
   
   # Jak rozumiem baza gwarantuje, że każdy element skale_elementy posiada kryterium albo pseudokryterium.
-  kryt = dwaPL[,"id_kryterium"]
-  kryt[is.na(kryt)] = dwaPL[,"id_pseudokryterium"]
+  kryt = dwaPL$id_kryterium
+  kryt[is.na(kryt)] = dwaPL$id_pseudokryterium[is.na(kryt)]
   
   ret2PL = data.frame()
   for(krytNum in unique(kryt)){
-    czyKryterium = krytNum %in% na.omit(dwaPL[,"id_kryterium"])
+    czyKryterium = krytNum %in% na.omit(dwaPL$id_kryterium)
     
     by = dwaPL$wartosc[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="dyskryminacja" ]
     byStd = dwaPL$bl_std[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="dyskryminacja" ]
@@ -205,10 +167,10 @@ pobierz_parametry_mplus <- function(nazwa_skali=NULL, id_testu=NULL,
   }
   
   #GRM
-  grm = tablicaDanych[tablicaDanych[, "model"]=="GRM", ]
+  grm = tablicaDanych[tablicaDanych$model=="GRM", ]
   
-  kryt = grm[,"id_kryterium"]
-  kryt[is.na(kryt)] = grm[, "id_pseudokryterium"]
+  kryt = grm$id_kryterium
+  kryt[is.na(kryt)] = grm$id_pseudokryterium
   
   
   retGRM = data.frame()
@@ -231,7 +193,6 @@ pobierz_parametry_mplus <- function(nazwa_skali=NULL, id_testu=NULL,
   }
   
   ret = rbind(ret2PL,retGRM)
-  #colnames(ret)[ colnames(ret) == "EstSE" ] = "Est./S.E."
   
   ret = ret[order(ret$typ,ret$zmienna1,ret$zmienna2),] 
   
