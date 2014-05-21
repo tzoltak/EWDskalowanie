@@ -104,9 +104,9 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
             
             kolejnoscTemp = NULL
             if(krytNum %in% kryteriaBaza){
-              kolejnoscTemp = skaleElementy$kolejnosc[ skaleElementy$id_kryterium == krytNum ]
+              kolejnoscTemp = skaleElementy$kolejnosc[ (skaleElementy$id_kryterium == krytNum) %in% TRUE ]
             } else if(krytNum %in% pseudokryteriaBaza){
-              kolejnoscTemp = skaleElementy$kolejnosc[ skaleElementy$id_pseudokryterium == krytNum ]
+              kolejnoscTemp = skaleElementy$kolejnosc[ (skaleElementy$id_pseudokryterium == krytNum) %in% TRUE ]
             }
             
             # model 2PL
