@@ -111,48 +111,28 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
             
             # model 2PL
             if( liczbaParam[k]== 1 ){
-              insSkalowania = paste0("INSERT INTO skalowania_elementy (id_elementu, id_skali, kolejnosc, skalowanie, parametr, model, wartosc, uwagi, bl_std)
-                                      VALUES (nextval('skalowania_elementy_id_elementu_seq'), ", idSkali,
-                                      ", ", kolejnoscTemp, ", ", numerSkalowania,
-                                      ", 'dyskryminacja', ", "'2PL'", ", ",
-                                      parBy$wartosc[kryteriaBy==krytNum], ", '', ", parBy$"S.E."[kryteriaBy==krytNum], ")"
-                                      )
-              bezpieczne_sqlQuery(P, insSkalowania)
               
+              wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp,numerSkalowania,
+                                           "dyskryminacja","2PL",parBy$wartosc[kryteriaBy==krytNum],parBy$'S.E.'[kryteriaBy==krytNum])
               
-              insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu,id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi,bl_std) 
-                                     VALUES (nextval('skalowania_elementy_id_elementu_seq'),",idSkali,
-                                     ",",kolejnoscTemp, ",",
-                                     numerSkalowania,
-                                     " , 'trudność' ,","'2PL'",", ",
-                                     parTreshold[kryteriaTres==krytNum,"wartosc"]/parBy[kryteriaBy==krytNum, "wartosc"],
-                                     ",'',", parTreshold[kryteriaTres==krytNum,"S.E."]/parBy[kryteriaBy==krytNum, "wartosc"] ,")"
-                                     )
-              bezpieczne_sqlQuery(P, insSkalowania)
+              wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp,numerSkalowania,
+                                           "trudność","2PL",
+                                           parTreshold$wartosc[kryteriaTres==krytNum]/parBy$wartosc[kryteriaBy==krytNum],
+                                           parTreshold$'S.E.'[kryteriaTres==krytNum]/parBy$wartosc[kryteriaBy==krytNum] )
+              
               
             } else if ( liczbaParam[k] > 1 ){ # model GRM
               dyskryminacja = parBy[kryteriaBy==krytNum,"wartosc"]
-              insSkalowania =  paste0("INSERT INTO skalowania_elementy  (id_elementu,id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi,bl_std)
-                                      VALUES (nextval('skalowania_elementy_id_elementu_seq'),", idSkali,
-                                      ",",kolejnoscTemp,",",
-                                      numerSkalowania,
-                                      " , 'dyskryminacja' ,","'GRM'",", ",
-                                      dyskryminacja, ",'',", parBy[kryteriaBy==krytNum,"S.E."],")"
-                                      )
-              bezpieczne_sqlQuery(P, insSkalowania)
+              
+              wstaw_do_skalowania_elementy (P, idSkali, kolejnoscTemp,
+                                            numerSkalowania,"dyskryminacja",
+                                            "GRM",dyskryminacja,parBy$'S.E.'[kryteriaBy==krytNum])
               
               indTres = which(kryteriaTres==krytNum)
               srednia = mean(parTreshold[indTres, "wartosc"]) / parBy$wartosc[kryteriaBy==krytNum]
               
-              insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu, id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi) 
-                                     VALUES (nextval('skalowania_elementy_id_elementu_seq'),",idSkali,
-                                     ",", kolejnoscTemp, ",",
-                                     numerSkalowania,
-                                     " , 'trudność' ,", "'GRM'", ", ",
-                                     srednia,
-                                     ",'')"
-                                     )
-              bezpieczne_sqlQuery(P, insSkalowania)
+              wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp,numerSkalowania,
+                                           "trudność","GRM",srednia,NULL)
                       
               for(m in indTres ){
                 nazwaPar = paste0("k", which(m==indTres))
@@ -161,15 +141,9 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
                   bezpieczne_sqlQuery(P, paste0("INSERT INTO sl_parametry(parametr,opis) values ('", nazwaPar, "','kn(GRM) - patrz opis parametru k1')")  )
                 }
                 
-                insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu,id_skali,kolejnosc,skalowanie,parametr,model,wartosc,uwagi,bl_std)
-                                       VALUES (nextval('skalowania_elementy_id_elementu_seq'),", idSkali,
-                                       ",", kolejnoscTemp, ",",
-                                       numerSkalowania,
-                                       " , '", nazwaPar, "' ,", "'GRM'", ", ",
-                                       parTreshold[m,"wartosc"]/parBy[kryteriaBy==krytNum,"wartosc"] - srednia,
-                                       ",'',",parTreshold[m,"S.E."]/parBy[kryteriaBy==krytNum, "wartosc"], ")"
-                                       )
-                bezpieczne_sqlQuery(P, insSkalowania)
+                wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp,numerSkalowania,nazwaPar,"GRM",
+                                             parTreshold$wartosc[m]/parBy$wartosc[kryteriaBy==krytNum] - srednia,
+                                             parTreshold$'S.E.'[m]/parBy$wartosc[kryteriaBy==krytNum])
               }
             }
           } 
@@ -182,6 +156,30 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
             stop(e)
           }
         )
+  invisible(NULL)
+}
+#' @title Wstawianie danych do tablicy 'skalowania_elementy'
+#' @description
+#' Funkcja wstawia jeden wiersz danych do tablicy 'skalowania_elementy'.
+#' @param P źródło danych ODBC.
+#' @param idSkali numer opisujący id skali
+#' @param kolejnosc liczba
+#' @param numerSkalowania liczba 
+#' @param nazwaParametru ciąg znaków określający nazwę parametru
+#' @param model ciąg znaków
+#' @param wartosc liczba
+#' @param odchylenie liczba opisująca odchylenie standardowe parametru.
+#' @return Funkcja nie zwraca żadnej wartości.
+wstaw_do_skalowania_elementy <- function(zrodloODBC, idSkali, kolejnosc,numerSkalowania,
+                                         nazwaParametru,model,wartosc,odchylenie){
+  insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu,id_skali,kolejnosc,
+                         skalowanie,parametr,model,wartosc,uwagi",ifelse(is.null(odchylenie),"",",bl_std"),")
+                         VALUES (nextval('skalowania_elementy_id_elementu_seq'),", idSkali,
+                         ",", kolejnosc, ",",
+                         numerSkalowania, " , '", nazwaParametru, "' ,'", model, "', ",
+                         wartosc,",''",ifelse(is.null(odchylenie),"",paste0(",",odchylenie)), ")"
+                         )
+  bezpieczne_sqlQuery(zrodloODBC, insSkalowania)
   invisible(NULL)
 }
 #' @title Bezpieczna funkcja do wykonywania polecen SQL.
