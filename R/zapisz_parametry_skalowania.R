@@ -275,7 +275,7 @@ sprawdz_zgodnosc_kryteriow <- function(kryt1, kryt2, nazwa1, nazwa2, error=TRUE)
 wydziel_kryteria_pseudokryteria <- function(nazwy){
   poprawneKrytBy = grepl("^k_[0-9]", nazwy)
   poprawnePseudokrytBy = grepl("^p_[0-9]", nazwy)
-  poprawneIinneKryteriaBy =  grepl("^[[:alnum:]]+_", nazwy)
+  poprawneIinneKryteriaBy =  grepl("^([[:alnum:]]+_)+[[:digit:]]+", nazwy)
   
   if(sum(! poprawneIinneKryteriaBy) > 0){
     stop("Nazwy nie pasujące do kryteriów i pseudokryteriów:\n",
