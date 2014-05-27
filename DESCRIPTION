@@ -9,7 +9,8 @@ Maintainer: Tomasz Zoltak <tomek@zozlak.org>
 Description: Functions to assist IRT calibrations developed while working on
     Polish Educational Value-Added indicators.
 Depends:
-    R (>= 2.15.0)
+    R (>= 2.15.0),
+    RODBCext
 License: LGPL-3
 Language: pl
 NeedsCompilation: no

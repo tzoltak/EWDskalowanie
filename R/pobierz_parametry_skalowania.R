@@ -7,7 +7,7 @@
 #' @param id_testu id testu.Kiedy id testu przymuje wartość NULL nie jest brana pod 
 #' uwagę w wyszukiwaniu. Wartość domyślna to NULL.
 #' @param opis_skalowania wyrażenie regularne określające opis skalowania. Domyślna wartość to '\%'. 
-#' @param zrodloDanychODB string określający źródło danych. docelowa wartość domyślna to 'EWD'. Obecnie 'ewd_grzes'.
+#' @param zrodloDanychODBC string określający źródło danych. docelowa wartość domyślna to 'EWD'. Obecnie 'ewd_grzes'.
 #' @param parametryzacja parametr określający format zwracanego wyniku. Domyślna wartość to 'baza'.
 #' Inna możliwa wartość to 'mplus'.
 #' @return W przyopadku użycia parametryzacji 'baza', funkcja zwraca listę taką, że:
@@ -22,15 +22,9 @@
 #' id_testu = 1128
 #' nazwa_skali = "ktt;1128"
 #' ret = pobierz_parametry_skalowania(nazwa_skali,id_testu)
-#' 
-#' attributes(ret)
-#' str(ret)
-#' 
-#' attributes(ret[[1]])
-#' str(ret[[1]])
 #' @export
 pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_skalowania='.*', 
-                                         zrodloDanychODB = 'ewd_grzes', parametryzacja = "baza"){
+                                         zrodloDanychODBC = 'ewd_grzes', parametryzacja = "baza"){
   
   if(!parametryzacja %in% c("baza","mplus")){
     stop("Niepoprawna wartość parametru 'parametryzacja': ",parametryzacja)
@@ -40,24 +34,37 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_s
     stop("Nazwa skali oraz id testu nie mogą mieć jednocześnie wartości null.")
   }
   
+  if(  !is.null(nazwa_skali)  & !is.character(nazwa_skali) ){
+    stop("Nazwa skali nie jest ciągiem znaków.")
+  }
+  if( !is.null(id_testu)  & !is.numeric(id_testu) ){
+    stop("Id testu nie jest liczbą.")
+  }
+  if( !is.character(opis_skalowania) ){
+    stop("Opis_skalowania nie jest ciągiem znaków.")
+  }
+  if( !is.character(zrodloDanychODBC) ){
+    stop("ZrodloDanychODBC nie jest ciągiem znaków.")
+  }
+  
   where = "where"
   if( !is.null(nazwa_skali) ){
-    where = paste0(where," nazwa = '", nazwa_skali, "'" )
+    where = paste0(where, " nazwa = ? " )
     
     if(!is.null(id_testu)){
-      where = paste0(where, " and id_testu = ", id_testu, "")
+      where = paste0(where, " and id_testu = ? ")
     }
   } else {
-    where = paste0(where, " id_testu = ", id_testu, "")
+    where = paste0(where, " id_testu = ? ")
   }
-  where = paste0(where, " and SA.opis ~* '", opis_skalowania, "'")
+  where = paste0(where, " and SA.opis ~* ? ")
   
-  joiny =         "
-                  from skale AS S
-                  JOIN skale_elementy AS SE USING(id_skali)
-                  JOIN skalowania_elementy AS SAE USING(id_skali,kolejnosc)
-                  JOIN skalowania AS SA USING(id_skali,skalowanie)
-                  "
+  joiny =             "
+                      from skale AS S
+                      JOIN skale_elementy AS SE USING(id_skali)
+                      JOIN skalowania_elementy AS SAE USING(id_skali, kolejnosc)
+                      JOIN skalowania AS SA USING(id_skali, skalowanie)
+                      "
   
   zapytanie1 = paste0("
                       select  
@@ -76,12 +83,19 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_s
                       ", joiny , where)
   
   
-  require(RODBC)
-  P = odbcConnect(zrodloDanychODB)
+  if( !is.null(nazwa_skali) & !is.null(id_testu) ){
+    sqlFrame = data.frame(nazwa_skali, id_testu, opis_skalowania)
+  } else if( !is.null(nazwa_skali) & is.null(id_testu) ){
+    sqlFrame = data.frame(nazwa_skali, opis_skalowania)
+  } else  {
+    sqlFrame = data.frame(id_testu, opis_skalowania)
+  }
+  
+  P = odbcConnect(zrodloDanychODBC)
   tryCatch({
-            tablicaDanych = sqlQuery(P, gsub(" ", " ", zapytanie1))
-            opisSkalowan  = sqlQuery(P, gsub(" ", " ", zapytanie2))
-            skale         = sqlQuery(P, gsub(" ", " ", zapytanie3))
+            tablicaDanych = sqlPrepare(P, zapytanie1, data = sqlFrame, fetch = TRUE)
+            opisSkalowan  = sqlPrepare(P, zapytanie2, data = sqlFrame, fetch = TRUE)
+            skale         = sqlPrepare(P, zapytanie3, data = sqlFrame, fetch = TRUE)
             odbcClose(P)
           },
           error=function(e) {
@@ -154,15 +168,15 @@ zmien_na_mplus <- function(tablicaDanych){
     by = dwaPL$wartosc[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="dyskryminacja" ]
     byStd = dwaPL$bl_std[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="dyskryminacja" ]
     
-    zmienna1 = ifelse(czyKryterium,"k","p")
-    zmienna2 = paste0(zmienna1,"_",krytNum)
+    zmienna1 = ifelse(czyKryterium, "k", "p")
+    zmienna2 = paste0(zmienna1, "_", krytNum)
     
     ret2PL = rbind(ret2PL, data.frame(typ="by", zmienna1, zmienna2, wartosc = by, S.E.= byStd ))
     
     tres = dwaPL$wartosc[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="trudność" ]
     tresStd = dwaPL$bl_std[dwaPL$id_kryterium == krytNum & dwaPL$parametr=="trudność" ]
     
-    ret2PL = rbind(ret2PL, data.frame(typ="treshold", zmienna1=zmienna2,zmienna2=zmienna1,
+    ret2PL = rbind(ret2PL, data.frame(typ="treshold", zmienna1=zmienna2, zmienna2=zmienna1,
                                       wartosc = tres*by, S.E.=tresStd*by ))
   }
   
@@ -178,23 +192,24 @@ zmien_na_mplus <- function(tablicaDanych){
     
     czyKryterium = krytNum %in% tablicaDanych$id_kryterium
     
-    by  = grm[ grm$parametr=="dyskryminacja" & kryt == krytNum, c("wartosc","bl_std")]
+    by  = grm[ grm$parametr=="dyskryminacja" & kryt == krytNum, c("wartosc", "bl_std")]
     srednia = grm$wartosc[ grm$parametr=="trudność" & kryt == krytNum] * by$wartosc
-    kPar = grm[ grepl("^k[[:digit:]+]$", grm$parametr) & kryt == krytNum , c("wartosc","bl_std")]  
+    kPar = grm[ grepl("^k[[:digit:]+]$", grm$parametr) & kryt == krytNum , c("wartosc", "bl_std")]  
     
-    zmienna1 = ifelse(czyKryterium,"k","p")
-    zmienna2 = paste0(zmienna1,"_",krytNum)
+    zmienna1 = ifelse(czyKryterium, "k", "p")
+    zmienna2 = paste0(zmienna1, "_", krytNum)
     retGRM = rbind(retGRM, 
-                   data.frame(typ ='by', zmienna1=zmienna1, zmienna2=zmienna2, wartosc = by$wartosc, 
-                              S.E.=by$bl_std  ) )
+                   data.frame(typ ='by', zmienna1=zmienna1, zmienna2=zmienna2, 
+                              wartosc = by$wartosc, S.E.=by$bl_std  ) )
     
     retGRM = rbind(retGRM, 
-                   data.frame(typ ='treshold', zmienna1=zmienna2, zmienna2=zmienna1, wartosc = kPar$wartosc*by$wartosc + srednia, S.E.=kPar$bl_std*by$wartosc ) )
+                   data.frame(typ ='treshold', zmienna1=zmienna2, zmienna2=zmienna1, 
+                              wartosc = kPar$wartosc*by$wartosc + srednia, S.E.=kPar$bl_std*by$wartosc ) )
   }
   
-  ret = rbind(ret2PL,retGRM)
+  ret = rbind(ret2PL, retGRM)
   
-  ret = ret[order(ret$typ,ret$zmienna1,ret$zmienna2),] 
+  ret = ret[order(ret$typ, ret$zmienna1, ret$zmienna2), ] 
   
   return (ret)
 }
