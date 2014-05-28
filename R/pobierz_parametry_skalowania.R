@@ -19,9 +19,11 @@
 #' W przyopadku użycia parametryzacji 'mplus' funkcja zwraca parametry skalowania w formie ramki danych, która jest
 #' w postaci zwracanej przez funkcję skaluj().
 #' @examples
+#' \dontrun{
 #' id_testu = 1128
 #' nazwa_skali = "ktt;1128"
 #' ret = pobierz_parametry_skalowania(nazwa_skali,id_testu)
+#' }
 #' @export
 pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_skalowania='.*', 
                                          zrodloDanychODBC = 'ewd_grzes', parametryzacja = "baza"){
