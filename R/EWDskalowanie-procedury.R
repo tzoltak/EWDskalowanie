@@ -91,7 +91,7 @@ procedura_eg = function(nazwyZmiennych, parametryS0, parametryS1, processors=3) 
   "część pol.-hum." = list(
     czescPomiarowa = list(
       gh = list(
-        zmienne = nazwyZmiennych[grep("^gh_[hp][[:digit:]]", nazwyZmiennych)],
+        zmienne = nazwyZmiennych[grep("^gh_[hp](|_)[[:digit:]]", nazwyZmiennych)],
         var1 = TRUE,
         rasch = FALSE,
         kryteriaUsuwania = list(
@@ -149,7 +149,7 @@ procedura_eg = function(nazwyZmiennych, parametryS0, parametryS1, processors=3) 
   "część mat.-przyr." = list(
     czescPomiarowa = list(
       gm = list(
-        zmienne = nazwyZmiennych[grep("^gm_[mp][[:digit:]]", nazwyZmiennych)],
+        zmienne = nazwyZmiennych[grep("^gm_[mp](|_)[[:digit:]]", nazwyZmiennych)],
         var1 = TRUE,
         rasch = FALSE,
         kryteriaUsuwania = list(

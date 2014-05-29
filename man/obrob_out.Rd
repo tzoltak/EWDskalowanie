@@ -3,10 +3,12 @@
 \alias{obrob_out}
 \title{Parsowanie pliku wynikow Mplusa.}
 \usage{
-obrob_out(output)
+obrob_out(output, nazwyDoZmiany = NULL)
 }
 \arguments{
 \item{output}{wektor tekstowy - wczytany plik poleceń Mplusa}
+
+\item{nazwyDoZmiany}{lista, której elementami są zmienione (skrócone) nazwy zmiennych, a nazwami elementów listy są obecne nazwy zmiennych}
 }
 \value{
 lista

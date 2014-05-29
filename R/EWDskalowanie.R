@@ -278,6 +278,7 @@ przygotuj_inp = function(title="", data, variable, analysis=list(), model, outpu
 #' @description
 #' Funkcja parsuje plik poleceń .out Mplusa i wyciąga z niego użyteczne informacje.
 #' @param output wektor tekstowy - wczytany plik poleceń Mplusa
+#' @param nazwyDoZmiany lista, której elementami są zmienione (skrócone) nazwy zmiennych, a nazwami elementów listy są obecne nazwy zmiennych
 #' @return lista
 #' @details
 #' W elementach zwracanej listy znajdują się:
@@ -288,7 +289,7 @@ przygotuj_inp = function(title="", data, variable, analysis=list(), model, outpu
 #' \item \code{zapis} - .
 #' \item \code{czas} - .
 #' }
-obrob_out = function(output) {
+obrob_out = function(output, nazwyDoZmiany=NULL) {
   # wydzielanie części outputu z informacjami ogólnymi i ustawianiami
   podsumowanie = output[(grep("^SUMMARY OF ANALYSIS$", output)):(grep("^Input data file", output)-1)]
   # wydzielanie i obróbka części outputu ze statystykami dopasowania
@@ -429,6 +430,17 @@ obrob_out = function(output) {
                          return(temp)
                        }
     )
+    if (!is.null(nazwyDoZmiany)) {
+    	parametry = lapply(parametry,
+    										 function(x) {
+    										 	for (i in c("zmienna1", "zmienna2")) {
+    										 		maska = x[, i] %in% names(nazwyDoZmiany)
+    										 		x[maska, i] = unlist(nazwyDoZmiany[x[maska, i]])
+    										 	}
+    										 	return(x)
+    										 }
+    	)
+    }
   }
   else parametry = NULL
   # wydzielanie i obróbka części outputu dotyczącej pliku, w którym zostały zapisane wyniki
@@ -437,6 +449,11 @@ obrob_out = function(output) {
     zapis = lapply(strsplit(zapis, "[ ]+"), function(x) return(tolower(x[x != ""])))
     zapis = as.data.frame(matrix(unlist(zapis), ncol=2, byrow=TRUE, dimnames=list(c(), c("zmienna", "szerokosc"))), stringsAsFactors=FALSE)
     zapis$szerokosc = as.numeric(sub("^f([[:digit:]]+).[[:digit:]]+", "\\1", zapis$szerokosc))
+    if (!is.null(nazwyDoZmiany)) {
+    	maska = zapis$zmienna %in% names(nazwyDoZmiany)
+    	if (!all(maska)) warning("Niektóre nazwy zmiennych w pliku z oszacowaniami natężenia cech ukrytych nie występują w mapowaniu skróconych nazw zmiennych na pierwotne nazwy zmiennych.")
+    	zapis$zmienna[maska] = unlist(nazwyDoZmiany[zapis$zmienna[maska]])
+    }
   }
   else zapis = NULL
   # wydzielenie z outputu stopki z czasem wykoniania

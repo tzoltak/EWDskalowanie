@@ -36,7 +36,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     is.character(zmienneDolaczaneDoOszacowan) | is.null(zmienneDolaczaneDoOszacowan),
     usunFWF %in% c(TRUE, FALSE)
   )
-  if (!all(grepl("^[[:lower:]][[:lower:][:digit:]_]{0,8}$", names(dane)))) stop("Wszystkie nazwy zmiennych muszą składać się wyłącznie z małych liter, cyfr i znaku '_', przy czym pierwszym znakiem musi być litera.")
+  if (!all(grepl("^[[:lower:]][[:lower:][:digit:]_]*$", names(dane)))) stop("Wszystkie nazwy zmiennych muszą składać się wyłącznie z małych liter, cyfr i znaku '_', przy czym pierwszym znakiem musi być litera.")
   # wywalanie zmiennych posiadających same braki danych
   maskaSameNA = unlist(lapply(dane, function(x) return(all(is.na(x)))))
   if (any(maskaSameNA)) {
@@ -214,10 +214,6 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     }
     else opisProcedury[[i]]$parametry$fscores = FALSE
   }
-  # obsługa nazw zmiennych
-  if (max(nchar(names(dane))) > 8) {
-  	stop("Niestety wszystkie nazwy zmiennych muszą być nie dłuższe niż 8 znaków.")
-  }
   # rozszerzone id obserwacji
   if (any(idObs == "id_temp")) stop("Parametr idObs nie może mieć przypisanej wartości 'id_temp'.")
   if (length(idObs) > 1) {
@@ -237,6 +233,32 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   # kowersja factorów na liczby
   maskaFactory = (1:ncol(dane))[unlist(lapply(dane, is.factor))]
   for (i in maskaFactory) dane[, i]=as.numeric(dane[, i])
+  # obsługa przydługich nazw zmiennych - przygotowanie
+  # trochę upierdliwości związanych jest z tym, że trzeba dodać do mapowania także nazwy konstruktów, oraz ich połęcznie z przyrostkiem "_se" (z tym, że skracać trzeba tylko nazwy konstruktów, a potem do pierwotnych i skróconych dopisać "_se", a nie skracać po dopisaniu przyrostka)
+  maxLZn = 8
+  nazwyKonstruktow = unlist(lapply(opisProcedury, function(x) {return(names(x$czescPomiarowa))}))
+  if (max(nchar(nazwyKonstruktow)) > maxLZn) {
+  	nazwyKonstruktowSkrocone = skroc_nazwy_zmiennych(nazwyKonstruktow, maxLZn)
+  } else {
+  	nazwyKonstruktowSkrocone = nazwyKonstruktow
+  }
+  nazwyKonstruktow         = c(nazwyKonstruktow        , paste0(nazwyKonstruktow        , "_se"))
+  nazwyKonstruktowSkrocone = c(nazwyKonstruktowSkrocone, paste0(nazwyKonstruktowSkrocone, "_se"))
+
+  nazwyPierwotne = c(
+  	names(dane),
+  	unlist(lapply(opisProcedury, function(x) {return(names(x$czescPomiarowa))}))  # nazwy konstruktow
+  )
+  if (max(nchar(nazwyPierwotne)) > maxLZn) {
+  	nazwySkrocone = skroc_nazwy_zmiennych(nazwyPierwotne, maxLZn)
+  } else {
+  	nazwySkrocone = nazwyPierwotne
+  }
+
+  nazwyPierwotne = as.list(unique(c(nazwyPierwotne, nazwyKonstruktow)))
+  nazwySkrocone  = as.list(unique(c(nazwySkrocone , nazwyKonstruktowSkrocone)))
+  names(nazwySkrocone)  = nazwyPierwotne
+  names(nazwyPierwotne) = nazwySkrocone
   # zamiana zmiennych na ciągi znaków o stałej długości
   dane = as.data.frame(
     lapply(dane,
@@ -338,13 +360,13 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       zmienneWModelu = zmienneWModelu[zmienneWModelu %in% names(dane) & !(zmienneWModelu %in% zmienneCiagle)]	# trzeba wykluczyć składowe 
       variable = list(
         missing     = "BLANK",
-        names       = names(dane),
-        usevariables= zmienneWModelu[  zmienneWModelu %in% names(dane)   ],
-        categorical = zmienneWModelu[!(zmienneWModelu %in% zmienneCiagle)],
-        idvariable  = idObs
+        names       = unlist(nazwySkrocone),
+        usevariables= unlist(nazwySkrocone[zmienneWModelu[  zmienneWModelu %in% names(dane)   ]]),
+        categorical = unlist(nazwySkrocone[zmienneWModelu[!(zmienneWModelu %in% zmienneCiagle)]]),
+        idvariable  = nazwySkrocone[[idObs]]
       )
       analysis = krok$parametry[names(krok$parametry) %in% c("estimator", "processors", "integration")]
-      model = przygotuj_model(krok)
+      model = przygotuj_model(zmien_nazwy_w_kroku_procedury(krok, nazwySkrocone))
       output = list("STANDARDIZED", "TECH4", "TECH8")
       if (krok$parametry$fscores) {
         savedata = list(
@@ -363,7 +385,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       # kalibracja w Mplusie
       mplus = system2("mplus", paste0('"', nazwaInp, '"'))
       if (mplus == 1) return(list(wyniki=wyniki, tenKrok=krok))
-      wyniki[[i]][[j]] = obrob_out(readLines(sub("[.]inp$", ".out", nazwaInp)))
+      wyniki[[i]][[j]] = obrob_out(readLines(sub("[.]inp$", ".out", nazwaInp)), nazwyPierwotne)
       if ("brak_zbieznosci" %in% names(wyniki[[i]][[j]])) {
         cat("\n   ###################################\n    Nie osiągnięto zbieżności!\n   ###################################\n")
         return(list(wyniki=wyniki, tenKrok=krok))
