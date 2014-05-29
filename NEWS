@@ -1,5 +1,5 @@
 --------------------
-Zmiany w ZPD 0.3 (2014-05-29)
+Zmiany w EWDskalowanie 0.3 (2014-05-29)
 
 - Nowe funkcje:
   - pobierz_parametry_skalowania() - jak mówi nazwa;
@@ -17,9 +17,12 @@ Zmiany w ZPD 0.3 (2014-05-29)
       w związku z tym dopasowano funkcję procedura_eg() do sytuacji, gdy z nazw kryteriów nie zostały usunięte niektóre znaki '_';
 
 --------------------
-Zmiany w ZPD 0.2 (2014-04-27)
+Zmiany w EWDskalowanie 0.2 (2014-04-27)
 
 - Nowe funkcjonalności:
   - Możliwość definiowania "equality constraints" na parametrach modelu:
     W definicji procedury, w definicji konstruktu dodałem możliwość zdefiniowania elementu 'ograniczeniaWartosci', który musi mieć strukturę analogiczną do tej elementów 'wartosciStartowe' czy 'wartosciZakotwiczone', z tym wyjątkiem, że kolumna 'wartosc' musi być typu character, zamiast numeric. Pozwala to przypisać "equality constraint" dowolnym parametrom, o ile są one wprost zdefiniowane w modelu.
   - W funkcji procedura_matura_m_rasch() dopisane zostao uwzględnenie parametru selekcji.
+
+--------------------
+Publikacja EWDskalowanie 0.1 (2014-03-28)
