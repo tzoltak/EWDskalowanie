@@ -20,7 +20,7 @@
 #' @examples
 #' # chwilowo brak
 #' @export
-skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmienneSpecjalne=NULL, zwrocOszacowania=TRUE, zmienneDolaczaneDoOszacowan=NULL, usunFWF=TRUE) {
+skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmienneSpecjalne=NULL, zmienneDolaczaneDoOszacowan=NULL, zwrocOszacowania=TRUE, usunFWF=TRUE) {
   # podstawowe sprawdzenie argumentów
   cat("Sprawdzanie poprawności argumentów...\n")
   stopifnot(
@@ -81,12 +81,14 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   )
   # sprawdzanie poprawności struktury argumentu opisProcedury
   dozwoloneElementy = list(
-    krok=c("czescPomiarowa", "parametry"),
-    konstrukt=c("zmienne", "var1", "rasch", "kryteriaUsuwania", "wartosciStartowe", "wartosciZakotwiczone"),
-    kryteriaUsuwania=c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj"),
-    parametry=c("estimator", "processors", "integration", "fscores"),
-    wartosci=c("typ", "zmienna1", "zmienna2", "wartosc")	# akurat te w roli niezbędnych, a nie dozwolonych
+    krok             = c("czescPomiarowa", "wieleGrup", "parametry"),
+    konstrukt        = c("zmienne", "var1", "rasch", "kryteriaUsuwania", "wartosciStartowe", "wartosciZakotwiczone"),
+    kryteriaUsuwania = c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj"),
+    parametry        = c("estimator", "processors", "integration", "fscores"),
+    wartosci         = c("typ", "zmienna1", "zmienna2", "wartosc"),  # akurat te w roli niezbędnych, a nie dozwolonych
+    wieleGrup        = c("zmienneGrupujace", "uwolnijWartosciOczekiwane", "uwolnijWariancje")
   )
+  grupyMapowanie = vector(mode="list", length=length(opisProcedury))
   # pętla po krokach procedury
   for (i in 1:length(opisProcedury)) {
     krok = opisProcedury[[i]]  # mały aliasik, żeby mniej pisać
@@ -188,9 +190,43 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         }
       }
     }
+    # sprawdzanie poprawności elementu 'wieleGrup' (o ile jest)
+    if (!("parametry" %in% names(krok))) opisProcedury[[i]]$wieleGrup = NULL
+    wieleGrup = opisProcedury[[i]]$wieleGrup
+    if (!is.null(wieleGrup)) {
+    	if (!all(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' pojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(wieleGrup)[!(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
+    	
+    	# sprawdzanie poprawności komponentu 'zmienneGrupujace'
+    	if (!"zmienneGrupujace" %in% names(wieleGrup)) {
+    		opisProcedury[[i]]$wieleGrup = NULL
+    		warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowano element 'wieleGrup', ale nie zdefiniowano w nim elementu 'zmienneGrupujace'.\nModel zostanie wyestymowany jako przy założeniu homogeniczności populacji (bez podziału na grupy)."), immediate.=TRUE)
+    	}
+    	if (!is.character(wieleGrup$zmienneGrupujace) | length(wieleGrup$zmienneGrupujace) < 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'zmienneGrupujace' musi być wektorem tekstowym (typu character), podającym nazwy zmiennych mierzalnych związanych z konstruktem.\n"))
+   		if (!all(wieleGrup$zmienneGrupujace %in% names(dane))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'zmienneGrupujace' elementu 'wieleGrup' podane zostały nazwy zmiennych, które nie występują w danych:\n - ", paste0(wieleGrup$zmienneGrupujace[!(wieleGrup$zmienneGrupujace %in% names(dane))], collapse="\n - "), "\n"))
+    	# i dwa pozostałe
+    	if (!("uwolnijWartosciOczekiwane" %in% names(wieleGrup))) {
+    		opisProcedury[[i]]$wieleGrup$uwolnijWartosciOczekiwane = TRUE
+    	} else {
+    		if (length(wieleGrup$uwolnijWartosciOczekiwane) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
+    		if (!(wieleGrup$uwolnijWartosciOczekiwane %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
+    	}    	
+    	if (!("uwolnijWariancje" %in% names(wieleGrup))) {
+    		opisProcedury[[i]]$wieleGrup$uwolnijWariancje = TRUE
+    	} else {
+    		if (length(wieleGrup$uwolnijWariancje) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
+    		if (!(wieleGrup$uwolnijWariancje %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
+    	}
+    	# tworzenie zmiennej opisującej podział na grupy w obiekcie 'dane'
+    	if (paste0("gr_tmp", i) %in% names(dane)) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowany został model wielogrupowy.\nW takim przypadku w danych nie może występować zmienna o nazwie zaczynającej się od 'gr_tmp'."))
+    	grupyMapowanie[[i]] = unique(dane[, wieleGrup$zmienneGrupujace, drop=FALSE])
+    	grupyMapowanie[[i]] = cbind(gr_tmp=1:nrow(grupyMapowanie[[i]]), grupyMapowanie[[i]])
+    	names(grupyMapowanie[[i]]) = sub("gr_tmp", paste0("gr_tmp", i), names(grupyMapowanie[[i]]))
+    	dane = merge(dane, grupyMapowanie[[i]], all.x=TRUE)
+    	if (any(is.na(dane[, paste0("gr_tmp", i)]))) stop("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' podane zmienne nie definiują wyczerpującego podziału na grupy.")
+    }
     # sprawdzanie poprawności parametrów estymacji
     if (!("parametry" %in% names(krok))) opisProcedury[[i]]$parametry = list()
-    parametry=opisProcedury[[i]]$parametry
+    parametry = opisProcedury[[i]]$parametry
     if (!all(names(parametry) %in% dozwoloneElementy$parametry)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], "\n, w parametrach sterujących estymacją dla Mplusa pojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(parametry)[!(names(parametry)%in%dozwoloneElementy$parametry)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
     if ("estimator" %in% names(parametry)) {
       if (!all(parametry$estimator %in% c("ML", "MLM", "MLMV", "MLR", "MLF", "GLS", "WLS", "WML", "WLSM", "WLSMV", "ULSM", "BAYES")) | length(parametry$estimator) != 1) {
@@ -255,8 +291,8 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   	nazwySkrocone = nazwyPierwotne
   }
 
-  nazwyPierwotne = as.list(unique(c(nazwyPierwotne, nazwyKonstruktow)))
-  nazwySkrocone  = as.list(unique(c(nazwySkrocone , nazwyKonstruktowSkrocone)))
+  nazwyPierwotne = as.list(tolower(unique(c(nazwyPierwotne, nazwyKonstruktow))))
+  nazwySkrocone  = as.list(tolower(unique(c(nazwySkrocone , nazwyKonstruktowSkrocone))))
   names(nazwySkrocone)  = nazwyPierwotne
   names(nazwyPierwotne) = nazwySkrocone
   # zamiana zmiennych na ciągi znaków o stałej długości
@@ -367,6 +403,31 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       )
       analysis = krok$parametry[names(krok$parametry) %in% c("estimator", "processors", "integration")]
       model = przygotuj_model(zmien_nazwy_w_kroku_procedury(krok, nazwySkrocone))
+      if (!is.null(krok$wieleGrup)) {
+      	wartosciZmGrupujacej = unique(dane[, paste0("gr_tmp", i)])
+      	variable$classes = length(wartosciZmGrupujacej)
+      	variable$knownclass = paste0(paste0("gr_tmp", i), " = ", wartosciZmGrupujacej)
+      	analysis$type = "MIXTURE"
+      	analysis$algorithm = "INTEGRATION"
+
+      	modelWielogrupowy = as.list(paste0("  %gr_tmp#", 1:length(wartosciZmGrupujacej), "%"))
+      	if (krok$wieleGrup$uwolnijWartosciOczekiwane) {
+      		temp = paste0(" [", names(krok$czescPomiarowa), "*];")
+      		modelWielogrupowy = lapply(modelWielogrupowy, function(x, y) {return(c(x, y))}, y=temp)
+      	}
+      	if (krok$wieleGrup$uwolnijWariancje) {
+      		temp = paste0("  ", names(krok$czescPomiarowa), "*;")
+      		modelWielogrupowy = lapply(modelWielogrupowy, function(x, y) {return(c(x, y))}, y=temp)
+      	}
+      	model = unlist(
+      		list(
+      			"%OVERALL%",
+      			model,
+      			modelWielogrupowy[-1]
+      		),
+      		recursive=FALSE
+      	)
+      }
       output = list("STANDARDIZED", "TECH4", "TECH8")
       if (krok$parametry$fscores) {
         savedata = list(
@@ -395,7 +456,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         ocCzyn = wczytaj_fwf(savedata$file, wyniki[[i]][[j]]$zapis$szerokosc, wyniki[[i]][[j]]$zapis$zmienna)
         ocCzyn = ocCzyn[, grepl(
           paste0(
-            "^", tolower(idObs), "$|^(",
+            "^", tolower(idObs), "$|^gr_tmp|^(",
             paste0(unique(wyniki[[i]][[j]]$parametry$surowe$zmienna1[wyniki[[i]][[j]]$parametry$surowe$typ == "by"]), collapse="|"),
             ")(|_se)$"
           ),

@@ -4,8 +4,8 @@
 \title{Skalowanie modeli IRT.}
 \usage{
 skaluj(dane, opisProcedury, idObs, tytul = "", zmienneCiagle = NULL,
-  zmienneSpecjalne = NULL, zwrocOszacowania = TRUE,
-  zmienneDolaczaneDoOszacowan = NULL, usunFWF = TRUE)
+  zmienneSpecjalne = NULL, zmienneDolaczaneDoOszacowan = NULL,
+  zwrocOszacowania = TRUE, usunFWF = TRUE)
 }
 \arguments{
 \item{dane}{data.frame z danymi}

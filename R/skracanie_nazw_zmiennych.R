@@ -1,4 +1,3 @@
-# Funkcje pomocnicze ------------------------------------------------------
 #' @title Obsluga ew. wystapienia duplikatow po skroceniu nazw zmiennych.
 #' @description
 #' Funkcja sprawdza, czy w pierwszym wektorze nie występują duplikaty. Jeśli występują, to podmienia je (zarówno pierwsze wystąpienie jak i powtórzenia) odpowiednimi wartościami z drugiego wektora.
@@ -45,6 +44,8 @@ skroc_nazwy_zmiennych = function(nazwy, dl) {
 																			x = czy_sie_nie_powtarza(sub("kryt(erium|eria)", "k", x), x)
 																			x = czy_sie_nie_powtarza(sub("pseudo(|kryt(erium|eria))", "p", x), x)
 																			x = czy_sie_nie_powtarza(sub("pseudo(|kryt(erium|eria))", "p", x), x)
+																			x = czy_sie_nie_powtarza(sub("sel(|ekcja)", "s", x), x)
+																			x = czy_sie_nie_powtarza(sub("temat", "t", x), x)
 																			x = czy_sie_nie_powtarza(sub("publiczn(a|y|e)", "pbl", x), x)
 																			x = czy_sie_nie_powtarza(sub("dla(|_)doroslych", "ddr", x), x)
 																			x = czy_sie_nie_powtarza(sub("specjaln(a|e)", "spc", x), x)
@@ -74,7 +75,6 @@ skroc_nazwy_zmiennych = function(nazwy, dl) {
 	# zwracamy wynik
 	return(nazwy)
 }
-# Funkcje pomocnicze ------------------------------------------------------
 #' @title Skracanie nazw zmiennych.
 #' @description
 #' Funkcja przechodzi przez elementy \code{zmienne}, \code{wartosciStartowe}, \code{wartosciZakotwoczone}, \code{ograniczeniWartosci} kroku procedury i zamienia w nich nazwy zmiennych (typowo na skrócone).

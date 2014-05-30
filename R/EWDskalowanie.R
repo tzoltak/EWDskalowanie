@@ -99,16 +99,16 @@ lam_wiersze = function(x, wciecie=2, maxDl=90, srednikNaKoncu=TRUE, sep=" ", lam
 #' @details
 #' Warto pamiętać, że ustawienia opisywane elementami 'rasch', 'var1' i 'e0' są nadpisywane przez wpisy z elementu wartosciZakotwiczone.
 przygotuj_model = function(opisModelu) {
-  return(mapply(
+	return(mapply(
     function(x, y) {
       zmienne = y$zmienne
       progiSyntax = wariancjeSyntax = wartosciOczekiwaneSyntax = c()
       e0 = TRUE	# wartość oczekiwana zmiennej ukrytej równa 0
       if (!is.null(y$wartosciZakotwiczone)) {
-        dyskryminacje      = y$wartosciZakotwiczone[y$wartosciZakotwiczone$typ == "by", ]
-        progi    	       = y$wartosciZakotwiczone[y$wartosciZakotwiczone$typ == "threshold", ]
-        wariancje          = y$wartosciZakotwiczone[grep("variance", y$wartosciZakotwiczone$typ), ]  # to może być zarówno "variance" jak i "residual variance"
-        wartosciOczekiwane = y$wartosciZakotwiczone[y$wartosciZakotwiczone$typ == "mean", ]
+        dyskryminacje      = y$wartosciZakotwiczone[grep("^by(|[.]gr1)$"       , y$wartosciZakotwiczone$typ), ]
+        progi    	         = y$wartosciZakotwiczone[grep("^threshold(|[.]gr1)$", y$wartosciZakotwiczone$typ), ]
+        wariancje          = y$wartosciZakotwiczone[grep("variance(|[.]gr1)$"  , y$wartosciZakotwiczone$typ), ]  # to może być zarówno "variance" jak i "residual variance"
+        wartosciOczekiwane = y$wartosciZakotwiczone[grep("^mean(|[.]gr1)$"     , y$wartosciZakotwiczone$typ), ]
         # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
         dyskryminacje = setNames(
           as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
@@ -148,10 +148,10 @@ przygotuj_model = function(opisModelu) {
         if (nrow(progi) > 0 & nrow(wartosciOczekiwane) == 0) e0 = FALSE
       }
       if (!is.null(y$wartosciStartowe)) {
-        dyskryminacje      = y$wartosciStartowe[y$wartosciStartowe$typ == "by", ]
-        progi              = y$wartosciStartowe[y$wartosciStartowe$typ == "threshold", ]
-        wariancje          = y$wartosciStartowe[grep("variance", y$wartosciStartowe$typ), ]  # to może być zarówno "variance" jak i "residual variance"
-        wartosciOczekiwane = y$wartosciStartowe[y$wartosciStartowe$typ == "mean", ]
+        dyskryminacje      = y$wartosciStartowe[grep("^by(|[.]gr1)$",      , y$wartosciStartowe$typ), ]
+        progi              = y$wartosciStartowe[grep("^threshold(|[.]gr1)$", y$wartosciStartowe$typ), ]
+        wariancje          = y$wartosciStartowe[grep("variance(|[.]gr1)$"  , y$wartosciStartowe$typ), ]  # to może być zarówno "variance" jak i "residual variance"
+        wartosciOczekiwane = y$wartosciStartowe[grep("^mean(|[.]gr1)$     ", y$wartosciStartowe$typ), ]
         # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
         # dodatkowa zabawa - jeśli coś już przypadkiem ma wartość zakotwiczoną, to nie przypisujemy temu wartości startowej
         dyskryminacje = setNames(
@@ -249,12 +249,16 @@ przygotuj_inp = function(title="", data, variable, analysis=list(), model, outpu
           paste0("IDVARIABLE IS ", variable$idvariable, ";")
   )
   if ("useobservations" %in% names(variable)) kod = c(kod, "USEOBSERVATIONS ARE", lam_wiersze(variable$useobservations))
+  if ("classes" %in% names(variable)) kod = c(kod, paste0("CLASSES ARE gr_tmp (", variable$classes, ");"))
+  if ("knownclass" %in% names(variable)) kod = c(kod, paste0("KNOWNCLASS ARE gr_tmp (", paste0(variable$knownclass, collapse=" ") , ");"))
   kod = c(kod,
           "",
           "ANALYSIS:"
   )
-  if ("estimator" %in% names(analysis))   kod = c(kod, paste0("ESTIMATOR IS ", analysis$estimator, ";"))
-  if ("processors" %in% names(analysis))  kod = c(kod, paste0("PROCESSORS ARE ", analysis$processors, ";"))
+  if ("type"        %in% names(analysis)) kod = c(kod, paste0("TYPE IS "       , analysis$type       , ";"))
+  if ("algorithm"   %in% names(analysis)) kod = c(kod, paste0("ALGORITHM IS "  , analysis$algorithm  , ";"))
+  if ("estimator"   %in% names(analysis)) kod = c(kod, paste0("ESTIMATOR IS "  , analysis$estimator  , ";"))
+  if ("processors"  %in% names(analysis)) kod = c(kod, paste0("PROCESSORS ARE ", analysis$processors , ";"))
   if ("integration" %in% names(analysis)) kod = c(kod, paste0("INTEGRATION IS ", analysis$integration, ";"))
   kod = c(kod,
           "",
@@ -335,7 +339,7 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     temp = output[(grep("^MODEL RESULTS$", output) + 1):(grep("^(QUALITY OF NUMERICAL RESULTS|MODEL COMMAND WITH FINAL ESTIMATES USED AS STARTING VALUES)$", output)[1] - 1)]
     temp = temp[!grepl("^$|^STANDARDIZED MODEL RESULTS$|[ ]+Two-Tailed$", temp)]
     parametry = list()
-    tnij = grep("Standardization|R-SQUARE|IRT PARAMETERIZATION", temp)
+    tnij = grep("Standardization|Categorical Latent Variables|R-SQUARE|IRT PARAMETERIZATION", temp)
     while (length(tnij) > 0) {
       parametry[[length(parametry) + 1]] = temp[1:(tnij[1] - 1)]
       temp = temp[tnij[1]:length(temp)]
@@ -345,89 +349,121 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     parametry[[length(parametry) + 1]] = temp      
     names(parametry) = tolower(unlist(lapply(parametry, 
                                              function(x) {
-                                               return(sub("^.*IRT PARAMETERIZATION.*$", "irt",
+                                               return(sub("Categorical Latent Variables", "grupy",
+                                               					sub("^.*IRT PARAMETERIZATION.*$", "irt",
                                                           sub(" Standardization", "",
                                                               sub("[-]SQUARE", "2",
                                                                   sub("^[ ]+Estimate.+$", "SUROWE", x[1])
-                                                              )
-                                                          )
-                                               ))
+                                               )))))
                                              }
     )))
     # wstawka do usunięcia nikomu niepotrzebnych wyników w parametryzacji IRT, które Mplus wrzuca tylko wtedy, gdy model jest jednowymiarowy, a zadania są tylko 0-1
-    parametry = parametry[names(parametry) != 'irt']
+    # oraz częstości grup, jeśli model był wielogrupowy
+    parametry = parametry[!(names(parametry) %in% c("irt", "grupy"))]
     # i przerabianie go na listę data.frame'ów
     parametry = lapply(parametry,
                        function(x) {
-                         if (!grepl("^[ ]+Estimate.*$", x[1])) x=x[-1]
-                         # nazwy kolumn
-                         kolumny = c("Variable", strsplit(x[1], "[ ]+")[[1]][-1])
-                         if (all(kolumny[1:2] == "Variable")) {  # sekcja dotycząca R2 - musi być obrobiona nieco inaczej
-                           kolumny = kolumny[-1]
-                           temp = list(x[-1])
-                           attributes(temp)$typ = "R2"
-                           attributes(temp)$zmienna = ""
-                         }
-                         else {
-                           # pocięcie na poszczególne tabelki
-                           tnij = c(grep("^ [[:upper:][:digit:]_]{1,8}[ ]+BY$|^ [[:upper:][:digit:]_]{1,8}[ ]+ON$|^ [[:upper:][:digit:]_]{1,8}[ ]+WITH$|[]Intercepts|^[ ]Means$|^[ ]Thresholds$|^[ ]Variances$|^[ ]Residual Variances$", x), length(x) + 1)
-                           # stwierdzenie, co opisują kolejne tabelki
-                           temp = list()
-                           for (i in 1:(length(tnij) - 1)) {
-                             temp[[length(temp) + 1]] = x[(tnij[i] + 1):(tnij[i + 1] - 1)]
-                           }
-                           attributes(temp)$typ = sub("^[ ]+", "", x[tnij[-length(tnij)]])
-                           attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)] = sub("^.*(BY|ON|WITH)", "\\1", attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)])
-                           attributes(temp)$zmienna = ifelse(
-                             grepl("(BY|ON|WITH)$", attributes(temp)$typ),
-                             sub("^([^ ]*)[ ]+(BY|ON|WITH)$", "\\1",
-                                 sub("^[ ]+", "", x[tnij[-length(tnij)]])
-                             ),
-                             rep("", length(attributes(temp)$typ))
-                           )
-                         }
-                         # konwersja tabelek na data.frame'y
-                         x = lapply(temp, 
-                                    function(x, kolumny) {
-                                      x = lapply(strsplit(x, "[ ]+"), function(x) return(x[-1]))
-                                      x = as.data.frame(matrix(unlist(x), ncol=length(kolumny), byrow=TRUE, dimnames=list(c(), kolumny)), stringsAsFactors=FALSE)
-                                      for (i in 1:ncol(x)) {
-                                        x[x[, i] %in% c("999", "999.000"), i] = NA
-                                        if (all(grepl("^[[:digit:]+-.]+$", x[, i]) | is.na(x[, i]))) x[, i]=as.numeric(x[, i])
-                                      }
-                                      return(x)
-                                    },
-                                    kolumny = kolumny
-                         )
-                         attributes(x) = attributes(temp)
-                         # przygotowanie tabelek do złączenia w jedną wielką tabelkę
-                         x = mapply(
-                           function(x, typ, zmienna) {
-                             x = data.frame(
-                               typ=tolower(sub("s$", "", typ)),
-                               zmienna1=tolower(zmienna),
-                               zmienna2=tolower(x$Variable),
-                               wartosc=x$Estimate,
-                               x[, !(names(x)%in%c("Variable", "Estimate"))],
-                               stringsAsFactors=FALSE, check.names=FALSE
-                             )
-                             x$zmienna1[grepl("mean|variance|^r2$", x$typ)] = x$zmienna2[grepl("mean|variance|^r2$", x$typ)]
-                             x$zmienna2[grepl("mean|variance|^r2$", x$typ)] = ""
-                             x$zmienna1[x$typ=="threshold"] = sub("[$][[:digit:]]+$", "", x$zmienna2[x$typ=="threshold"])
-                             x$zmienna2[x$typ=="threshold"] = sub("^.+[$]", "", x$zmienna2[x$typ=="threshold"])
-                             return(x)
-                           },
-                           x,
-                           as.list(attributes(x)$typ),
-                           as.list(attributes(x)$zmienna),
-                           SIMPLIFY=FALSE
-                         )
-                         if (length(x) > 1) temp=rbind(x[[1]], x[[2]])
-                         else temp = x[[1]]
-                         if (length(x) > 2) {
-                           for (i in 3:length(x)) temp = rbind(temp, x[[i]])
-                         }
-                         return(temp)
+                       	if (x[1] == "R-SQUARE") {
+                       		if (grepl("Class", x[2])) {
+                       			x = x[c(3, 2:length(x))]
+                       			x[grep("[ ]+Variable", x)[-1]] = "r2"
+                       		} else {
+                       			x = c(x[2], "r2", x[3:length(x)])
+                       		}
+                       		x[1] = sub("Variable", "        ", x[1])
+                       	} else if (!grepl("Estimate", x[1])) {
+                       		x = x[-1]
+                       	}
+                       	# nazwy kolumn
+                       	kolumny = c("Variable", strsplit(x[1], "[ ]+")[[1]][-1])
+                       	# sztuczka z przerzuceniem na tabelkę przez zapis do .csv-ki
+                       	kolumny = paste0(kolumny, collapse="  ")
+                       	x = c(kolumny, x[!grepl("Estimate", x)])
+                       	x = gsub("[ ]+(BY|ON|WITH)$", " \\1", x)
+                       	x = sub("^,", "", gsub("[ ][ ]+", ",",x))
+                       	nazwaTemp = paste0(letters[floor(runif(20, 0, length(letters)+0.999))], collapse="")
+												writeLines(x, nazwaTemp)
+												x = read.csv(nazwaTemp, fill=TRUE)
+												unlink(nazwaTemp)
+												# zamiana braków danych (999) na NA
+												maskaNumeric = unlist(lapply(x, class)) == "numeric"
+												x[maskaNumeric] = lapply(x[maskaNumeric],
+																									 function(x) {
+																									 	x[x == 999] = NA
+																									 	return(x)
+																									 }
+												)
+												# obsługa wielogrupowaości
+												wieleGrup = grep("Class", x$Variable)
+												if (length(wieleGrup) > 0) {
+													wieleGrup = c(wieleGrup, nrow(x) + 1)
+													temp = list()
+													for (i in 1:(length(wieleGrup) - 1)) {
+														temp[[i]] = x[(wieleGrup[i] + 1):(wieleGrup[i + 1] - 1), ]
+													}
+												} else {
+													temp = list(x)
+												}
+												x = lapply(temp,
+																			function(x) {
+																				tnij = c(grep("[ ](BY|ON|WITH)$|Intercepts|Means$|Thresholds$|[vV]ariances$|r2$", x$Variable), nrow(x) + 1)
+																				# stwierdzenie, co opisują kolejne tabelki
+																				temp = list()
+																				for (i in 1:(length(tnij) - 1)) {
+																					temp[[i]] = x[(tnij[i] + 1):(tnij[i + 1] - 1), ]
+																				}
+																				attributes(temp)$typ = sub("^[ ]+", "", x$Variable[tnij[-length(tnij)]])
+																				attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)] = sub("^.*(BY|ON|WITH)", "\\1", attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)])
+																				attributes(temp)$zmienna = ifelse(
+																					grepl("(BY|ON|WITH)$", attributes(temp)$typ),
+																					sub("^([^ ]*)[ ]+(BY|ON|WITH)$", "\\1",
+																							sub("^[ ]+", "", x$Variable[tnij[-length(tnij)]])
+																					),
+																					rep("", length(attributes(temp)$typ))
+																				)
+																				# przygotowanie tabelek do złączenia w jedną wielką tabelkę
+																				temp = mapply(
+																					function(x, typ, zmienna) {
+																						x = data.frame(
+																							typ=sub("s$", "", tolower(typ)),
+																							zmienna1=tolower(zmienna),
+																							zmienna2=tolower(x$Variable),
+																							wartosc=x$Estimate,
+																							x[, !(names(x)%in%c("Variable", "Estimate"))],
+																							stringsAsFactors=FALSE, check.names=FALSE
+																						)
+																						x$zmienna1[grepl("mean|(|residual )variance|^r2$", x$typ)] = x$zmienna2[grepl("mean|(|residual )variance|^r2$", x$typ)]
+																						x$zmienna2[grepl("mean|(|residual )variance|^r2$", x$typ)] = ""
+																						x$zmienna1[x$typ=="threshold"] = sub("[$][[:digit:]]+$", "", x$zmienna2[x$typ=="threshold"])
+																						x$zmienna2[x$typ=="threshold"] = sub("^.+[$]", "", x$zmienna2[x$typ=="threshold"])
+																						return(x)
+																					},
+																					temp,
+																					as.list(attributes(temp)$typ),
+																					as.list(attributes(temp)$zmienna),
+																					SIMPLIFY=FALSE
+																				)
+																				if (length(temp) > 1) {
+																					x = rbind(temp[[1]], temp[[2]])
+																				} else {
+																					x = temp[[1]]
+																				}
+																				if (length(temp) > 2) {
+																					for (i in 3:length(temp)) x = rbind(x, temp[[i]])
+																				}
+																				return(x)
+																			}
+												)
+												# mały porządek z wielogrupowością
+												temp = x[[1]]
+												if (length(x) > 1) {
+													temp$typ = paste0(temp$typ, ".gr1")
+													for (i in 2:length(x)) {
+														x[[i]]$typ = paste0(x[[i]]$typ, ".gr", i)
+														temp = rbind(temp, x[[i]])
+													}
+												}
+                       	return(temp)
                        }
     )
     if (!is.null(nazwyDoZmiany)) {
@@ -448,7 +484,7 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     zapis = output[(grep("Order and format of variables", output)+2):(grep("Save file format", output)[1]-2)]
     zapis = lapply(strsplit(zapis, "[ ]+"), function(x) return(tolower(x[x != ""])))
     zapis = as.data.frame(matrix(unlist(zapis), ncol=2, byrow=TRUE, dimnames=list(c(), c("zmienna", "szerokosc"))), stringsAsFactors=FALSE)
-    zapis$szerokosc = as.numeric(sub("^f([[:digit:]]+).[[:digit:]]+", "\\1", zapis$szerokosc))
+    zapis$szerokosc = as.numeric(sub("^[fi]([[:digit:]]+)(.[[:digit:]]+|)", "\\1", zapis$szerokosc))
     if (!is.null(nazwyDoZmiany)) {
     	maska = zapis$zmienna %in% names(nazwyDoZmiany)
     	if (!all(maska)) warning("Niektóre nazwy zmiennych w pliku z oszacowaniami natężenia cech ukrytych nie występują w mapowaniu skróconych nazw zmiennych na pierwotne nazwy zmiennych.")

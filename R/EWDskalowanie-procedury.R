@@ -490,6 +490,68 @@ procedura_matura_hm = function(nazwyZmiennych, processors=3) return(list(
 ))
 #' @title Procedury skalowania egzaminow.
 #' @description
+#' Procedura skalowania matury - przedmioty humanistyczne bez lauratów, w modelu wielogrupowym ze względu na typ szkoły.
+#' Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
+#' @param nazwyZmiennych nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja
+#' @param processors liczba rdzeni do wykorzystania przy estymacji
+#' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
+#' @seealso \code{\link{skaluj}}
+#' @examples
+#' # chwilowo brak
+#' @export
+procedura_matura_hm_gr = function(nazwyZmiennych, processors=3) return(list(
+	"j. pol" = list(
+		czescPomiarowa = list(
+			j_pol = list(
+				zmienne = nazwyZmiennych[grep("^jpl_[pr]|^selekcja_jpl", nazwyZmiennych)],
+				var1 = TRUE,
+				rasch = FALSE,
+				kryteriaUsuwania = list(
+					dyskryminacjaPonizej = 0.2,
+					istotnoscPowyzej = 1,
+					nigdyNieUsuwaj = "^s_"
+				),
+				wartosciStartowe = NULL,
+				wartosciZakotwiczone = NULL
+			)
+		),
+		wieleGrup = list(
+			zmienneGrupujace = "typ_szkoly",
+			uwolnijWartosciOczekiwane = TRUE,
+			uwolnijWariancje = TRUE
+		),
+		parametry = list(
+			estimator = "MLR",
+			processors = processors,
+			integration = "STANDARD (20)",
+			fscores = TRUE
+		)
+	)#,
+# 	"przedm. hum." = list(
+# 		czescPomiarowa = list(
+# 			hum = list(
+# 				zmienne = nazwyZmiennych[grep("^(jpl|his|wos)_[pr]|^s_(jpl|his|wos)", nazwyZmiennych)],
+# 				var1 = TRUE,
+# 				rasch = FALSE,
+# 				kryteriaUsuwania = list(
+# 					dyskryminacjaPonizej = 0.2,
+# 					istotnoscPowyzej = 1,
+# 					nigdyNieUsuwaj = "^s_"
+# 				),
+# 				wartosciStartowe = NULL,
+# 				wartosciZakotwiczone = NULL
+# 			)
+# 		),
+# 		parametry = list(
+# 			estimator = "MLR",
+# 			processors = processors,
+# 			integration = "STANDARD (30)",
+# 			fscores = TRUE
+# 		)
+# 	)
+))
+#' @title Procedury skalowania egzaminow.
+#' @description
 #' Procedura skalowania matury - przedmioty humanistyczne z uwzględnieniem laureatów.
 #' Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
 #' @param nazwyZmiennych nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja
