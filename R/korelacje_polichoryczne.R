@@ -8,7 +8,7 @@
 #' @param korelacjaWiazki tablica zawierająca kolumny kr1 oraz kr2 z wartościami kryteriów do połącznia 
 #' oraz kolumnę numer określającą kolejność obliczeń korelacji.
 #' @param nazwaSkalowania ciąg znaków opisujący skalowanie.
-#' @param ileKrokow liczba kolejnych skalowań, które ma wykonać funkcja
+#' @param ileKrokow liczba kolejnych skalowań, które ma wykonać funkcja.
 #' @details
 #' Parametr ileKrokow określa liczbę połączeń, które zostaną wykonane na danych. Funkcja także wykonuje 
 #' skalowanie dla danych bez połączeń. Jeżeli ileKrokow wynosi 0 to wtedy zostaną wykonane obliczenia dla danych nie połączonych.
@@ -28,7 +28,7 @@
 #' skaluj_polichorycznie(dane, proceduraEG, korelacjaWiazki =  kor_wiazki, nazwaSkalowania = "EG_2008_hum", ileKrokow = 5)
 skaluj_polichorycznie <- function(dane, proceduraEG, korelacjaWiazki, nazwaSkalowania, 
                                   ileKrokow = nrow(korelacjaWiazki)){
-
+  
   skalObiekt = initializuj_skalowanie_polich(dane, proceduraEG, korelacjaWiazki, nazwaSkalowania)
   n = ileKrokow
   while(n >= 0){
@@ -97,8 +97,11 @@ kolejny_krok_polich <- function(wynikSkalowania){
   ret = wynikSkalowania
   ret$skalowania = retList
   ret$kolejnyIndeks = index + 1
-  ret$wartosciStartowe = tempSkaluj$wartosciStartowe[, c("typ", "zmienna1", "zmienna2", "wartosc")]
-  ret$procedura = proceduraEG
+  
+  # ret$wartosciStartowe = tempSkaluj$wartosciStartowe[, c("typ", "zmienna1", "zmienna2", "wartosc")]
+  ret$wartosciStartowe = NULL
+  
+  ret$procedura = tempSkaluj$procedura
   ret$dane = tempSkaluj$dane
   return(ret)
 }
@@ -143,17 +146,21 @@ skaluj_krok <- function(dane, proceduraEG, opisSkalowania, korelacjaWiazki, inde
   zmienne = names(daneTmp)[grep("^gh_[[:digit:]]", names(daneTmp))]
   proceduraEG = podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
   
-  maskiZmienne = grepl("^(g[mh]_)[[:digit:]]{1,4}$|^id_obs$", names(daneTmp))
-  wynikSkalowania = skaluj(dane[, maskiZmienne], proceduraEG, "id_obs", opisSkalowania)
+  # maskiZmienne = grepl("^(g[h]_)[[:digit:]]{1,4}$|^id_obs$", names(daneTmp))
   
+#   print(names(daneTmp[, maskiZmienne]))
+#   print(proceduraEG$`czesc hum.`$czescPomiarowa$gh$zmienne)
+  
+  wynikSkalowania = skaluj(daneTmp, proceduraEG, "id_obs", opisSkalowania)
+
   return( list(wynikSkalowania = wynikSkalowania, 
-               wartosciStartowe = wynikSkalowania[[1]]$kalibracja1$parametry$surowe, dane = daneTmp
+               wartosciStartowe = wynikSkalowania[[1]]$kalibracja1$parametry$surowe, 
+               dane = daneTmp, procedura = proceduraEG
                )
                )
 }
 #' @title Zmiana wartości jednego z węzłów listy
 #' @description
-#' 
 #' @param wezel lista zawierająca węzeł do zmiany
 #' @param nowaWartosc nowa wartość dla zmienianego elementu
 #' @return 
@@ -185,12 +192,16 @@ podmien_wartosci_lista <- function(wezel, nowaWartosc, doZmiany){
   
   return(wezel)
 }
-#' @title
+#' @title Procedury skalowania egzaminow.
 #' @description
-#' 
-#' @param n
-#' @return 
-procedura_eg_hum <- function(nazwyZmiennych, parametryGH=NULL, parametryGMP=NULL, processors=3) {
+#' Procedura skalowania części humanistycznej egzaminu gimnazjalnego.
+#' Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
+#' @param nazwyZmiennych nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja
+#' @param parametryGH 
+#' @param processors liczba rdzeni do wykorzystania przy estymacji
+#' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
+#' @export
+procedura_eg_hum <- function(nazwyZmiennych, parametryGH=NULL, processors=3) {
   procedura=list(
     "czesc hum."=list(
       czescPomiarowa=list(
@@ -263,7 +274,12 @@ pobierz_wiazki_pytania_kryteria <- function(kryteria, zrodloODBC="EWD"){
 #   odbcClose(P)
 #   return( ret )
 # }
-
+#' @title Kryteria z nazw
+#' @description
+#' Funkcja wyznacza numer kryteriów z ich nazw.
+#' @param nazwy nazwy kryteriów.
+#' @return 
+#' Funkcja zwraca wektor liczb oznaczających numery kryteriów.
 kryteria_z_nazw <- function(nazwy){
   kryt_nazwy = nazwy[grepl("^([[:alnum:]]+_)+[[:digit:]]+", nazwy)]
   return( as.numeric(gsub("^[[:alnum:]]+_", "", kryt_nazwy)) )
@@ -305,7 +321,6 @@ policz_korelacje_wiazki <- function (dane_pytan, wiazki_pyt_kryt){
   sprawdz_zgodnosc_kryteriow(wiazki_pyt_kryt$id_kryterium, kryt, "Kryteria z wiazek", "Kryteria z pytan")
   
   daneZad = dane_pytan[, grepl("^([[:alnum:]]+_)+[[:digit:]]+", colnames(dane_pytan))]
-  
   wiazki = unique(wiazki_pyt_kryt$id_wiazki)
   
   polaczenia = NULL
@@ -316,12 +331,7 @@ policz_korelacje_wiazki <- function (dane_pytan, wiazki_pyt_kryt){
     if(sum(indKryteria)==1){
       next()
     }
-    
-    print("Przed korelacja")
-    
     korsPoli = korelacjePolihoryczne(daneZad[, indKryteria])
-    
-    print("Po korelacja")
     
     hc = hclust(as.dist(1-korsPoli^2))
     mh = data.frame(hc$merge) 
