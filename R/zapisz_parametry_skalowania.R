@@ -70,11 +70,11 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           }
           
           if( !is.null(nazwa_skali) & is.null(id_testu) ){
-            skaleZap = sqlPrepare(P, zapytanie, data = nazwa_skali, fetch = TRUE)
+            skaleZap = sqlExecute(P, zapytanie, data = nazwa_skali, fetch = TRUE)
           } else if( !is.null(nazwa_skali) & ! is.null(id_testu)    ){
-            skaleZap = sqlPrepare(P, zapytanie, data = data.frame(nazwa_skali, id_testu), fetch = TRUE)
+            skaleZap = sqlExecute(P, zapytanie, data = data.frame(nazwa_skali, id_testu), fetch = TRUE)
           } else{
-            skaleZap = sqlPrepare(P, zapytanie, data = id_testu, fetch = TRUE)
+            skaleZap = sqlExecute(P, zapytanie, data = id_testu, fetch = TRUE)
           }
           
           if( length(na.omit(skaleZap))==0 ){
@@ -86,14 +86,14 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           }
           idSkali = skaleZap$id_skali[1]
           
-          estymacjeNumZap = sqlPrepare(P, "SELECT count(*) FROM sl_estymacje_parametrow WHERE estymacja = ? ", 
+          estymacjeNumZap = sqlExecute(P, "SELECT count(*) FROM sl_estymacje_parametrow WHERE estymacja = ? ", 
                                        data=estymacja, fetch=TRUE)
           
-          nazwyParametrow = sqlPrepare(P, "SELECT parametr FROM sl_parametry", data=data.frame(NULL), fetch=TRUE)$parametr
+          nazwyParametrow = sqlExecute(P, "SELECT parametr FROM sl_parametry", data=data.frame(NULL), fetch=TRUE)$parametr
           
           zapytanie = "SELECT greatest(max(skalowanie), count(*)) + 1 AS skalowanie
           FROM skalowania WHERE id_skali = ? "
-          numerSkalowania = sqlPrepare(P, zapytanie, data=idSkali, fetch=TRUE)$skalowanie
+          numerSkalowania = sqlExecute(P, zapytanie, data=idSkali, fetch=TRUE)$skalowanie
           
           odbcClose(P)
         },
@@ -111,26 +111,26 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           parBy = parametry[parametry$typ=="by", ]
           parTreshold = parametry[parametry$typ=="threshold", ]
           
-          by = wydziel_kryteria_pseudokryteria(parBy$zmienna2)
+          by = EWDskalowanie:::wydziel_kryteria_pseudokryteria(parBy$zmienna2)
           kryteriaBy = by$kryteria
           pseudokryteriaBy = by$pseudokryteria
           
-          tres = wydziel_kryteria_pseudokryteria(parTreshold$zmienna1)
+          tres = EWDskalowanie:::wydziel_kryteria_pseudokryteria(parTreshold$zmienna1)
           kryteriaTres = tres$kryteria
           pseudokryteriaTres = tres$pseudokryteria
           
           liczbaParam = table(kryteriaTres)
           
           zapytanie = "SELECT kolejnosc, id_kryterium, id_pseudokryterium FROM skale_elementy WHERE id_skali = ?"
-          skaleElementy =  sqlPrepare(P, zapytanie, data=idSkali, fetch=TRUE)
+          skaleElementy =  sqlExecute(P, zapytanie, data=idSkali, fetch=TRUE)
           
           kryteriaBaza = na.omit(skaleElementy$id_kryterium)
           pseudokryteriaBaza = na.omit(skaleElementy$id_pseudokryterium)
           
-          sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBy  , "kryteria 'treshold'" , "kryteria 'by'")
-          sprawdz_zgodnosc_kryteriow(kryteriaBy  , kryteriaTres, "kryteria 'by'"       , "kryteria 'treshold'")
-          sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBaza, "kryteria z parametru", "kryteria z bazy")
-          sprawdz_zgodnosc_kryteriow(kryteriaBaza, kryteriaTres, "kryteria z bazy"     , "kryteria z parametru", error=FALSE)
+          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBy  , "kryteria 'treshold'" , "kryteria 'by'")
+          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaBy  , kryteriaTres, "kryteria 'by'"       , "kryteria 'treshold'")
+          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBaza, "kryteria z parametru", "kryteria z bazy")
+          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaBaza, kryteriaTres, "kryteria z bazy"     , "kryteria z parametru", error=FALSE)
           
           sprawdz_zgodnosc_kryteriow(pseudokryteriaTres, pseudokryteriaBy  , "pseudokryteria 'treshold'"         , "pseudokryteria 'by'")
           sprawdz_zgodnosc_kryteriow(pseudokryteriaBy  , pseudokryteriaTres, "pseudokryteria 'by'"               , "pseudokryteria 'treshold'")
@@ -141,7 +141,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           sqlExecute(P)
           
           insert = "INSERT INTO skalowania (skalowanie, opis , estymacja, id_skali)  VALUES (? , ? , ?, ?)" 
-          sqlPrepare(P, insert , data=data.frame(numerSkalowania, opis,estymacja, idSkali)) 
+          sqlExecute(P, insert , data=data.frame(numerSkalowania, opis,estymacja, idSkali)) 
           
           for(k in 1:length(liczbaParam)){
             krytNum = as.numeric(names(liczbaParam)[k])
@@ -185,7 +185,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
                 if( ! nazwaPar %in% nazwyParametrow ){
                   insert = "INSERT INTO sl_parametry(parametr,opis) 
                             values ( ? ,'kn - odchylenie krzywych opisujących poszczególne liczby punktów od średniej trudności całego zadania w modelu GRM')"
-                  sqlPrepare(P, insert, data = nazwaPar)
+                  sqlExecute(P, insert, data = nazwaPar)
                 }
                 
                 wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania, nazwaPar, "GRM",
@@ -224,8 +224,8 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
 #' @param wartosc liczba
 #' @param odchylenie liczba opisująca odchylenie standardowe parametru.
 #' @return Funkcja nie zwraca żadnej wartości.
-wstaw_do_skalowania_elementy <- function(zrodloODBC, idSkali, kolejnosc,numerSkalowania,
-                                         nazwaParametru,model,wartosc,odchylenie){
+wstaw_do_skalowania_elementy <- function(zrodloODBC, idSkali, kolejnosc, numerSkalowania,
+                                         nazwaParametru, model, wartosc, odchylenie){
   
   insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu, id_skali, kolejnosc,
                          skalowanie, parametr, model, wartosc, uwagi", ifelse(is.null(odchylenie), "",", bl_std"), ")
@@ -234,10 +234,10 @@ wstaw_do_skalowania_elementy <- function(zrodloODBC, idSkali, kolejnosc,numerSka
                          )
   
   if(is.null(odchylenie)){
-    sqlPrepare(zrodloODBC, insSkalowania, 
+    sqlExecute(zrodloODBC, insSkalowania, 
                data = data.frame(idSkali, kolejnosc, numerSkalowania, nazwaParametru, model, wartosc))
   } else{
-    sqlPrepare(zrodloODBC, insSkalowania, 
+    sqlExecute(zrodloODBC, insSkalowania, 
                data = data.frame(idSkali, kolejnosc, numerSkalowania, nazwaParametru, model, wartosc, odchylenie))
   }
   invisible(NULL)

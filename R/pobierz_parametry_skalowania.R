@@ -22,9 +22,11 @@
 #' \dontrun{
 #' id_testu = 1128
 #' nazwa_skali = "ktt;1128"
-#' ret = pobierz_parametry_skalowania(nazwa_skali,id_testu)
+#' pobierz_parametry_skalowania(nazwa_skali, id_testu)
+#' pobierz_parametry_skalowania(nazwa_skali, id_testu, parametryzacja = "mplus")
 #' }
 #' @export
+#' pobierz_parametry_skalowania(nazwa_skali, parametryzacja="mplus")
 pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_skalowania='.*', 
                                          zrodloDanychODBC = 'ewd_grzes', parametryzacja = "baza"){
   
@@ -95,20 +97,35 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_s
   
   P = odbcConnect(zrodloDanychODBC)
   tryCatch({
-            tablicaDanych = sqlPrepare(P, zapytanie1, data = sqlFrame, fetch = TRUE)
-            opisSkalowan  = sqlPrepare(P, zapytanie2, data = sqlFrame, fetch = TRUE)
-            skale         = sqlPrepare(P, zapytanie3, data = sqlFrame, fetch = TRUE)
+            tablicaDanych = sqlExecute(P, zapytanie1, data = sqlFrame, fetch = TRUE)
+            opisSkalowan  = sqlExecute(P, zapytanie2, data = sqlFrame, fetch = TRUE)
+            skale         = sqlExecute(P, zapytanie3, data = sqlFrame, fetch = TRUE)
             odbcClose(P)
           },
           error=function(e) {
             odbcClose(P)
             stop(e)
           }
-          )
+          ) 
   
   if(nrow(tablicaDanych)==0){
     warning("Nie znalezniono danych spełniających kryteria wyszukiwania")
     return(NULL)
+  }
+  
+  tablicaDanych=tablicaDanych
+  
+  for(ind in 1:(ncol(tablicaDanych))){
+    omitTmp = na.omit(as.character(tablicaDanych[,ind]))
+    numbersTmp = suppressWarnings(as.numeric(omitTmp))
+    if( length(numbersTmp)!=0 && all((!is.na(numbersTmp)))){
+      if(is.null(attr(omitTmp,"na.action"))){
+        tablicaDanych[,ind] = numbersTmp 
+      }else{
+        tablicaDanych[,ind] = NA
+        tablicaDanych[-attr(omitTmp,"na.action"),ind] = numbersTmp
+      }    
+    }
   }
   
   ret = list()
@@ -136,7 +153,7 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_s
   }
   
   if( parametryzacja=="mplus" ){
-    for(ilist in 1:length(ret)){
+    for(ilist in seq_along(ret)){
       ret[[ilist]] = zmien_na_mplus(ret[[ilist]])
     }
   }
@@ -152,11 +169,17 @@ pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_s
 #' Funkcja zwraca ramkę danych, która jest zgodna z postacią ramek zwracanych przez funkcję skaluj().
 zmien_na_mplus <- function(tablicaDanych){
   
-  # 2PL
+  grm = tablicaDanych[tablicaDanych$model=="GRM", ]
   dwaPL = tablicaDanych[tablicaDanych$model=="2PL",]
   
+  if(nrow(grm)==0 && nrow(dwaPL)==0 ){
+    stop("Brak parametrów modeli 2PL i GRM.")
+  }
+  
+  # 2PL
+  
   if( length ( errInds <- which( ! dwaPL$parametr %in% c("dyskryminacja","trudność")  ) ) != 0 ){
-    stop("Niepoprawne rodzaje parametrów dla modelu 2PL: \n", paste(errInds,collapse="\n"))
+    stop("Niepoprawne rodzaje parametrów dla modelu 2PL: \n", paste(errInds, collapse="\n"))
   }
   
   # Jak rozumiem baza gwarantuje, że każdy element skale_elementy posiada kryterium albo pseudokryterium.
@@ -183,8 +206,6 @@ zmien_na_mplus <- function(tablicaDanych){
   }
   
   #GRM
-  grm = tablicaDanych[tablicaDanych$model=="GRM", ]
-  
   kryt = grm$id_kryterium
   kryt[is.na(kryt)] = grm$id_pseudokryterium
   
