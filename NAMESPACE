@@ -26,3 +26,8 @@ export(initializuj_skalowanie_polich)
 export(kolejny_krok_polich)
 export(procedura_eg_hum)
 export(policz_korelacje_wiazki)
+export(polacz_kryteria_mirt)
+export(skaluj_laczenie_mirt)
+export(przygotuj_parametry_2PL)
+
+

@@ -87,7 +87,11 @@ kolejny_krok_polich <- function(wynikSkalowania){
                                  paste(korelacjaWiazki[index, c("kr1", "kr2")], collapse="_"))
   }
   
-  proceduraEG = podmien_wartosci_lista( wynikSkalowania$procedura, wynikSkalowania$wartosciStartowe, "wartosciStartowe")
+  # dostosowanie do przestarzałych obiektów wynikSkalowania: 
+  # maskiZmienne = grepl("^(g[h]_)[[:digit:]]{1,4}$|^id_obs$", names(wynikSkalowania$dane))
+  # proceduraEG = podmien_wartosci_lista( wynikSkalowania$procedura, wynikSkalowania$wartosciStartowe, "wartosciStartowe")
+  # tempSkaluj = skaluj_krok(wynikSkalowania$dane[, maskiZmienne], proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
+  
   tempSkaluj = skaluj_krok(wynikSkalowania$dane, proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
   
   retList = wynikSkalowania$skalowania
@@ -123,10 +127,22 @@ polacz_dane <- function(dane, korelacjaWiazki = NULL, index = 0 ){
     stop("Niepoprawna forma korelacji.")
   }
   
-  pol = korelacjaWiazki[index, ]
-  pyt1 = ifelse(pol$kr1 > 0, pol$kr1, korelacjaWiazki$kr1[ pol$numer + pol$kr1 == korelacjaWiazki$numer] )
-  pyt2 = ifelse(pol$kr2 > 0, pol$kr2, korelacjaWiazki$kr1[ pol$numer + pol$kr2 == korelacjaWiazki$numer] )
+  kryterium_do_polaczenia <- function(pol_numer, pol_kryt, korelacjaWiazki){
+    if(pol_kryt > 0) {
+      return(pol_kryt)
+    }
+    pol = korelacjaWiazki[which( pol_numer + pol_kryt == korelacjaWiazki$numer), ]
+    return (kryterium_do_polaczenia(pol$numer, pol$kr1, korelacjaWiazki))
+  }
   
+  pol = korelacjaWiazki[index, ]
+  pyt1 = kryterium_do_polaczenia(pol$numer, pol$kr1, korelacjaWiazki)
+  pyt2 = kryterium_do_polaczenia(pol$numer, pol$kr2, korelacjaWiazki)
+  
+#   pol = korelacjaWiazki[index, ]
+#   pyt1 = ifelse(pol$kr1 > 0, pol$kr1, korelacjaWiazki$kr1[ pol$numer + pol$kr1 == korelacjaWiazki$numer] )
+#   pyt2 = ifelse(pol$kr2 > 0, pol$kr2, korelacjaWiazki$kr1[ pol$numer + pol$kr2 == korelacjaWiazki$numer] )
+
   if( sum(grepl(pyt1, names(dane)))!=1 | sum(grepl(pyt2, names(dane)))!=1 ){
     stop("Zle zdefiniowane polaczenie: \n", paste(pol, collapse=" " ), "\n")
   }
@@ -145,11 +161,6 @@ skaluj_krok <- function(dane, proceduraEG, opisSkalowania, korelacjaWiazki, inde
   daneTmp = polacz_dane(dane, korelacjaWiazki, index)
   zmienne = names(daneTmp)[grep("^gh_[[:digit:]]", names(daneTmp))]
   proceduraEG = podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
-  
-  # maskiZmienne = grepl("^(g[h]_)[[:digit:]]{1,4}$|^id_obs$", names(daneTmp))
-  
-#   print(names(daneTmp[, maskiZmienne]))
-#   print(proceduraEG$`czesc hum.`$czescPomiarowa$gh$zmienne)
   
   wynikSkalowania = skaluj(daneTmp, proceduraEG, "id_obs", opisSkalowania)
 
@@ -280,6 +291,7 @@ pobierz_wiazki_pytania_kryteria <- function(kryteria, zrodloODBC="EWD"){
 #' @param nazwy nazwy kryteriów.
 #' @return 
 #' Funkcja zwraca wektor liczb oznaczających numery kryteriów.
+#' @export
 kryteria_z_nazw <- function(nazwy){
   kryt_nazwy = nazwy[grepl("^([[:alnum:]]+_)+[[:digit:]]+", nazwy)]
   return( as.numeric(gsub("^[[:alnum:]]+_", "", kryt_nazwy)) )
@@ -313,6 +325,7 @@ korelacjePolihoryczne <- function(dane){
 #' 
 #' @param n
 #' @return 
+# dane_pytan = daneKor, wiazki_pyt_kryt
 policz_korelacje_wiazki <- function (dane_pytan, wiazki_pyt_kryt){
   kryt_nazwy = colnames(dane_pytan)[grepl("^([[:alnum:]]+_)+[[:digit:]]+", colnames(dane_pytan))]
   kryt = as.numeric(gsub("^([[:alnum:]]+_)+", "", kryt_nazwy))
