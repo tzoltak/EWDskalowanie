@@ -4,7 +4,7 @@
 #' na zbiorze danych z dwoma połączonymi kryteriami. Łączenie kryteriów odbywa się na podstawie 
 #' korelacji polichorycznych. 
 #' @param dane ramka danych zawierająca wyniki egzaminów.
-#' @param procedura procedura skalowania egzaminów.
+#' @param proceduraEG procedura skalowania.
 #' @param korelacjaWiazki tablica zawierająca kolumny kr1 oraz kr2 z wartościami kryteriów do połącznia 
 #' oraz kolumnę numer określającą kolejność obliczeń korelacji. Jeżeli korelacjaWiazki=NULL 
 #' to funkcja liczy korelacje polichoryczne przed każdym połączeniem.
@@ -172,16 +172,20 @@ polacz_dane <- function(dane, korelacjaWiazki = NULL, index = 0 ){
 }
 #' @title Łączenie danych kryteriów oraz ich skalowanie.
 #' @description
-#' Funkcja, której kod znajdzie się docelowo w ciele funkcji kolejny_krok_polich.
-#' @param n
+#' Funkcja, która wykonuje łączenie danych oraz skalowanie.
+#' @param dane ramka daych kryteriów (przed połączeniem).
+#' @param proceduraEG procedura skalowania.
+#' @param opisSkalowania ciąg znaków opisujący skalowanie.
+#' @param korelacjaWiazki ramka danych zawierająca korelacje polichoryczne.
+#' @param index numer wiersza ramki korelacjeWiazki, który zawiera informacje o połączeniach.
+#' @param wartosciStartowe wartości startowe skalowania. Domyślna wartość to NULL.
 #' @return 
-#' skaluj_krok(dane = wynikSkalowania$dane, proceduraEG, 
-#' opisSkalowania = wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
+#' Funkcja zwraca listę z wynikami skalowania, wartości startowe, dane po połączeniu, procedurę oraz połączenie.
 skaluj_krok <- function(dane, proceduraEG, opisSkalowania, korelacjaWiazki, index, wartosciStartowe = NULL)
 {
-  daneTmp = EWDskalowanie:::polacz_dane(dane, korelacjaWiazki, index)
+  daneTmp = polacz_dane(dane, korelacjaWiazki, index)
   zmienne = names(daneTmp)[grep("^gh_[[:digit:]]", names(daneTmp))]
-  proceduraEG = EWDskalowanie:::podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
+  proceduraEG = podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
   
   wynikSkalowania = suppressWarnings(skaluj(daneTmp, proceduraEG, "id_obs", opisSkalowania))
 
@@ -193,8 +197,10 @@ skaluj_krok <- function(dane, proceduraEG, opisSkalowania, korelacjaWiazki, inde
 }
 #' @title Zmiana wartości jednego z węzłów listy
 #' @description
-#' @param wezel lista zawierająca węzeł do zmiany
+#' Funkcja zmienia rekurencyjnie wartości węzłów o nazwie określonej w parametrze "doZmiany".
+#' @param wezel lista zawierająca, której węzły chcemy zmienić.
 #' @param nowaWartosc nowa wartość dla zmienianego elementu
+#' @param doZmiany nazwa węzła do zmiany.
 #' @return 
 #' Zmodyfikowana lista.
 podmien_wartosci_lista <- function(wezel, nowaWartosc, doZmiany){
@@ -229,7 +235,7 @@ podmien_wartosci_lista <- function(wezel, nowaWartosc, doZmiany){
 #' Procedura skalowania części humanistycznej egzaminu gimnazjalnego.
 #' Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
 #' @param nazwyZmiennych nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja
-#' @param parametryGH 
+#' @param parametryGH wartości startowe parametrów.
 #' @param processors liczba rdzeni do wykorzystania przy estymacji
 #' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
 #' @export
@@ -341,12 +347,13 @@ korelacjePolihoryczne <- function(dane){
   colnames(polyRet) <- colnames(dane)
   return(polyRet)  
 }
-#' @title
+#' @title Liczenie korelacji polichorycznych
 #' @description
-#' 
-#' @param n
+#' Funkcja liczy korelacje polichoryczne dla kryteriów zebranych w wiązki.
+#' @param dane_pytan ramka danych zawierająca wyniki kryteriów.
+#' @param wiazki_pyt_kryt ramka danych, która zawiera informacje o przynależności pytań do poszczególnych wiązek.
 #' @return 
-# dane_pytan = daneKor, wiazki_pyt_kryt
+#' Funkcja zwraca ramkę danych, w której znajdują się obliczone korelacje polichoryczne. 
 policz_korelacje_wiazki <- function (dane_pytan, wiazki_pyt_kryt){
   kryt_nazwy = colnames(dane_pytan)[grepl("^([[:alnum:]]+_)+[[:digit:]]+", colnames(dane_pytan))]
   kryt = as.numeric(gsub("^([[:alnum:]]+_)+", "", kryt_nazwy))

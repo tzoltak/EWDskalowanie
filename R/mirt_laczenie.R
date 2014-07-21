@@ -132,7 +132,7 @@ polacz_kryteria_mirt <- function(dane, mirtSummary, wiazki_pyt_kryt = NULL, prog
 #' @param h2 zmienna logiczna, która określa czy wykorzystywać miarę h2
 #' czy wartość drugiego konstruktu do łączeń kryteriów.
 #' @param maxIter maksymalna liczba iteracji.
-#' @parma czyLiczyc1 zmienna logiczna określająca 
+#' @param czyLiczyc1 zmienna logiczna określająca 
 #' czy w wynikach działania funkcji ma się znaleźć rezultat skalowania funkcją mirt dla jednego kostruktu
 #' czy dla dwóch konstruktów. Ustawienie parametru na FALSE przyśpiesza obliczenia.
 #' @details

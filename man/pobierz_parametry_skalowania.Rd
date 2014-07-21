@@ -39,7 +39,8 @@ opis skalowań spełnia podane wyrażenie regularne.
 \dontrun{
 id_testu = 1128
 nazwa_skali = "ktt;1128"
-ret = pobierz_parametry_skalowania(nazwa_skali,id_testu)
+pobierz_parametry_skalowania(nazwa_skali, id_testu)
+pobierz_parametry_skalowania(nazwa_skali, id_testu, parametryzacja = "mplus")
 }
 }
 

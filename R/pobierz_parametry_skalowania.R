@@ -26,7 +26,6 @@
 #' pobierz_parametry_skalowania(nazwa_skali, id_testu, parametryzacja = "mplus")
 #' }
 #' @export
-#' pobierz_parametry_skalowania(nazwa_skali, parametryzacja="mplus")
 pobierz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, opis_skalowania='.*', 
                                          zrodloDanychODBC = 'ewd_grzes', parametryzacja = "baza"){
   
