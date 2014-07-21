@@ -6,14 +6,15 @@
 #' @param dane ramka danych zawierająca wyniki egzaminów.
 #' @param procedura procedura skalowania egzaminów.
 #' @param korelacjaWiazki tablica zawierająca kolumny kr1 oraz kr2 z wartościami kryteriów do połącznia 
-#' oraz kolumnę numer określającą kolejność obliczeń korelacji.
+#' oraz kolumnę numer określającą kolejność obliczeń korelacji. Jeżeli korelacjaWiazki=NULL 
+#' to funkcja liczy korelacje polichoryczne przed każdym połączeniem.
 #' @param nazwaSkalowania ciąg znaków opisujący skalowanie.
 #' @param ileKrokow liczba kolejnych skalowań, które ma wykonać funkcja.
 #' @details
 #' Parametr ileKrokow określa liczbę połączeń, które zostaną wykonane na danych. Funkcja także wykonuje 
 #' skalowanie dla danych bez połączeń. Jeżeli ileKrokow wynosi 0 to wtedy zostaną wykonane obliczenia dla danych nie połączonych.
 #' Definicja połączeń jest zawarta w tablicy korelacjaWiazki. Funkcja łączy kryteria określone przez początkowe 
-#' wiersze tej tablicy.
+#' wiersze tej tablicy. 
 #' @return
 #' Funkcja zwraca obiekt klasy WynikSkalowania, który zawiera elementy:
 #' \itemize{
@@ -24,8 +25,9 @@
 #' \item \code{procedura} - procedura użyta przy ostatnim skalowaniu,
 #' \item \code{nazwaSkalowania} - nazwa skalowania,
 #' \item \code{dane} - dane użyte przy ostatnich obliczeniach,
+#' \item \code{polaczenie} - wykonane połączenia oraz miary odpowiadające im,
 #' }
-#' skaluj_polichorycznie(dane, proceduraEG, korelacjaWiazki =  kor_wiazki, nazwaSkalowania = "EG_2008_hum", ileKrokow = 5)
+#' @export
 skaluj_polichorycznie <- function(dane, proceduraEG, korelacjaWiazki, nazwaSkalowania, 
                                   ileKrokow = nrow(korelacjaWiazki)){
   
@@ -52,7 +54,7 @@ initializuj_skalowanie_polich <- function(dane, procedura, korelacjaWiazki, nazw
   ret = list(skalowania = list(), korelacjaWiazki = korelacjaWiazki, 
              kolejnyIndeks = 0, wartosciStartowe = NULL,
              procedura = procedura, nazwaSkalowania = nazwaSkalowania,
-             dane = dane)
+             dane = dane, polaczenie = NULL)
   class(ret) <- "WynikSkalowania"
   return(ret)
 }
@@ -71,14 +73,23 @@ kolejny_krok_polich <- function(wynikSkalowania){
     stop("Argument nie jest klasy 'WynikSkalowania'")
   }
   index = wynikSkalowania$kolejnyIndeks
+  
+  cat("Index: ", index, "\n")
+  
   korelacjaWiazki =  wynikSkalowania$korelacjaWiazki
   
-  if(index > nrow(korelacjaWiazki)){
+  if( !is.null(korelacjaWiazki) && index > nrow(korelacjaWiazki)){
     warning("Wykonano już wszystkie połączenia.")
     return (wynikSkalowania)
   }
-
-  cat("Index: ", index, "\n")
+  
+  if(is.null(korelacjaWiazki)){
+    daneKor = wynikSkalowania$dane[,grepl("^(gh_)[[:digit:]]+", names(wynikSkalowania$dane))]
+    kryteria = as.numeric(gsub("^[[:alnum:]]+_", "", names(daneKor)))
+    wiazki_pyt_kryt = pobierz_wiazki_pytania_kryteria(kryteria)
+    korelacjaWiazki = policz_korelacje_wiazki(daneKor, wiazki_pyt_kryt)
+    index = 1;
+  }
   
   if(index == 0 ){
     nazwaSkalowaniaTemp = paste0(wynikSkalowania$nazwaSkalowania, "_bez_pol")
@@ -87,14 +98,20 @@ kolejny_krok_polich <- function(wynikSkalowania){
                                  paste(korelacjaWiazki[index, c("kr1", "kr2")], collapse="_"))
   }
   
+  tempSkaluj = skaluj_krok(wynikSkalowania$dane, proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
+  
   # dostosowanie do przestarzałych obiektów wynikSkalowania: 
   # maskiZmienne = grepl("^(g[h]_)[[:digit:]]{1,4}$|^id_obs$", names(wynikSkalowania$dane))
   # proceduraEG = podmien_wartosci_lista( wynikSkalowania$procedura, wynikSkalowania$wartosciStartowe, "wartosciStartowe")
   # tempSkaluj = skaluj_krok(wynikSkalowania$dane[, maskiZmienne], proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
   
-  tempSkaluj = skaluj_krok(wynikSkalowania$dane, proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
-  
   retList = wynikSkalowania$skalowania
+  cat("retList \n")
+  print(names(retList))
+  print(length(retList))
+  cat("wynik skalowania \n")
+  print(names(tempSkaluj$wynikSkalowania))
+  
   retList[ length(retList) + 1 ] = tempSkaluj$wynikSkalowania
   names(retList)[length(retList)] = nazwaSkalowaniaTemp
   
@@ -107,6 +124,7 @@ kolejny_krok_polich <- function(wynikSkalowania){
   
   ret$procedura = tempSkaluj$procedura
   ret$dane = tempSkaluj$dane
+  ret$polaczenie = rbind(wynikSkalowania$polaczenie, tempSkaluj$polaczenie)
   return(ret)
 }
 #' @title Łączenie kryteriów
@@ -149,6 +167,7 @@ polacz_dane <- function(dane, korelacjaWiazki = NULL, index = 0 ){
   
   dane[, grepl(pyt1, names(dane))] = dane[, grepl(pyt1, names(dane))] + dane[, grepl(pyt2, names(dane))]
   dane = dane[, !grepl(pyt2, names(dane))]
+  attr(dane, "polaczenie") = c(pyt1, pyt2, pol$miara)
   return(dane)
 }
 #' @title Łączenie danych kryteriów oraz ich skalowanie.
@@ -156,17 +175,19 @@ polacz_dane <- function(dane, korelacjaWiazki = NULL, index = 0 ){
 #' Funkcja, której kod znajdzie się docelowo w ciele funkcji kolejny_krok_polich.
 #' @param n
 #' @return 
+#' skaluj_krok(dane = wynikSkalowania$dane, proceduraEG, 
+#' opisSkalowania = wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
 skaluj_krok <- function(dane, proceduraEG, opisSkalowania, korelacjaWiazki, index, wartosciStartowe = NULL)
 {
-  daneTmp = polacz_dane(dane, korelacjaWiazki, index)
+  daneTmp = EWDskalowanie:::polacz_dane(dane, korelacjaWiazki, index)
   zmienne = names(daneTmp)[grep("^gh_[[:digit:]]", names(daneTmp))]
-  proceduraEG = podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
+  proceduraEG = EWDskalowanie:::podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
   
-  wynikSkalowania = skaluj(daneTmp, proceduraEG, "id_obs", opisSkalowania)
+  wynikSkalowania = suppressWarnings(skaluj(daneTmp, proceduraEG, "id_obs", opisSkalowania))
 
   return( list(wynikSkalowania = wynikSkalowania, 
                wartosciStartowe = wynikSkalowania[[1]]$kalibracja1$parametry$surowe, 
-               dane = daneTmp, procedura = proceduraEG
+               dane = daneTmp, procedura = proceduraEG, polaczenie = attr(daneTmp, "polaczenie")
                )
                )
 }

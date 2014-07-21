@@ -154,6 +154,7 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
   daneRand = dane
   mirtResults = list()
   czasy = NULL
+  pvalues = NULL
   start.time = Sys.time()
   for(iterNum in 1:maxIter){
     message("Iteracja: ", iterNum)
@@ -170,7 +171,11 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
     } else{
       mirtRet
     }
-      
+    
+    anovaPvalue = as.numeric(as.character(anova(mirtRet, mirtResults[[length(mirtResults)]])$p[2]))
+    pvalues = rbind(pvalues, c(mirtResults[[length(mirtResults)]]@BIC, mirtRet@BIC, anovaPvalue))  
+    
+    
     danePolacz = polacz_kryteria_mirt(daneRand, mirtSummary, wiazki_pyt_kryt, prog = prog, h2 = h2)
     if( is.null(danePolacz$polaczenie) ){
       break(); 
@@ -183,7 +188,9 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
     start.time = end.time
   }
   
-  mirtWyniki = list(wyniki = mirtResults, polaczenia = polaczeniaRet, czasy = czasy, dane = daneRand)
+  colnames(pvalues) <- c("BIC 1", "BIC 2", "AN pvalue")
+  
+  mirtWyniki = list(wyniki = mirtResults, polaczenia = polaczeniaRet, czasy = czasy, dane = daneRand, pvalues = pvalues )
   return(mirtWyniki)
 }
 
