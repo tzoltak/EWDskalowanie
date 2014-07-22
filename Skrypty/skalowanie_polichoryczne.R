@@ -4,7 +4,7 @@ library(foreign)
 library(polycor)
 library(RODBCext)
 library(EWDskalowanie)
-sink("/home/g.golonka/EWDgit/EWDskalowanie/Skrypty/skalowanie_polichoryczne4.log", split=TRUE)
+sink("/home/g.golonka/EWDgit/EWDskalowanie/Skrypty/Log/skalowanie_polichoryczne.log", split=TRUE)
 
 # ścieżka do danych
 daneOrg = read.csv2("/home/g.golonka/gimnazjum_dane/EG2008.csv")
@@ -25,8 +25,6 @@ proceduraEG = procedura_eg_hum(names(dane), parametryGH = NULL, processors = 6)
 nazwaSkalowania = "EG_2008_hum"
 
 skWynik2008 = skaluj_polichorycznie(dane, proceduraEG, korelacjaWiazki, "EG_2008_hum_2", ileKrokow = 5)
-save(skWynik2008, file = "/home/g.golonka/EWDgit/EWDskalowanie/Skrypty/skWynik2008_pol")
+save(skWynik2008, file = "/home/g.golonka/EWDgit/EWDskalowanie/Skrypty/Wyniki/skWynik2008_pol")
 
 cat("Koniec. \n")
-
-
