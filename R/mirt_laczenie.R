@@ -20,16 +20,13 @@
 #' }
 #' @export
 polacz_kryteria_mirt <- function(dane, mirtSummary, wiazki_pyt_kryt = NULL, prog = NULL, h2 = FALSE){
-  
-  cat("Polacz_kryteria_mirt")
-  cat("\n",names(mirtSummary),"\n")
-  
+
   if(!is.null(prog) & !is.numeric(prog)){
     stop("Parametr prog powinien być liczbą.")
   }
   
   if( is.null(wiazki_pyt_kryt)){
-    stop("Informacja o wiązkach nie będzie uwzględniana przy łączeniu kryteriów.")
+    warning("Informacja o wiązkach nie będzie uwzględniana przy łączeniu kryteriów.")
   }
   
   if( h2 & ! "h2" %in% names(mirtSummary) ){
@@ -69,8 +66,9 @@ polacz_kryteria_mirt <- function(dane, mirtSummary, wiazki_pyt_kryt = NULL, prog
         return(list(dane = dane, polaczenie = NULL, wyniki = df))
       }
     }
-    dane[, grepl(kryt1, names(dane))] = dane[, grepl(kryt1, names(dane))] + dane[, grepl(kryt2, names(dane))]
-    dane = dane[, !grepl(kryt2, names(dane))]
+    dane[, grepl( paste0("^", kryt1, "$"), colnames(dane))] = dane[, grepl( paste0("^", kryt1, "$"), colnames(dane))] + 
+                                                              dane[, grepl(paste0("^", kryt2, "$"), colnames(dane))]
+    dane = dane[, !grepl( paste0("^", kryt2, "$"), colnames(dane))]
   } else{
     wektorKryt = if(h2){
       as.character(df$kryterium[ df$h2 > prog ])
@@ -149,6 +147,12 @@ polacz_kryteria_mirt <- function(dane, mirtSummary, wiazki_pyt_kryt = NULL, prog
 #' @export
 skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 = FALSE, 
                                  maxIter = ifelse(is.null(prog), 10, 100), czyLiczyc1 = FALSE ){
+  
+  if(is.null(colnames(dane))){
+    warning("Brak nazw kryteriów. Zostaną nadane nazwy domyślne.")
+    colnames(dane) <- paste0("kr_",1:ncol(dane))
+  }
+  
   cat("skaluj_laczenie_mirt \n")
   polaczeniaRet = NULL
   daneRand = dane
@@ -164,7 +168,7 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
     mirtSummary = mirt::summary(mirtRet, rotate = "none", verbose=FALSE)
     
     df = data.frame(kryterium = colnames(daneRand), mirtSummary$rotF, mirtSummary$h2)
-    print(df)
+    #print(df)
     
     mirtResults[ length(mirtResults) + 1 ] = if(czyLiczyc1){
       mirt(daneRand, model =  1)
@@ -174,7 +178,6 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
     
     anovaPvalue = as.numeric(as.character(anova(mirtRet, mirtResults[[length(mirtResults)]])$p[2]))
     pvalues = rbind(pvalues, c(mirtResults[[length(mirtResults)]]@BIC, mirtRet@BIC, anovaPvalue))  
-    
     
     danePolacz = polacz_kryteria_mirt(daneRand, mirtSummary, wiazki_pyt_kryt, prog = prog, h2 = h2)
     if( is.null(danePolacz$polaczenie) ){
