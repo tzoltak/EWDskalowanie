@@ -98,7 +98,7 @@ kolejny_krok_polich <- function(wynikSkalowania){
                                  paste(korelacjaWiazki[index, c("kr1", "kr2")], collapse="_"))
   }
   
-  tempSkaluj = skaluj_krok(wynikSkalowania$dane, proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
+  tempSkaluj = skaluj_krok(wynikSkalowania$dane, wynikSkalowania$procedura, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
   
   # dostosowanie do przestarzałych obiektów wynikSkalowania: 
   # maskiZmienne = grepl("^(g[h]_)[[:digit:]]{1,4}$|^id_obs$", names(wynikSkalowania$dane))
@@ -157,16 +157,13 @@ polacz_dane <- function(dane, korelacjaWiazki = NULL, index = 0 ){
   pyt1 = kryterium_do_polaczenia(pol$numer, pol$kr1, korelacjaWiazki)
   pyt2 = kryterium_do_polaczenia(pol$numer, pol$kr2, korelacjaWiazki)
   
-#   pol = korelacjaWiazki[index, ]
-#   pyt1 = ifelse(pol$kr1 > 0, pol$kr1, korelacjaWiazki$kr1[ pol$numer + pol$kr1 == korelacjaWiazki$numer] )
-#   pyt2 = ifelse(pol$kr2 > 0, pol$kr2, korelacjaWiazki$kr1[ pol$numer + pol$kr2 == korelacjaWiazki$numer] )
-
-  if( sum(grepl(pyt1, names(dane)))!=1 | sum(grepl(pyt2, names(dane)))!=1 ){
+  if( sum(grepl(paste0("_",pyt1,"$"), names(dane)))!=1 | 
+        sum(grepl(paste0("_",pyt2,"$"), names(dane)))!=1 ){
     stop("Zle zdefiniowane polaczenie: \n", paste(pol, collapse=" " ), "\n")
   }
   
-  dane[, grepl(pyt1, names(dane))] = dane[, grepl(pyt1, names(dane))] + dane[, grepl(pyt2, names(dane))]
-  dane = dane[, !grepl(pyt2, names(dane))]
+  dane[, grepl(paste0("_",pyt1,"$"), names(dane))] = dane[, grepl(paste0("_",pyt1,"$"), names(dane))] + dane[, grepl(paste0("_", pyt2,"$"), names(dane))]
+  dane = dane[, !grepl(paste0("_",pyt2,"$"), names(dane))]
   attr(dane, "polaczenie") = c(pyt1, pyt2, pol$miara)
   return(dane)
 }
@@ -280,21 +277,27 @@ procedura_eg_hum <- function(nazwyZmiennych, parametryGH=NULL, processors=3) {
 #' @description
 #' Funkcja pobiera dane dla zdefiniowanych kryteriów.
 #' @param kryteria wektor zawietający numery kryteriów.
-#' @param zrodloODBC źródło danych ODBC.
+#' @param zrodloODBC źródło danych ODBC. Jeżeli źródło danych=NULL 
+#' to funkcja zwraca przyporządkowuje wszystkie kryteria do jednej wiązki.
 #' @return 
 #' Funkcja zwraca tablicę danych zawierającą kolumny: id_wiazki, id_pytania, id_kryterium.
 pobierz_wiazki_pytania_kryteria <- function(kryteria, zrodloODBC="EWD"){
+  if(is.null(zrodloODBC)){
+    ret = data.frame(id_wiazki=rep(1,length(kryteria)), 
+                     id_pytania=rep(1,length(kryteria)), 
+                     id_kryterium = kryteria)
+    return(ret)
+  }
+  
   P = odbcConnect(zrodloODBC)
-  
   zapytanie = paste0("select distinct id_wiazki, id_pytania, id_kryterium 
-                      from pytania
-                      join kryteria_oceny using (id_pytania) 
-                      where id_kryterium in ", paste0("(", paste(kryteria,collapse=","), ")"),
-                      " order by id_pytania, id_kryterium, id_wiazki"
-                    )
+                     from pytania
+                     join kryteria_oceny using (id_pytania) 
+                     where id_kryterium in ", paste0("(", paste(kryteria,collapse=","), ")"),
+                     " order by id_pytania, id_kryterium, id_wiazki"
+  )
   ret = sqlQuery(P, zapytanie)
-  
-  odbcClose(P)
+  odbcClose(P)  
   
   return(ret)
 }
