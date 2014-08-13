@@ -10,6 +10,7 @@
 #' to funkcja liczy korelacje polichoryczne przed każdym połączeniem.
 #' @param nazwaSkalowania ciąg znaków opisujący skalowanie.
 #' @param ileKrokow liczba kolejnych skalowań, które ma wykonać funkcja.
+#' @param minMiara wartość miary 1-R2, powyżej której obliczenia są przerywane.
 #' @details
 #' Parametr ileKrokow określa liczbę połączeń, które zostaną wykonane na danych. Funkcja także wykonuje 
 #' skalowanie dla danych bez połączeń. Jeżeli ileKrokow wynosi 0 to wtedy zostaną wykonane obliczenia dla danych nie połączonych.
@@ -29,16 +30,23 @@
 #' }
 #' @export
 skaluj_polichorycznie <- function(dane, proceduraEG, korelacjaWiazki, nazwaSkalowania, 
-                                  ileKrokow = nrow(korelacjaWiazki)){
-  
-  skalObiekt = initializuj_skalowanie_polich(dane, proceduraEG, korelacjaWiazki, nazwaSkalowania)
+                                  ileKrokow = ifelse(is.null(korelacjaWiazki),
+                                                     1000, nrow(korelacjaWiazki)),
+                                  minMiara = NULL){
+    
+  wynikSkalowania = EWDskalowanie:::initializuj_skalowanie_polich(dane, proceduraEG, 
+                                                                  korelacjaWiazki, nazwaSkalowania, 
+                                                                  minMiara)
   n = ileKrokow
   while(n >= 0){
-    skalObiekt <- kolejny_krok_polich(skalObiekt)
+    index = wynikSkalowania$kolejnyIndeks
+    wynikSkalowania <- EWDskalowanie:::kolejny_krok_polich(wynikSkalowania)
     n=n-1
+    if(wynikSkalowania$kolejnyIndeks == index){
+      break
+    }
   }
-  
-  return(skalObiekt)
+  return(wynikSkalowania)
 }
 #' @title Zainiciowanie obliczeń.
 #' @description
@@ -48,13 +56,15 @@ skaluj_polichorycznie <- function(dane, proceduraEG, korelacjaWiazki, nazwaSkalo
 #' @param korelacjaWiazki tablica zawierająca kolumny kr1 oraz kr2 z wartościami kryteriów do połącznia 
 #' oraz kolumnę numer określającą kolejność obliczeń korelacji.
 #' @param nazwaSkalowania ciąg znaków opisujący skalowanie.
+#' @param minMiara patrz definicja \link{skaluj_polichorycznie}.
 #' @return 
 #' Patrz opis funkcji \code{\link{skaluj_polichorycznie}}.
-initializuj_skalowanie_polich <- function(dane, procedura, korelacjaWiazki, nazwaSkalowania){
-  ret = list(skalowania = list(), korelacjaWiazki = korelacjaWiazki, 
+initializuj_skalowanie_polich <- function(dane, procedura, korelacjaWiazki, nazwaSkalowania, minMiara){
+  ret = list(wyniki = list(), korelacjaWiazki = korelacjaWiazki, 
              kolejnyIndeks = 0, wartosciStartowe = NULL,
              procedura = procedura, nazwaSkalowania = nazwaSkalowania,
-             dane = dane, polaczenie = NULL)
+             dane = dane, polaczenie = NULL, 
+             metoda = ifelse(is.null(procedura), "mirt", "mplus"), minMiara = minMiara)
   class(ret) <- "WynikSkalowania"
   return(ret)
 }
@@ -83,47 +93,66 @@ kolejny_krok_polich <- function(wynikSkalowania){
     return (wynikSkalowania)
   }
   
+  indexStary = index
+  
   if(is.null(korelacjaWiazki)){
-    daneKor = wynikSkalowania$dane[,grepl("^(gh_)[[:digit:]]+", names(wynikSkalowania$dane))]
+    daneKor = wynikSkalowania$dane[,grepl("^([[:alnum:]]+_)[[:digit:]]+", names(wynikSkalowania$dane))]
     kryteria = as.numeric(gsub("^[[:alnum:]]+_", "", names(daneKor)))
     wiazki_pyt_kryt = pobierz_wiazki_pytania_kryteria(kryteria)
     korelacjaWiazki = policz_korelacje_wiazki(daneKor, wiazki_pyt_kryt)
     index = 1;
   }
   
-  if(index == 0 ){
+  if(indexStary == 0 ){
     nazwaSkalowaniaTemp = paste0(wynikSkalowania$nazwaSkalowania, "_bez_pol")
   } else{
     nazwaSkalowaniaTemp = paste0(wynikSkalowania$nazwaSkalowania, "_pol_",
                                  paste(korelacjaWiazki[index, c("kr1", "kr2")], collapse="_"))
   }
   
-  tempSkaluj = skaluj_krok(wynikSkalowania$dane, wynikSkalowania$procedura, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
+  pol = korelacjaWiazki[index, ]
+  
+  if(is.null(korelacjaWiazki)){
+    message("Wszystkie kryteria są we wszystkich wiązkach. Koniec.")
+    return (wynikSkalowania)
+  }
+  
+  if(pol$miara > wynikSkalowania$minMiara){
+    message("Miara przekracza: ", wynikSkalowania$minMiara,". Koniec.")
+    return (wynikSkalowania)
+  }
+  
+  if(is.null(wynikSkalowania$procedura )){
+    message("Skalowanie z użyciem funkcji mirt.")
+    tempSkaluj = EWDskalowanie:::skaluj_krok_mirt(wynikSkalowania$dane,
+                                                  wynikSkalowania$nazwaSkalowania, korelacjaWiazki, 
+                                                  index)
+  } else{
+    tempSkaluj = skaluj_krok(wynikSkalowania$dane, wynikSkalowania$procedura, 
+                             wynikSkalowania$nazwaSkalowania, korelacjaWiazki, 
+                             index, wynikSkalowania$wartosciStartowe)
+  }
   
   # dostosowanie do przestarzałych obiektów wynikSkalowania: 
   # maskiZmienne = grepl("^(g[h]_)[[:digit:]]{1,4}$|^id_obs$", names(wynikSkalowania$dane))
   # proceduraEG = podmien_wartosci_lista( wynikSkalowania$procedura, wynikSkalowania$wartosciStartowe, "wartosciStartowe")
   # tempSkaluj = skaluj_krok(wynikSkalowania$dane[, maskiZmienne], proceduraEG, wynikSkalowania$nazwaSkalowania, korelacjaWiazki, index, wynikSkalowania$wartosciStartowe)
   
-  retList = wynikSkalowania$skalowania
-  cat("retList \n")
-  print(names(retList))
-  print(length(retList))
-  cat("wynik skalowania \n")
-  print(names(tempSkaluj$wynikSkalowania))
+  retList = wynikSkalowania$wyniki
   
   retList[ length(retList) + 1 ] = tempSkaluj$wynikSkalowania
   names(retList)[length(retList)] = nazwaSkalowaniaTemp
   
   ret = wynikSkalowania
-  ret$skalowania = retList
-  ret$kolejnyIndeks = index + 1
+  ret$wyniki = retList
+  ret$kolejnyIndeks = indexStary + 1
   
   # ret$wartosciStartowe = tempSkaluj$wartosciStartowe[, c("typ", "zmienna1", "zmienna2", "wartosc")]
   ret$wartosciStartowe = NULL
   
   ret$procedura = tempSkaluj$procedura
   ret$dane = tempSkaluj$dane
+  
   ret$polaczenie = rbind(wynikSkalowania$polaczenie, tempSkaluj$polaczenie)
   return(ret)
 }
@@ -164,12 +193,13 @@ polacz_dane <- function(dane, korelacjaWiazki = NULL, index = 0 ){
   
   dane[, grepl(paste0("_",pyt1,"$"), names(dane))] = dane[, grepl(paste0("_",pyt1,"$"), names(dane))] + dane[, grepl(paste0("_", pyt2,"$"), names(dane))]
   dane = dane[, !grepl(paste0("_",pyt2,"$"), names(dane))]
-  attr(dane, "polaczenie") = c(pyt1, pyt2, pol$miara)
+  attr(dane, "polaczenie") = c(pyt1, pyt2, pol$miara) 
+  
   return(dane)
 }
 #' @title Łączenie danych kryteriów oraz ich skalowanie.
 #' @description
-#' Funkcja, która wykonuje łączenie danych oraz skalowanie.
+#' Funkcja, która wykonuje łączenie danych oraz skalowanie z użyciem Mplusa.
 #' @param dane ramka daych kryteriów (przed połączeniem).
 #' @param proceduraEG procedura skalowania.
 #' @param opisSkalowania ciąg znaków opisujący skalowanie.
@@ -184,13 +214,48 @@ skaluj_krok <- function(dane, proceduraEG, opisSkalowania, korelacjaWiazki, inde
   zmienne = names(daneTmp)[grep("^gh_[[:digit:]]", names(daneTmp))]
   proceduraEG = podmien_wartosci_lista(proceduraEG, zmienne, "zmienne")
   
-  wynikSkalowania = suppressWarnings(skaluj(daneTmp, proceduraEG, "id_obs", opisSkalowania))
-
+  # potencjalny błąd z kolumną id_obs
+  daneDoSkalowania = daneTmp
+  for(iC in seq_along(colnames(daneDoSkalowania))){
+    daneDoSkalowania[, iC] = polacz_nieliczne(daneDoSkalowania[, iC], poziomy = 5)
+  } 
+  wynikSkalowania = suppressWarnings(skaluj(daneDoSkalowania, proceduraEG, "id_obs", opisSkalowania))
+  
   return( list(wynikSkalowania = wynikSkalowania, 
                wartosciStartowe = wynikSkalowania[[1]]$kalibracja1$parametry$surowe, 
                dane = daneTmp, procedura = proceduraEG, polaczenie = attr(daneTmp, "polaczenie")
-               )
-               )
+  )
+  )
+}
+#' @title Łączenie danych kryteriów oraz ich skalowanie.
+#' @description
+#' Funkcja, która wykonuje łączenie danych oraz skalowanie w wykorzystaniem pakietu mirt.
+#' @param dane ramka daych kryteriów (przed połączeniem).
+#' @param opisSkalowania ciąg znaków opisujący skalowanie.
+#' @param korelacjaWiazki ramka danych zawierająca korelacje polichoryczne.
+#' @param index numer wiersza ramki korelacjeWiazki, który zawiera informacje o połączeniach.
+#' @return 
+#' Funkcja zwraca listę z wynikami skalowania, wartości startowe, dane po połączeniu, procedurę oraz połączenie.
+skaluj_krok_mirt <- function(dane, opisSkalowania, korelacjaWiazki, index)
+{
+  daneTmp = polacz_dane(dane, korelacjaWiazki, index)
+  polaczenie = attr(daneTmp, "polaczenie")
+  zmienne = names(daneTmp)[grep("^gh_[[:digit:]]", names(daneTmp))]
+  
+  daneTmp = daneTmp[, colnames(daneTmp) != "id_obs"]
+  message(names(daneTmp))
+  
+  daneDoSkalowania = daneTmp
+  for(iC in seq_along(colnames(daneDoSkalowania))){
+    daneDoSkalowania[, iC] = polacz_nieliczne(daneDoSkalowania[, iC], poziomy = 5)
+  }
+  wynikSkalowania = mirt(daneDoSkalowania, model = 1)
+  
+  return( list(wynikSkalowania = wynikSkalowania, 
+               wartosciStartowe = NULL, 
+               dane = daneTmp, procedura = NULL, polaczenie = polaczenie
+  )
+  )
 }
 #' @title Zmiana wartości jednego z węzłów listy
 #' @description
@@ -277,10 +342,10 @@ procedura_eg_hum <- function(nazwyZmiennych, parametryGH=NULL, processors=3) {
 #' @description
 #' Funkcja pobiera dane dla zdefiniowanych kryteriów.
 #' @param kryteria wektor zawietający numery kryteriów.
-#' @param zrodloODBC źródło danych ODBC. Jeżeli źródło danych=NULL 
-#' to funkcja zwraca przyporządkowuje wszystkie kryteria do jednej wiązki.
+#' @param zrodloODBC źródło danych ODBC.
 #' @return 
-#' Funkcja zwraca tablicę danych zawierającą kolumny: id_wiazki, id_pytania, id_kryterium.
+#' Funkcja zwraca ramkę danych.
+#' @export
 pobierz_wiazki_pytania_kryteria <- function(kryteria, zrodloODBC="EWD"){
   if(is.null(zrodloODBC)){
     ret = data.frame(id_wiazki=rep(1,length(kryteria)), 
@@ -343,7 +408,7 @@ korelacjePolihoryczne <- function(dane){
       }
       polyRet[k,m] = polychor(dane[,k], dane[,m])
       
-      print(paste0(k," ",m," :",polyRet[k,m]))
+      cat(paste0("\r", k," ",m," :",polyRet[k,m]))
     }
   }
   rownames(polyRet) <- colnames(dane)
@@ -385,6 +450,10 @@ policz_korelacje_wiazki <- function (dane_pytan, wiazki_pyt_kryt){
     mh[nedInds] = kryteriaTmp[-mh[nedInds]]
     
     polaczenia = rbind(polaczenia, cbind(mh, hc$height))
+  }
+  
+  if(is.null(polaczenia)){
+    return(polaczenia)
   }
   
   polaczeniaTab = cbind(1:nrow(polaczenia), polaczenia)

@@ -145,6 +145,7 @@ polacz_kryteria_mirt <- function(dane, mirtSummary, wiazki_pyt_kryt = NULL, prog
 #' \item \code{dane} - dane użyte do wykonania ostatniego skalowania;
 #' }
 #' @export
+# skaluj_laczenie_mirt(dane, wiazki_pyt_kryt, prog=0.3, h2=FALSE, czyLiczyc1 = TRUE)
 skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 = FALSE, 
                                  maxIter = ifelse(is.null(prog), 10, 100), czyLiczyc1 = FALSE ){
   
@@ -153,7 +154,6 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
     colnames(dane) <- paste0("kr_",1:ncol(dane))
   }
   
-  cat("skaluj_laczenie_mirt \n")
   polaczeniaRet = NULL
   daneRand = dane
   mirtResults = list()
@@ -163,15 +163,19 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
   for(iterNum in 1:maxIter){
     message("Iteracja: ", iterNum)
     
-    mirtRet = mirt(daneRand, model = 2)
+    daneDoSkalowania = daneRand
+    for(iC in seq_along(colnames(daneDoSkalowania))){
+      daneDoSkalowania[, iC] = polacz_nieliczne(daneDoSkalowania[, iC], poziomy = 5)
+    }
+    
+    mirtRet = mirt(daneDoSkalowania, model = 2)
     # Obowiązkowe 'mirt::'. Bez tego uruchamiana jest inna funkcja summary.
     mirtSummary = mirt::summary(mirtRet, rotate = "none", verbose=FALSE)
     
     df = data.frame(kryterium = colnames(daneRand), mirtSummary$rotF, mirtSummary$h2)
-    #print(df)
     
     mirtResults[ length(mirtResults) + 1 ] = if(czyLiczyc1){
-      mirt(daneRand, model =  1)
+      mirt(daneDoSkalowania, model =  1)
     } else{
       mirtRet
     }
@@ -196,7 +200,17 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
   mirtWyniki = list(wyniki = mirtResults, polaczenia = polaczeniaRet, czasy = czasy, dane = daneRand, pvalues = pvalues )
   return(mirtWyniki)
 }
-
+#'@title 
+#' @description
+#' @param dane dane w formie tabeli do obliczeń skalowania.
+#' @return 
+#' Funkcja zwraca listę zawierającą:
+#' \itemize{
+#' \item \code{dane} - wynik połączenia;
+#' \item \code{polaczenie} - informacja o wykonanym połączeniu;
+#' \item \code{wyniki} - tablica zawirejąca statystyki kryteriów wykorzystywane przy wyborze kryteriów do połączenia;
+#' }
+#' @export
 przygotuj_parametry_2PL <- function(skalowanie_laczenie){
   theta = list()
   param2PL_a = list()
@@ -206,11 +220,16 @@ przygotuj_parametry_2PL <- function(skalowanie_laczenie){
     theta[[ind]] = fscores(model, full.scores=TRUE, method="EAP")
     tmp = rbind.fill(lapply(coef(model)[names(coef(model)) != "GroupPars"], as.data.frame))
     param2PL_a[[ind]] = tmp$a1
-    d = tmp$d
-    d[is.na(d)] = apply(tmp[is.na(tmp$d), grepl("^d.", colnames(tmp))], 1, function(x) mean(na.omit(x)))
+    if("d" %in% names(tmp)){
+      d = tmp$d
+    } else{
+      d = apply(tmp[, grepl("^d",names(tmp))],1, mean, na.rm = TRUE)
+    }
+    
+    # d[is.na(d)] = apply(tmp[, grepl("^d.", colnames(tmp))], 1, function(x) mean(na.omit(x)))
     param2PL_d[[ind]] = d
   }
-  
+
   ret = list(theta=theta,a=param2PL_a, d= param2PL_d )
   return(ret)
 }
