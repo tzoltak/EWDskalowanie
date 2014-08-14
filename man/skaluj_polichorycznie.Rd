@@ -4,7 +4,8 @@
 \title{Skalowanie i łączenie kryteriów przy użyciu korelacji polichorycznych}
 \usage{
 skaluj_polichorycznie(dane, proceduraEG, korelacjaWiazki, nazwaSkalowania,
-  ileKrokow = nrow(korelacjaWiazki))
+  ileKrokow = ifelse(is.null(korelacjaWiazki), 1000, nrow(korelacjaWiazki)),
+  minMiara = NULL)
 }
 \arguments{
 \item{dane}{ramka danych zawierająca wyniki egzaminów.}
@@ -18,6 +19,8 @@ to funkcja liczy korelacje polichoryczne przed każdym połączeniem.}
 \item{nazwaSkalowania}{ciąg znaków opisujący skalowanie.}
 
 \item{ileKrokow}{liczba kolejnych skalowań, które ma wykonać funkcja.}
+
+\item{minMiara}{wartość miary 1-R2, powyżej której obliczenia są przerywane.}
 }
 \value{
 Funkcja zwraca obiekt klasy WynikSkalowania, który zawiera elementy:

@@ -11,7 +11,7 @@ pobierz_wiazki_pytania_kryteria(kryteria, zrodloODBC = "EWD")
 \item{zrodloODBC}{źródło danych ODBC.}
 }
 \value{
-Funkcja zwraca tablicę danych zawierającą kolumny: id_wiazki, id_pytania, id_kryterium.
+Funkcja zwraca ramkę danych.
 }
 \description{
 Funkcja pobiera dane dla zdefiniowanych kryteriów.

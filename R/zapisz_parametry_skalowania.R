@@ -111,11 +111,11 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           parBy = parametry[parametry$typ=="by", ]
           parTreshold = parametry[parametry$typ=="threshold", ]
           
-          by = EWDskalowanie:::wydziel_kryteria_pseudokryteria(parBy$zmienna2)
+          by = wydziel_kryteria_pseudokryteria(parBy$zmienna2)
           kryteriaBy = by$kryteria
           pseudokryteriaBy = by$pseudokryteria
           
-          tres = EWDskalowanie:::wydziel_kryteria_pseudokryteria(parTreshold$zmienna1)
+          tres = wydziel_kryteria_pseudokryteria(parTreshold$zmienna1)
           kryteriaTres = tres$kryteria
           pseudokryteriaTres = tres$pseudokryteria
           
@@ -127,10 +127,10 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           kryteriaBaza = na.omit(skaleElementy$id_kryterium)
           pseudokryteriaBaza = na.omit(skaleElementy$id_pseudokryterium)
           
-          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBy  , "kryteria 'treshold'" , "kryteria 'by'")
-          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaBy  , kryteriaTres, "kryteria 'by'"       , "kryteria 'treshold'")
-          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBaza, "kryteria z parametru", "kryteria z bazy")
-          EWDskalowanie:::sprawdz_zgodnosc_kryteriow(kryteriaBaza, kryteriaTres, "kryteria z bazy"     , "kryteria z parametru", error=FALSE)
+          sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBy  , "kryteria 'treshold'" , "kryteria 'by'")
+          sprawdz_zgodnosc_kryteriow(kryteriaBy  , kryteriaTres, "kryteria 'by'"       , "kryteria 'treshold'")
+          sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBaza, "kryteria z parametru", "kryteria z bazy")
+          sprawdz_zgodnosc_kryteriow(kryteriaBaza, kryteriaTres, "kryteria z bazy"     , "kryteria z parametru", error=FALSE)
           
           sprawdz_zgodnosc_kryteriow(pseudokryteriaTres, pseudokryteriaBy  , "pseudokryteria 'treshold'"         , "pseudokryteria 'by'")
           sprawdz_zgodnosc_kryteriow(pseudokryteriaBy  , pseudokryteriaTres, "pseudokryteria 'by'"               , "pseudokryteria 'treshold'")

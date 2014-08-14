@@ -34,13 +34,13 @@ skaluj_polichorycznie <- function(dane, proceduraEG, korelacjaWiazki, nazwaSkalo
                                                      1000, nrow(korelacjaWiazki)),
                                   minMiara = NULL){
     
-  wynikSkalowania = EWDskalowanie:::initializuj_skalowanie_polich(dane, proceduraEG, 
+  wynikSkalowania = initializuj_skalowanie_polich(dane, proceduraEG, 
                                                                   korelacjaWiazki, nazwaSkalowania, 
                                                                   minMiara)
   n = ileKrokow
   while(n >= 0){
     index = wynikSkalowania$kolejnyIndeks
-    wynikSkalowania <- EWDskalowanie:::kolejny_krok_polich(wynikSkalowania)
+    wynikSkalowania <- kolejny_krok_polich(wynikSkalowania)
     n=n-1
     if(wynikSkalowania$kolejnyIndeks == index){
       break
@@ -124,7 +124,7 @@ kolejny_krok_polich <- function(wynikSkalowania){
   
   if(is.null(wynikSkalowania$procedura )){
     message("Skalowanie z użyciem funkcji mirt.")
-    tempSkaluj = EWDskalowanie:::skaluj_krok_mirt(wynikSkalowania$dane,
+    tempSkaluj = skaluj_krok_mirt(wynikSkalowania$dane,
                                                   wynikSkalowania$nazwaSkalowania, korelacjaWiazki, 
                                                   index)
   } else{

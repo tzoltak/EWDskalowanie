@@ -3,7 +3,8 @@
 \alias{initializuj_skalowanie_polich}
 \title{Zainiciowanie obliczeń.}
 \usage{
-initializuj_skalowanie_polich(dane, procedura, korelacjaWiazki, nazwaSkalowania)
+initializuj_skalowanie_polich(dane, procedura, korelacjaWiazki, nazwaSkalowania,
+  minMiara)
 }
 \arguments{
 \item{dane}{ramka danych zawierająca wyniki egzaminów.}
@@ -14,6 +15,8 @@ initializuj_skalowanie_polich(dane, procedura, korelacjaWiazki, nazwaSkalowania)
 oraz kolumnę numer określającą kolejność obliczeń korelacji.}
 
 \item{nazwaSkalowania}{ciąg znaków opisujący skalowanie.}
+
+\item{minMiara}{patrz definicja \link{skaluj_polichorycznie}.}
 }
 \value{
 Patrz opis funkcji \code{\link{skaluj_polichorycznie}}.

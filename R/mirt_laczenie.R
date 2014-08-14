@@ -1,4 +1,4 @@
-#'@title Łączenie kryteriów przy wykorzystniu funkcji mirt.
+#' @title Łączenie kryteriów przy wykorzystniu funkcji mirt.
 #' @description
 #' Funkcja łączy kryteria korzystając z wyników skalowania funkcją mirt
 #' @param dane dane w formie tabeli do obliczeń skalowania.
@@ -200,18 +200,19 @@ skaluj_laczenie_mirt <- function(dane, wiazki_pyt_kryt = NULL, prog = NULL, h2 =
   mirtWyniki = list(wyniki = mirtResults, polaczenia = polaczeniaRet, czasy = czasy, dane = daneRand, pvalues = pvalues )
   return(mirtWyniki)
 }
-#'@title 
+#' @title Wylicznie parametrów modeli IRT
 #' @description
-#' @param dane dane w formie tabeli do obliczeń skalowania.
+#' Funkcja wylicza parametry modelu IRT.
+#' @param skalowanie_laczenie wyniki skalowania funkcją mirt.
 #' @return 
 #' Funkcja zwraca listę zawierającą:
 #' \itemize{
-#' \item \code{dane} - wynik połączenia;
-#' \item \code{polaczenie} - informacja o wykonanym połączeniu;
-#' \item \code{wyniki} - tablica zawirejąca statystyki kryteriów wykorzystywane przy wyborze kryteriów do połączenia;
+#' \item \code{theta} - umiejętności;
+#' \item \code{a} - dyskryminacje;
+#' \item \code{d} - średnia trudność;
 #' }
 #' @export
-przygotuj_parametry_2PL <- function(skalowanie_laczenie){
+przygotuj_parametry_IRT <- function(skalowanie_laczenie){
   theta = list()
   param2PL_a = list()
   param2PL_d = list()
@@ -230,7 +231,7 @@ przygotuj_parametry_2PL <- function(skalowanie_laczenie){
     param2PL_d[[ind]] = d
   }
 
-  ret = list(theta=theta,a=param2PL_a, d= param2PL_d )
+  ret = list(theta=theta, a=param2PL_a, d=param2PL_d )
   return(ret)
 }
 

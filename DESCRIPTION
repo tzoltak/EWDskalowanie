@@ -11,7 +11,9 @@ Description: Functions to assist IRT calibrations developed while working on
 Depends:
     R (>= 2.15.0),
     RODBCext,
-    polycor
+    polycor,
+    mirt,
+    plyr
 License: LGPL-3
 Language: pl
 NeedsCompilation: no
