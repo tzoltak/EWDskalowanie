@@ -54,7 +54,7 @@ wczytaj_fwf = function(nazwaPliku, szerokosciKolumn, nazwyKolumn) {
 #' @param x wektor tekstowy do pocięcia
 #' @param wciecie liczba spacji dostawianych na początku każdego wynikowego elementu wektora
 #' @param maxDl maksymalna liczba znaków w linii (uwzględniając wcięcie)
-#' @param srednikNaKoncu wartość logiczna - czy na końcu ostatniego elementu wynikowego wektora ma być dopisany średnik (o ile go tam nie ma)? 
+#' @param srednikNaKoncu wartość logiczna - czy na końcu ostatniego elementu wynikowego wektora ma być dopisany średnik (o ile go tam nie ma)?
 #' @param sep spearator używany przy złączaniu elementów \code{x} w jeden ciąg znaków
 #' @param lamNaNawiasachOkraglych wartość logiczna - czy dodatkowo łamać wiersze za zamykającymi nawiasami okrągłymi: ')'?
 #' @return lista
@@ -99,121 +99,144 @@ lam_wiersze = function(x, wciecie=2, maxDl=90, srednikNaKoncu=TRUE, sep=" ", lam
 #' @details
 #' Warto pamiętać, że ustawienia opisywane elementami 'rasch', 'var1' i 'e0' są nadpisywane przez wpisy z elementu wartosciZakotwiczone.
 przygotuj_model = function(opisModelu) {
-	return(mapply(
-    function(x, y) {
-      zmienne = y$zmienne
-      progiSyntax = wariancjeSyntax = wartosciOczekiwaneSyntax = c()
-      e0 = TRUE	# wartość oczekiwana zmiennej ukrytej równa 0
-      if (!is.null(y$wartosciZakotwiczone)) {
-        dyskryminacje      = y$wartosciZakotwiczone[grep("^by(|[.]gr1)$"       , y$wartosciZakotwiczone$typ), ]
-        progi    	         = y$wartosciZakotwiczone[grep("^threshold(|[.]gr1)$", y$wartosciZakotwiczone$typ), ]
-        wariancje          = y$wartosciZakotwiczone[grep("variance(|[.]gr1)$"  , y$wartosciZakotwiczone$typ), ]  # to może być zarówno "variance" jak i "residual variance"
-        wartosciOczekiwane = y$wartosciZakotwiczone[grep("^mean(|[.]gr1)$"     , y$wartosciZakotwiczone$typ), ]
-        # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
-        dyskryminacje = setNames(
-          as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
-          dyskryminacje$zmienna2[dyskryminacje$zmienna2 %in% zmienne]
-        )
-        dyskryminacje = unlist(dyskryminacje[y$zmienne[y$zmienne %in% names(dyskryminacje)]])
-        y$zmienne[zmienne %in% names(dyskryminacje)] = paste0(y$zmienne[zmienne %in% names(dyskryminacje)], "@", dyskryminacje)
-        # z progami bez zabawy w sortowanie (bo je się po prostu dopisuje)
-        progi = progi[progi$zmienna1 %in% zmienne, ]
-        if (nrow(progi) > 0) {
-          progiSyntax = setNames(
-            c(progiSyntax, paste0("   [", progi$zmienna1, "$", progi$zmienna2, "@", progi$wartosc, "];")),
-            c(names(progiSyntax), paste0(progi$zmienna1, "$", progi$zmienna2))
-          )
+  if (!("wieleGrup" %in% names(opisModelu))) {
+    opisModelu$wieleGrup = ""
+  } else {
+    opisModelu$wieleGrup = c("  %OVERALL%", paste0("  %gr_tmp#", 2:opisModelu$wieleGrup$liczbaGrup ,"%"))
+  }
+  model = list()
+  for (i in 1:length(opisModelu$wieleGrup)) {
+    model[[i]] = unlist(mapply(
+      function(x, y, grupa) {
+        progiSyntax = wariancjeSyntax = wartosciOczekiwaneSyntax = c()
+        if (grupa %in% c("", "  %OVERALL%")) {
+          e0 = TRUE	# wartość oczekiwana zmiennej ukrytej równa 0
+          maskaGr = "(|[.]gr1)"
+        } else {
+          e0 = FALSE
+          y$var1 = FALSE
+          maskaGr = paste0("[.]gr", gsub("[^[:digit:]]", "", grupa))
+          y$zmienne = y$zmienne[y$zmienne %in% c(
+            y$wartosciZakotwiczone$zmienna2[grep(paste0("^by", maskaGr, "$"), y$wartosciZakotwiczone$typ)],
+            y$wartosciStartowe$zmienna2    [grep(paste0("^by", maskaGr, "$"), y$wartosciStartowe$typ)]
+            )]
         }
-        # wariancje
-        wariancje = wariancje[wariancje$zmienna1 == x, ]
-        if (nrow(wariancje) > 0) {
-          wariancjeSyntax = setNames(
-            c(wariancjeSyntax, paste0("  ", wariancje$zmienna1, "@", wariancje$wartosc, ";")),
-            c(names(wariancjeSyntax), wariancje$zmienna1)
+        zmienne = y$zmienne
+        if (!is.null(y$wartosciZakotwiczone)) {
+          dyskryminacje      = y$wartosciZakotwiczone[grep(paste0(       "^by", maskaGr, "$"), y$wartosciZakotwiczone$typ), ]
+          progi    	         = y$wartosciZakotwiczone[grep(paste0("^threshold", maskaGr, "$"), y$wartosciZakotwiczone$typ), ]
+          wariancje          = y$wartosciZakotwiczone[grep(paste0( "^variance", maskaGr, "$"), y$wartosciZakotwiczone$typ), ]  # to może być zarówno "variance" jak i "residual variance"
+          wartosciOczekiwane = y$wartosciZakotwiczone[grep(paste0(     "^mean", maskaGr, "$"), y$wartosciZakotwiczone$typ), ]
+          # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
+          dyskryminacje = setNames(
+            as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
+            dyskryminacje$zmienna2[dyskryminacje$zmienna2 %in% zmienne]
           )
+          dyskryminacje = unlist(dyskryminacje[y$zmienne[y$zmienne %in% names(dyskryminacje)]])
+          y$zmienne[zmienne %in% names(dyskryminacje)] = paste0(y$zmienne[zmienne %in% names(dyskryminacje)], "@", dyskryminacje)
+          # z progami bez zabawy w sortowanie (bo je się po prostu dopisuje)
+          progi = progi[progi$zmienna1 %in% zmienne, ]
+          if (nrow(progi) > 0) {
+            progiSyntax = setNames(
+              c(progiSyntax, paste0("   [", progi$zmienna1, "$", progi$zmienna2, "@", progi$wartosc, "];")),
+              c(names(progiSyntax), paste0(progi$zmienna1, "$", progi$zmienna2))
+            )
+          }
+          # wariancje
+          wariancje = wariancje[wariancje$zmienna1 == x, ]
+          if (nrow(wariancje) > 0) {
+            wariancjeSyntax = setNames(
+              c(wariancjeSyntax, paste0("  ", wariancje$zmienna1, "@", wariancje$wartosc, ";")),
+              c(names(wariancjeSyntax), wariancje$zmienna1)
+            )
+          }
+          # wartości oczekiwane
+          wartosciOczekiwane = wartosciOczekiwane[wartosciOczekiwane$zmienna1 == x, ]
+          if (nrow(wartosciOczekiwane) > 0) {
+            wartosciOczekiwaneSyntax = setNames(
+              c(wartosciOczekiwaneSyntax, paste0(" [", wartosciOczekiwane$zmienna1, "@", wartosciOczekiwane$wartosc, "];")),
+              c(names(wartosciOczekiwaneSyntax), wartosciOczekiwane$zmienna1)
+            )
+          }
+          # jeżeli którakolwiek z dyskryminacji jest zakotwiczona, ale nie ma kotwicy na wariancji, to wariancję zmiennej ukrytej należy uwolnić
+          if ((length(dyskryminacje) > 0 & any(dyskryminacje != 0)) & !(x %in% names(wariancje))) y$var1 = FALSE
+          # jeżeli zakotwiczone dyskryminacje nie są takie same, to nadpisz ustawienie rascha
+          if (length(unique(dyskryminacje)) > 1) y$rasch = FALSE
+          # jeżeli którykolwiek z progów jest zakotwiczony, ale nie ma kotwicy na wartości oczekiwanej, to wartość oczekiwaną zmiennej ukrytej należy uwolnić
+          if (nrow(progi) > 0 & nrow(wartosciOczekiwane) == 0) e0 = FALSE
         }
-        # wartości oczekiwane
-        wartosciOczekiwane = wartosciOczekiwane[wartosciOczekiwane$zmienna1 == x, ]
-        if (nrow(wartosciOczekiwane) > 0) {
-          wartosciOczekiwaneSyntax = setNames(
-            c(wartosciOczekiwaneSyntax, paste0(" [", wartosciOczekiwane$zmienna1, "@", wartosciOczekiwane$wartosc, "];")),
-            c(names(wartosciOczekiwaneSyntax), wartosciOczekiwane$zmienna1)
+        if (!is.null(y$wartosciStartowe)) {
+          dyskryminacje      = y$wartosciStartowe[grep(paste0(       "^by", maskaGr, "$"), y$wartosciStartowe$typ), ]
+          progi              = y$wartosciStartowe[grep(paste0("^threshold", maskaGr, "$"), y$wartosciStartowe$typ), ]
+          wariancje          = y$wartosciStartowe[grep(paste0(  "variance", maskaGr, "$"), y$wartosciStartowe$typ), ]  # to może być zarówno "variance" jak i "residual variance"
+          wartosciOczekiwane = y$wartosciStartowe[grep(paste0(     "^mean", maskaGr, "$"), y$wartosciStartowe$typ), ]
+          # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
+          # dodatkowa zabawa - jeśli coś już przypadkiem ma wartość zakotwiczoną, to nie przypisujemy temu wartości startowej
+          dyskryminacje = setNames(
+            as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
+            dyskryminacje$zmienna2[dyskryminacje$zmienna2 %in% zmienne]
           )
+          dyskryminacje = unlist(dyskryminacje[y$zmienne[y$zmienne %in% names(dyskryminacje)]])
+          y$zmienne[zmienne %in% names(dyskryminacje) & ! grepl("@", y$zmienne)] = paste0(y$zmienne[zmienne %in% names(dyskryminacje) & ! grepl("@", y$zmienne)], "*", dyskryminacje)
+          # z progami bez zabawy w sortowanie (bo je się po prostu dopisuje)
+          progi = progi[progi$zmienna1 %in% zmienne, ]
+          if (nrow(progi) > 0) progi = progi[!(paste0(progi$zmienna1, "$", progi$zmienna2) %in% names(progiSyntax)), ]  # jeżeli jakiś próg ma już wartość zakotwiczoną, to nie dodawajmy mu startowej
+          if (nrow(progi) > 0) {
+            progiSyntax = setNames(
+              c(progiSyntax, paste0("   [", progi$zmienna1, "$", progi$zmienna2, "*", progi$wartosc, "];")),
+              c(names(progiSyntax), paste0(progi$zmienna1, "$", progi$zmienna2))
+            )
+          }
+          # wariancje
+          wariancje = wariancje[wariancje$zmienna1 == x, ]
+          wariancje = wariancje[!(wariancje$zmienna1 %in% names(wariancjeSyntax)), ]  # jeśli coś ma już przypadkiem wartość zakotwiczoną, to startowa mu niepotrzebna
+          if (y$var1) wariancje = wariancje[wariancje$zmienna1 != x, ]
+          if (nrow(wariancje) > 0) {
+            wariancjeSyntax=setNames(
+              c(wariancjeSyntax, paste0("  ", wariancje$zmienna1, "*", wariancje$wartosc, ";")),
+              c(names(wariancjeSyntax), wariancje$zmienna1)
+            )
+          }
+          # wartości oczekiwane
+          wartosciOczekiwane = wartosciOczekiwane[wartosciOczekiwane$zmienna1 == x, ]
+          wartosciOczekiwane = wartosciOczekiwane[!(wartosciOczekiwane$zmienna1 %in% names(wartosciOczekiwaneSyntax)), ]  # jeśli coś ma już przypadkiem wartość zakotwiczoną, to startowa mu niepotrzebna
+          if (nrow(wartosciOczekiwane) > 0) {
+            wartosciOczekiwaneSyntax = setNames(
+              c(wartosciOczekiwaneSyntax, paste0(" [", wartosciOczekiwane$zmienna1, "*", wartosciOczekiwane$wartosc, "];")),
+              c(names(wartosciOczekiwaneSyntax), wartosciOczekiwane$zmienna1)
+            )
+          }
         }
-        # jeżeli którakolwiek z dyskryminacji jest zakotwiczona, ale nie ma kotwicy na wariancji, to wariancję zmiennej ukrytej należy uwolnić
-        if ((length(dyskryminacje) > 0 & any(dyskryminacje != 0)) & !(x %in% names(wariancje))) y$var1 = FALSE
-        # jeżeli zakotwiczone dyskryminacje nie są takie same, to nadpisz ustawienie rascha
-        if (length(unique(dyskryminacje)) > 1) y$rasch = FALSE
-        # jeżeli którykolwiek z progów jest zakotwiczony, ale nie ma kotwicy na wartości oczekiwanej, to wartość oczekiwaną zmiennej ukrytej należy uwolnić
-        if (nrow(progi) > 0 & nrow(wartosciOczekiwane) == 0) e0 = FALSE
-      }
-      if (!is.null(y$wartosciStartowe)) {
-        dyskryminacje      = y$wartosciStartowe[grep("^by(|[.]gr1)$",      , y$wartosciStartowe$typ), ]
-        progi              = y$wartosciStartowe[grep("^threshold(|[.]gr1)$", y$wartosciStartowe$typ), ]
-        wariancje          = y$wartosciStartowe[grep("variance(|[.]gr1)$"  , y$wartosciStartowe$typ), ]  # to może być zarówno "variance" jak i "residual variance"
-        wartosciOczekiwane = y$wartosciStartowe[grep("^mean(|[.]gr1)$     ", y$wartosciStartowe$typ), ]
-        # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
-        # dodatkowa zabawa - jeśli coś już przypadkiem ma wartość zakotwiczoną, to nie przypisujemy temu wartości startowej
-        dyskryminacje = setNames(
-          as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
-          dyskryminacje$zmienna2[dyskryminacje$zmienna2 %in% zmienne]
-        )
-        dyskryminacje = unlist(dyskryminacje[y$zmienne[y$zmienne %in% names(dyskryminacje)]])
-        y$zmienne[zmienne %in% names(dyskryminacje) & ! grepl("@", y$zmienne)] = paste0(y$zmienne[zmienne %in% names(dyskryminacje) & ! grepl("@", y$zmienne)], "*", dyskryminacje)					
-        # z progami bez zabawy w sortowanie (bo je się po prostu dopisuje)
-        progi = progi[progi$zmienna1 %in% zmienne, ]
-        if (nrow(progi) > 0) progi = progi[!(paste0(progi$zmienna1, "$", progi$zmienna2) %in% names(progiSyntax)), ]  # jeżeli jakiś próg ma już wartość zakotwiczoną, to nie dodawajmy mu startowej
-        if (nrow(progi) > 0) {
-          progiSyntax = setNames(
-            c(progiSyntax, paste0("   [", progi$zmienna1, "$", progi$zmienna2, "*", progi$wartosc, "];")),
-            c(names(progiSyntax), paste0(progi$zmienna1, "$", progi$zmienna2))
-          )
+        # jeszcze trochę obsługi elementów 'rasch', 'var1' i 'e0'
+        if (y$var1 & !any(grepl(paste0("^[ ]*", x, "@"), wariancjeSyntax))) {  # jeśli wariancja konstruktu ma być ustawiona na 1 i nie ma zakotwiczonych dyskryminacji
+          if (!grepl("[@*]", y$zmienne[1])) y$zmienne[1] = paste0(y$zmienne[1], "*")  # uwolnij dyskryminację pierwszej zmiennej związanej z konstruktem (dopisując '*' za jej nazwą)
+          wariancjeSyntax = paste0("  ", x, "@1;", wariancjeSyntax)  # i ustal wariancję konstruktu w 1
         }
-        # wariancje
-        wariancje = wariancje[wariancje$zmienna1 == x, ]
-        wariancje = wariancje[!(wariancje$zmienna1 %in% names(wariancjeSyntax)), ]  # jeśli coś ma już przypadkiem wartość zakotwiczoną, to startowa mu niepotrzebna
-        if (y$var1) wariancje = wariancje[wariancje$zmienna1 != x, ]
-        if (nrow(wariancje) > 0) {
-          wariancjeSyntax=setNames(
-            c(wariancjeSyntax, paste0("  ", wariancje$zmienna1, "*", wariancje$wartosc, ";")),
-            c(names(wariancjeSyntax), wariancje$zmienna1)
-          )
+        if (y$rasch & !y$var1 & !any(grepl("@", y$zmienne))) {  # jeśli to ma być Rasch, dyskryminacje nie są zakotwiczone, a wariancja konstruktu ma być uwolniona
+          wynik = c(lam_wiersze(c(x, "BY", paste0(y$zmienne, "@1")), 4))  # zakotwicz wartości wszystkich dyskryminacji w 1
+        } else if (y$rasch) {  # jeśli to ma być Rasch, a wariancja konstruktu ma być ustalona w 1 (co obsłużyliśmy kilka linii kodu wcześniej)
+          wynik = c(paste0("  ", x, " BY"), paste0("    ", y$zmienne, " (", x, ")"))  # dopisz ograniczenia na równość dyskryminacji
+          wynik[length(wynik)] = paste0(wynik[length(wynik)], ";")  # teraz każda zmienną związana z konstruktem jest w oddzielnej linii, ale na końcu ostatniej trzeba dopisać ';'
         }
-        # wartości oczekiwane
-        wartosciOczekiwane = wartosciOczekiwane[wartosciOczekiwane$zmienna1 == x, ]
-        wartosciOczekiwane = wartosciOczekiwane[!(wartosciOczekiwane$zmienna1 %in% names(wartosciOczekiwaneSyntax)), ]  # jeśli coś ma już przypadkiem wartość zakotwiczoną, to startowa mu niepotrzebna
-        if (nrow(wartosciOczekiwane) > 0) {
-          wartosciOczekiwaneSyntax = setNames(
-            c(wartosciOczekiwaneSyntax, paste0(" [", wartosciOczekiwane$zmienna1, "*", wartosciOczekiwane$wartosc, "];")),
-            c(names(wartosciOczekiwaneSyntax), wartosciOczekiwane$zmienna1)
-          )
+        else wynik = c(lam_wiersze(c(x, "BY", y$zmienne), 4))  # w innych przypadkach nie trzeba nic więcej cudować
+        wynik[1] = substr(wynik[1], 3, nchar(wynik[1])) # wcinamy pierwszy wiersz o 2 znaki mniej, niż pozostałe
+        if (all(grepl("BY;", wynik))) {wynik=NULL}  # obsługa inwariancji pomiarowej w modelach wielogrupowych
+        if (length(wariancjeSyntax) == 0) wariancjeSyntax = lam_wiersze(c(x, "*"), 2, sep="")  # choć w zasadzie to niepotrzebne, dostawiamy do syntaxu polecenie opisujące wariancję konstruktu (w takim przypadku uwolnioną)
+        if (length(wartosciOczekiwaneSyntax) == 0) {
+          if (!e0) wynik = c(wynik, paste0(" [", x, "];"))  # uwalniamy wartość oczekiwaną konstruktu
+          else     wynik = c(wynik, paste0(" [", x, "@0];"))  # to niepotrzebne do samej estymacji, ale sprawi, że wartość oczekiwana pojawi się w outpucie (skąd będzie ją można zapisać)
         }
-      }
-      # jeszcze trochę obsługi elementów 'rasch', 'var1' i 'e0'
-      if (y$var1 & !any(grepl(paste0("^[ ]*", x, "@"), wariancjeSyntax))) {  # jeśli wariancja konstruktu ma być ustawiona na 1 i nie ma zakotwiczonych dyskryminacji
-        if (!grepl("[@*]", y$zmienne[1])) y$zmienne[1] = paste0(y$zmienne[1], "*")  # uwolnij dyskryminację pierwszej zmiennej związanej z konstruktem (dopisując '*' za jej nazwą)
-        wariancjeSyntax = paste0("  ", x, "@1;", wariancjeSyntax)  # i ustal wariancję konstruktu w 1
-      }
-      if (y$rasch & !y$var1 & !any(grepl("@", y$zmienne))) {  # jeśli to ma być Rasch, dyskryminacje nie są zakotwiczone, a wariancja konstruktu ma być uwolniona
-        wynik = c(lam_wiersze(c(x, "BY", paste0(y$zmienne, "@1")), 4))  # zakotwicz wartości wszystkich dyskryminacji w 1
-      } else if (y$rasch) {  # jeśli to ma być Rasch, a wariancja konstruktu ma być ustalona w 1 (co obsłużyliśmy kilka linii kodu wcześniej)
-        wynik = c(paste0("  ", x, " BY"), paste0("    ", y$zmienne, " (", x, ")"))  # dopisz ograniczenia na równość dyskryminacji
-        wynik[length(wynik)] = paste0(wynik[length(wynik)], ";")  # teraz każda zmienną związana z konstruktem jest w oddzielnej linii, ale na końcu ostatniej trzeba dopisać ';'
-      }
-      else wynik = c(lam_wiersze(c(x, "BY", y$zmienne), 4))  # w innych przypadkach nie trzeba nic więcej cudować
-      wynik[1] = substr(wynik[1], 3, nchar(wynik[1])) # wcinamy pierwszy wiersz o 2 znaki mniej, niż pozostałe
-      if (length(wariancjeSyntax) == 0) wariancjeSyntax = lam_wiersze(c(x, "*"), 2, sep="")  # choć w zasadzie to niepotrzebne, dostawiamy do syntaxu polecenie opisujące wariancję konstruktu (w takim przypadku uwolnioną)
-      if (length(wartosciOczekiwaneSyntax) == 0) {
-        if (!e0) wynik = c(wynik, paste0(" [", x, "];"))  # uwalniamy wartość oczekiwaną konstruktu
-        else     wynik = c(wynik, paste0(" [", x, "@0];"))  # to niepotrzebne do samej estymacji, ale sprawi, że wartość oczekiwana pojawi się w outpucie (skąd będzie ją można zapisać)
-      }
-      wynik = c(wynik, progiSyntax, wartosciOczekiwaneSyntax, wariancjeSyntax)
-      return(wynik)
-    },
-    as.list(names(opisModelu$czescPomiarowa)),
-    opisModelu$czescPomiarowa,
-    SIMPLIFY=FALSE
-  ))
+        wynik = c(wynik, progiSyntax, wartosciOczekiwaneSyntax, wariancjeSyntax)
+        return(wynik)
+      },
+      as.list(names(opisModelu$czescPomiarowa)),
+      opisModelu$czescPomiarowa,
+      MoreArgs=list(grupa=opisModelu$wieleGrup[i]),
+      SIMPLIFY=FALSE
+    ))
+    model[[i]] = unname(c(opisModelu$wieleGrup[i], model[[i]]))
+  }
+  return(model)
 }
 #' @title Przygotowywanie polecen Mplusa.
 #' @description
@@ -321,7 +344,7 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     liczbKolumn = max(unlist(lapply(dopasowanie, length)))
     temp = as.data.frame(matrix(NA, nrow=length(dopasowanie), ncol=liczbKolumn, dimnames=list(NULL, rep("_", liczbKolumn))), check.names=FALSE)
     for (i in 1:ncol(temp)) {
-      temp[, i] = unlist(lapply(dopasowanie, 
+      temp[, i] = unlist(lapply(dopasowanie,
                                 function(x, i) {
                                   return(ifelse((1:i) <= length(x), x, rep(NA, i))[i])
                                 },
@@ -332,8 +355,9 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
       }
     }
     dopasowanie = temp
+  } else {
+    dopasowanie = NULL
   }
-  else dopasowanie = NULL
   # wydzielanie części outputu z wartościami parametrów
   if (any(grepl("^MODEL RESULTS$", output)) & any(grepl("^(QUALITY OF NUMERICAL RESULTS|MODEL COMMAND WITH FINAL ESTIMATES USED AS STARTING VALUES)$", output))) {
     temp = output[(grep("^MODEL RESULTS$", output) + 1):(grep("^(QUALITY OF NUMERICAL RESULTS|MODEL COMMAND WITH FINAL ESTIMATES USED AS STARTING VALUES)$", output)[1] - 1)]
@@ -346,8 +370,8 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
       tnij = tnij - tnij[1] + 1
       tnij = tnij[-1]
     }
-    parametry[[length(parametry) + 1]] = temp      
-    names(parametry) = tolower(unlist(lapply(parametry, 
+    parametry[[length(parametry) + 1]] = temp
+    names(parametry) = tolower(unlist(lapply(parametry,
                                              function(x) {
                                                return(sub("Categorical Latent Variables", "grupy",
                                                					sub("^.*IRT PARAMETERIZATION.*$", "irt",
@@ -405,54 +429,54 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
 													temp = list(x)
 												}
 												x = lapply(temp,
-																			function(x) {
-																				tnij = c(grep("[ ](BY|ON|WITH)$|Intercepts|Means$|Thresholds$|[vV]ariances$|r2$", x$Variable), nrow(x) + 1)
-																				# stwierdzenie, co opisują kolejne tabelki
-																				temp = list()
-																				for (i in 1:(length(tnij) - 1)) {
-																					temp[[i]] = x[(tnij[i] + 1):(tnij[i + 1] - 1), ]
-																				}
-																				attributes(temp)$typ = sub("^[ ]+", "", x$Variable[tnij[-length(tnij)]])
-																				attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)] = sub("^.*(BY|ON|WITH)", "\\1", attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)])
-																				attributes(temp)$zmienna = ifelse(
-																					grepl("(BY|ON|WITH)$", attributes(temp)$typ),
-																					sub("^([^ ]*)[ ]+(BY|ON|WITH)$", "\\1",
-																							sub("^[ ]+", "", x$Variable[tnij[-length(tnij)]])
-																					),
-																					rep("", length(attributes(temp)$typ))
-																				)
-																				# przygotowanie tabelek do złączenia w jedną wielką tabelkę
-																				temp = mapply(
-																					function(x, typ, zmienna) {
-																						x = data.frame(
-																							typ=sub("s$", "", tolower(typ)),
-																							zmienna1=tolower(zmienna),
-																							zmienna2=tolower(x$Variable),
-																							wartosc=x$Estimate,
-																							x[, !(names(x)%in%c("Variable", "Estimate"))],
-																							stringsAsFactors=FALSE, check.names=FALSE
-																						)
-																						x$zmienna1[grepl("mean|(|residual )variance|^r2$", x$typ)] = x$zmienna2[grepl("mean|(|residual )variance|^r2$", x$typ)]
-																						x$zmienna2[grepl("mean|(|residual )variance|^r2$", x$typ)] = ""
-																						x$zmienna1[x$typ=="threshold"] = sub("[$][[:digit:]]+$", "", x$zmienna2[x$typ=="threshold"])
-																						x$zmienna2[x$typ=="threshold"] = sub("^.+[$]", "", x$zmienna2[x$typ=="threshold"])
-																						return(x)
-																					},
-																					temp,
-																					as.list(attributes(temp)$typ),
-																					as.list(attributes(temp)$zmienna),
-																					SIMPLIFY=FALSE
-																				)
-																				if (length(temp) > 1) {
-																					x = rbind(temp[[1]], temp[[2]])
-																				} else {
-																					x = temp[[1]]
-																				}
-																				if (length(temp) > 2) {
-																					for (i in 3:length(temp)) x = rbind(x, temp[[i]])
-																				}
-																				return(x)
-																			}
+												           function(x) {
+												             tnij = c(grep("[ ](BY|ON|WITH)$|Intercepts|Means$|Thresholds$|[vV]ariances$|r2$", x$Variable), nrow(x) + 1)
+												             # stwierdzenie, co opisują kolejne tabelki
+												             temp = list()
+												             for (i in 1:(length(tnij) - 1)) {
+												               temp[[i]] = x[(tnij[i] + 1):(tnij[i + 1] - 1), ]
+												             }
+												             attributes(temp)$typ = sub("^[ ]+", "", x$Variable[tnij[-length(tnij)]])
+												             attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)] = sub("^.*(BY|ON|WITH)", "\\1", attributes(temp)$typ[grep("(BY|ON|WITH)$", attributes(temp)$typ)])
+												             attributes(temp)$zmienna = ifelse(
+												               grepl("(BY|ON|WITH)$", attributes(temp)$typ),
+												               sub("^([^ ]*)[ ]+(BY|ON|WITH)$", "\\1",
+												                   sub("^[ ]+", "", x$Variable[tnij[-length(tnij)]])
+												               ),
+												               rep("", length(attributes(temp)$typ))
+												             )
+												             # przygotowanie tabelek do złączenia w jedną wielką tabelkę
+												             temp = mapply(
+												               function(x, typ, zmienna) {
+												                 x = data.frame(
+												                   typ=sub("s$", "", tolower(typ)),
+												                   zmienna1=tolower(zmienna),
+												                   zmienna2=tolower(x$Variable),
+												                   wartosc=x$Estimate,
+												                   x[, !(names(x)%in%c("Variable", "Estimate"))],
+												                   stringsAsFactors=FALSE, check.names=FALSE
+												                 )
+												                 x$zmienna1[grepl("mean|(|residual )variance|^r2$", x$typ)] = x$zmienna2[grepl("mean|(|residual )variance|^r2$", x$typ)]
+												                 x$zmienna2[grepl("mean|(|residual )variance|^r2$", x$typ)] = ""
+												                 x$zmienna1[x$typ=="threshold"] = sub("[$][[:digit:]]+$", "", x$zmienna2[x$typ=="threshold"])
+												                 x$zmienna2[x$typ=="threshold"] = sub("^.+[$]", "", x$zmienna2[x$typ=="threshold"])
+												                 return(x)
+												               },
+												               temp,
+												               as.list(attributes(temp)$typ),
+												               as.list(attributes(temp)$zmienna),
+												               SIMPLIFY=FALSE
+												             )
+												             if (length(temp) > 1) {
+												               x = rbind(temp[[1]], temp[[2]])
+												             } else {
+												               x = temp[[1]]
+												             }
+												             if (length(temp) > 2) {
+												               for (i in 3:length(temp)) x = rbind(x, temp[[i]])
+												             }
+												             return(x)
+												           }
 												)
 												# mały porządek z wielogrupowością
 												temp = x[[1]]
@@ -463,6 +487,16 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
 														temp = rbind(temp, x[[i]])
 													}
 												}
+                        # jeśli podział na grupy jest dla picu, bo zakładamy inwariancję pomiarową, to zastąpmy wielokrotne wpisy pojedynczymi (bez podziału na grupy)
+                        tempUnique = temp
+                        nBy     = sum(grepl(       "^by[.]gr", temp)) / length(x)
+												nThresh = sum(grepl("^threshold[.]gr", temp)) / length(x)
+                        tempUnique$typ = sub("^(by|threshold)[.]gr[[:digit:]]+$", "\\1", tempUnique$typ)
+                        tempUnique = unique(tempUnique)
+                        if (  sum(grepl(       "^by[.]gr", temp)) %in% (    nBy * c(1, length(x)))
+                            & sum(grepl("^threshold[.]gr", temp)) %in% (nThresh * c(1, length(x))) ) {
+                          temp = tempUnique
+                        }
                        	return(temp)
                        }
     )
@@ -477,8 +511,9 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     										 }
     	)
     }
+  } else {
+    parametry = NULL
   }
-  else parametry = NULL
   # wydzielanie i obróbka części outputu dotyczącej pliku, w którym zostały zapisane wyniki
   if (any(output == "SAVEDATA INFORMATION") & any(grepl("Save file format", output))) {
     zapis = output[(grep("Order and format of variables", output)+2):(grep("Save file format", output)[1]-2)]
@@ -490,8 +525,9 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     	if (!all(maska)) warning("Niektóre nazwy zmiennych w pliku z oszacowaniami natężenia cech ukrytych nie występują w mapowaniu skróconych nazw zmiennych na pierwotne nazwy zmiennych.")
     	zapis$zmienna[maska] = unlist(nazwyDoZmiany[zapis$zmienna[maska]])
     }
+  } else {
+    zapis = NULL
   }
-  else zapis = NULL
   # wydzielenie z outputu stopki z czasem wykoniania
   czas = output[(grep("(Beginning|Ending|Elapsed) Time", output))]
   # kończenie

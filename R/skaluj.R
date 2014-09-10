@@ -13,7 +13,7 @@
 #' @details
 #' Poniżej trzeba będzie dodać wyczerpujący opis parametru \code{opisProcedury}
 #' \itemize{
-#' \item 
+#' \item
 #' \item .
 #' }
 #' @return lista
@@ -22,7 +22,7 @@
 #' @export
 skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmienneSpecjalne=NULL, zmienneDolaczaneDoOszacowan=NULL, zwrocOszacowania=TRUE, usunFWF=TRUE) {
   # podstawowe sprawdzenie argumentów
-  cat("Sprawdzanie poprawności argumentów...\n")
+  message("Sprawdzanie poprawności argumentów...")
   stopifnot(
     is.data.frame(dane),
     is.list(opisProcedury),
@@ -97,7 +97,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     for (j in 1:length(krok$czescPomiarowa)) {
       konstrukt = krok$czescPomiarowa[[j]]
       if (!all(names(konstrukt) %in% dozwoloneElementy$konstrukt)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nPojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(konstrukt)[!(names(konstrukt) %in% dozwoloneElementy$konstrukt)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
-      
+
       # sprawdzanie poprawności komponentu 'zmienne'
       if (!"zmienne" %in% names(konstrukt)) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nBrak elementu 'zmienne', podającego zmienne mierzalne związane z konstruktem.\n"))
       if (!(is.character(konstrukt$zmienne) | is.list(konstrukt$zmienne)) | length(konstrukt$zmienne) < 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'zmienne' musi być wektorem tekstowym (typu character), podającym nazwy zmiennych mierzalnych związanych z konstruktem.\n"))
@@ -114,15 +114,15 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         if (!all(names(konstrukt$zmienne)[-1] %in% konstruktyWDef)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ", w elemencie 'zmienne'.\nPojawiły się elementy, które nie są związane z żadnym konstruktem, ze zdefiniowanych w pierwszym elemencie:\n - ", paste0(names(konstrukt$zmienne)[-1][!(names(konstrukt$zmienne)[-1] %in% konstruktyWDef)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
         if (!all(is.character(unlist(konstrukt$zmienne[-1]))) | !all(unlist(lapply(konstrukt$zmienne[-1], length)) == 1))    stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ", w elemencie 'zmienne'.\nNieprawidłowa definicja symboliczna zmiennych związanych z konstruktem.\nWszystkie elementy listy poza pierwszym powinny być ciągami znaków (jednoelementowymi wektorami typu character).\n"))
       }
-      
+
       # sprawdzanie poprawności komponentu 'var1'
       if (!"var1" %in% names(konstrukt)) opisProcedury[[i]]$czescPomiarowa[[j]]$var1=TRUE	# jeśli nie podano, załóż, że wszystkie ładunki mają być uwolnione, a wariancja zmiennej ukrytej zaktowiczona w 1
       if (!all(konstrukt$var1 %in% c(TRUE, FALSE)) | length(konstrukt$var1) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'var1' musi być jednoelementowym wektorem logicznym (typu logical), przyjmującym wyłącznie wartość TRUE lub FALSE.\n"))
-      
+
       # sprawdzanie poprawności komponentu 'rasch'
       if (!"rasch" %in% names(konstrukt)) opisProcedury[[i]]$czescPomiarowa[[j]]$rasch=FALSE	# jeśli nie podano, załóż 2PL/SGRM
       if (!all(konstrukt$rasch %in% c(TRUE, FALSE)) | length(konstrukt$rasch) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'rasch' musi być jednoelementowym wektorem logicznym (typu logical), przyjmującym wyłącznie wartość TRUE lub FALSE.\n"))
-      
+
       # sprawdzanie poprawności komponentu 'kryteriaUsuwania'
       if (!"kryteriaUsuwania" %in% names(konstrukt)) opisProcedury[[i]]$czescPomiarowa[[j]]$kryteriaUsuwania=NULL
       if (!is.null(konstrukt$kryteriaUsuwania) & !all(names(konstrukt$kryteriaUsuwania) %in% dozwoloneElementy$kryteriaUsuwania)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nWśród podanych kryteriów usuwania zadań pojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(konstrukt$kryteriaUsuwania)[!(names(konstrukt$kryteriaUsuwania)%in%dozwoloneElementy$kryteriaUsuwania)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
@@ -130,7 +130,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         if (!is.numeric  (konstrukt$kryteriaUsuwania$dyskryminacjaPonizej) | length(konstrukt$kryteriaUsuwania$dyskryminacjaPonizej) != 1 | any(is.na(konstrukt$kryteriaUsuwania$dyskryminacjaPonizej))) {
           stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], "\nkryterium usuwania zadań 'dyskryminacjaPonizej' musi być zdefiniowane jako jednoelementowy wektor liczbowy (typu numeric).\n"))
         }
-      }	
+      }
       if (!is.null(konstrukt$kryteriaUsuwania$istotnoscPowyzej)) {
         if (!is.numeric  (konstrukt$kryteriaUsuwania$istotnoscPowyzej)     | length(konstrukt$kryteriaUsuwania$istotnoscPowyzej)     != 1 | any(is.na(konstrukt$kryteriaUsuwania$istotnoscPowyzej) | konstrukt$kryteriaUsuwania$istotnoscPowyzej > 1 | konstrukt$kryteriaUsuwania$istotnoscPowyzej <= 0)) {
           stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], "\nkryterium usuwania zadań 'istotnoscPowyzej' musi być zdefiniowane jako jednoelementowy wektor liczbowy (typu numeric), przyjmujący wartości z zakresu (0,1].\n"))
@@ -195,7 +195,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     wieleGrup = opisProcedury[[i]]$wieleGrup
     if (!is.null(wieleGrup)) {
     	if (!all(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' pojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(wieleGrup)[!(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
-    	
+
     	# sprawdzanie poprawności komponentu 'zmienneGrupujace'
     	if (!"zmienneGrupujace" %in% names(wieleGrup)) {
     		opisProcedury[[i]]$wieleGrup = NULL
@@ -209,7 +209,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     	} else {
     		if (length(wieleGrup$uwolnijWartosciOczekiwane) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
     		if (!(wieleGrup$uwolnijWartosciOczekiwane %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
-    	}    	
+    	}
     	if (!("uwolnijWariancje" %in% names(wieleGrup))) {
     		opisProcedury[[i]]$wieleGrup$uwolnijWariancje = TRUE
     	} else {
@@ -263,7 +263,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   	if (length(unique(dane[, idObs])) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
   }
   # zapis pliku z danymi w formie stałoszerokościowej
-  cat("Zapis danych do pliku tekstowego o stałej szerokości kolumn...\n")
+  message("Zapis danych do pliku tekstowego o stałej szerokości kolumn...")
   # wyłączenie do oddzielnego obiektu zmiennych, które mają być potem przyłączane do oszacowań (po skonwertowaniu obiektu 'dane' na teksty nie da się z niego do tego skorzystać)
   if (!is.null(zmienneDolaczaneDoOszacowan)) daneDolaczaneDoOszacowan = dane[, c(idObs, zmienneDolaczaneDoOszacowan)]
   # kowersja factorów na liczby
@@ -342,9 +342,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   # pętla główna
   wyniki = vector(mode="list", length=length(opisProcedury))
   names(wyniki) = names(opisProcedury)
-  
+
   for (i in 1:length(opisProcedury)) {
-    cat("\n###################################\n Krok ", i, ". ", names(opisProcedury)[i], "\n###################################\n", sep="")
+    message("###################################\n Krok ", i, ". ", names(opisProcedury)[i], "\n###################################")
     # ewaluacja konstruktów zdefiniowanych "symbolicznie"
     for (k in 1:length(opisProcedury[[i]]$czescPomiarowa)) {
       if (!is.language(opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne[[1]])) next
@@ -354,7 +354,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       szkielet = as.data.frame(matrix(NA, nrow=0, ncol=ncol(wyniki[[1]][[1]]$parametry$surowe), dimnames=list(c(), names(wyniki[[1]][[1]]$parametry$surowe))))
       if      (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciZakotwiczone)) opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciZakotwiczone = szkielet
       else if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe    )) opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe     = szkielet
-      
+
       for (l in konstruktyWDef) {
         indeks = max((1:(i - 1))[unlist(lapply(opisProcedury[1:(i - 1)], function(x, l) return(l %in% names(x$czescPomiarowa)), l=l))])
         if (!(l %in% names(maski))) {
@@ -363,7 +363,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         }
         zmienneTemp = opisProcedury[[indeks]]$czescPomiarowa[names(opisProcedury[[indeks]]$czescPomiarowa) == l][[1]]$zmienne
         opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne = c(opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne, zmienneTemp[grepl(maski[names(maski) == l][[1]], zmienneTemp)])
-        
+
         # tylko dyskryminacje i progi, wariancje zostawiamy w spokoju
         parametryTemp = wyniki[[indeks]][[length(wyniki[[indeks]])]]$parametry$surowe
         parametryTemp = rbind(
@@ -384,7 +384,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     j = 1
     kalibrujDalej = TRUE
     while (kalibrujDalej) {
-      cat("\n   ###################################   \n    Kalibracja ", j, ".\n   ###################################\n", sep="")
+      message("   ###################################   \n    Kalibracja ", j, ".\n   ###################################")
       krok = opisProcedury[[i]]	# tu, a nie przed pętlą, bo opisProcedury jest (może być) modyfikowany na podstawie wyników estymacji
       # przygotowanie obiektów dla funkcji tworzącej polecenia Mplusa
       title = paste0(tytul, " Krok ", i, ". ", names(opisProcedury)[i])
@@ -393,7 +393,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         format = szerokosciKolumn
       )
       zmienneWModelu = unique(unlist(lapply(krok[names(krok) %in% c("czescPomiarowa")], function(x) return(lapply(x, function(x) return(x$zmienne))))))
-      zmienneWModelu = zmienneWModelu[zmienneWModelu %in% names(dane) & !(zmienneWModelu %in% zmienneCiagle)]	# trzeba wykluczyć składowe 
+      zmienneWModelu = zmienneWModelu[zmienneWModelu %in% names(dane) & !(zmienneWModelu %in% zmienneCiagle)]	# trzeba wykluczyć składowe
       variable = list(
         missing     = "BLANK",
         names       = unlist(nazwySkrocone),
@@ -402,32 +402,14 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         idvariable  = nazwySkrocone[[idObs]]
       )
       analysis = krok$parametry[names(krok$parametry) %in% c("estimator", "processors", "integration")]
-      model = przygotuj_model(zmien_nazwy_w_kroku_procedury(krok, nazwySkrocone))
       if (!is.null(krok$wieleGrup)) {
       	wartosciZmGrupujacej = unique(dane[, paste0("gr_tmp", i)])
-      	variable$classes = length(wartosciZmGrupujacej)
+      	variable$classes = krok$wieleGrup$liczbaGrup = length(wartosciZmGrupujacej)
       	variable$knownclass = paste0(paste0("gr_tmp", i), " = ", wartosciZmGrupujacej)
       	analysis$type = "MIXTURE"
       	analysis$algorithm = "INTEGRATION"
-
-      	modelWielogrupowy = as.list(paste0("  %gr_tmp#", 1:length(wartosciZmGrupujacej), "%"))
-      	if (krok$wieleGrup$uwolnijWartosciOczekiwane) {
-      		temp = paste0(" [", names(krok$czescPomiarowa), "*];")
-      		modelWielogrupowy = lapply(modelWielogrupowy, function(x, y) {return(c(x, y))}, y=temp)
-      	}
-      	if (krok$wieleGrup$uwolnijWariancje) {
-      		temp = paste0("  ", names(krok$czescPomiarowa), "*;")
-      		modelWielogrupowy = lapply(modelWielogrupowy, function(x, y) {return(c(x, y))}, y=temp)
-      	}
-      	model = unlist(
-      		list(
-      			"%OVERALL%",
-      			model,
-      			modelWielogrupowy[-1]
-      		),
-      		recursive=FALSE
-      	)
       }
+      model = przygotuj_model(zmien_nazwy_w_kroku_procedury(krok, nazwySkrocone))
       output = list("STANDARDIZED", "TECH4", "TECH8")
       if (krok$parametry$fscores) {
         savedata = list(
@@ -448,7 +430,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       if (mplus == 1) return(list(wyniki=wyniki, tenKrok=krok))
       wyniki[[i]][[j]] = obrob_out(readLines(sub("[.]inp$", ".out", nazwaInp)), nazwyPierwotne)
       if ("brak_zbieznosci" %in% names(wyniki[[i]][[j]])) {
-        cat("\n   ###################################\n    Nie osiągnięto zbieżności!\n   ###################################\n")
+        message("   ###################################\n    Nie osiągnięto zbieżności!\n   ###################################")
         return(list(wyniki=wyniki, tenKrok=krok))
       }
       # zapis ocen czynnikowych do bardziej zwartej i łatwiej dostępnej postaci
@@ -479,7 +461,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         unlink(savedata$file)
         if (zwrocOszacowania) wyniki[[i]][[j]]$zapis = ocCzyn
         else wyniki[[i]][[j]]$zapis = sub("[.]inp$", ".csv", nazwaInp)
-      }							
+      }
       # ew. usuwanie zadań nie spełniających kryteriów
       kalibrujDalej = FALSE
       # sprawdzanie części pomiarowej
@@ -487,7 +469,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         parametry = wyniki[[i]][[j]]$parametry$surowe[wyniki[[i]][[j]]$parametry$surowe$typ == "by" & wyniki[[i]][[j]]$parametry$surowe$zmienna1 == names(opisProcedury[[i]]$czescPomiarowa)[k], ]
         # jeśli zdefiniowano jakieś kryteria usuwania
         if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania)) {
-          cat("\n   ###################################\n    Usuwanie źle dopasowanych zadań: konstrukt ", names(opisProcedury[[i]]$czescPomiarowa)[k], "\n   ###################################\n", sep="")
+          message("   ###################################\n    Usuwanie źle dopasowanych zadań: konstrukt ", names(opisProcedury[[i]]$czescPomiarowa)[k], "\n   ###################################")
           kryteria = opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania
           doUsuniecia = c()
           # jeśli zdefiniowano kryterium 'dyskryminacjaPonizej'
@@ -500,7 +482,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
             # wybór zadania do usunięcia i drukowanie informacji
             doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
             if (length(doUsuniecia) > 0) {
-              cat("    Zadania o dyskryminacji poniżej ", kryteria$dyskryminacjaPonizej, ":\n",  sep="")
+              message("    Zadania o dyskryminacji poniżej ", kryteria$dyskryminacjaPonizej, ":")
               print(
                 data.frame(
                   "_"="     ",
@@ -523,7 +505,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
             }
             # drukowanie informacji o zadaniach do usunięcia
             if (length(doUsuniecia) > 0) {
-              cat("    Zadania o istotności powyżej ", kryteria$istotnoscPowyzej, ":\n",  sep="")
+              message("    Zadania o istotności powyżej ", kryteria$istotnoscPowyzej, ":")
               print(
                 data.frame(
                   "_"="     ",
@@ -540,8 +522,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
           if (length(doUsuniecia)>0) {
             kalibrujDalej=TRUE
             opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne=opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne[!(opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne%in%doUsuniecia)]
+          } else {
+            message("    Brak zadań do usunięcia.")
           }
-          else cat("    Brak zadań do usunięcia.\n")
         }
       }
       # jeśli kalibrujemy dalej, to zapiszmy sobie wartości startowe
@@ -557,6 +540,6 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   }
   # kończenie
   if (usunFWF) unlink("daneMplusTemp.fwf")
-  cat("\n")
+  message("")
   return(wyniki)
 }

@@ -1,10 +1,20 @@
 --------------------
+Zmiany w EWDskalowanie 0.4 (2014-09-10)
+
+- Nowe funkcje:
+  - ;
+
+- Nowe funkcjonalności:
+  - funkcja skaluj():
+    - ;
+
+--------------------
 Zmiany w EWDskalowanie 0.3 (2014-05-29)
 
 - Nowe funkcje:
   - pobierz_parametry_skalowania() - jak mówi nazwa;
   - zapisz_parametry_skalowania() - jak mówi nazwa;
-  Obie funkcje napisał Grzesiek Golonka. Nie są jeszcze dobrze przetestowane. W przyszłości byćmożezostaną przeniesieone do pakietu EWDdane.
+  Obie funkcje napisał Grzesiek Golonka. Nie są jeszcze dobrze przetestowane. W przyszłości być może zostaną przeniesieone do pakietu EWDdane.
   - skroc_nazwy_zmiennych() - jak mówi nazwa;
   - czy_sie_nie_powtarza() [nieeksportowana] - wykorzystywana przez skroc_nazwy_zmiennych();
   - zmien_nazwy_w_kroku_procedury() [nieeksportowana] - wykorzystywana do zmiany nazw zmiennych tuż przed przekazaniem kopii opisu procedury (kroku skalowania) do funkcji przygotuj_model();
@@ -22,7 +32,7 @@ Zmiany w EWDskalowanie 0.2 (2014-04-27)
 - Nowe funkcjonalności:
   - Możliwość definiowania "equality constraints" na parametrach modelu:
     W definicji procedury, w definicji konstruktu dodałem możliwość zdefiniowania elementu 'ograniczeniaWartosci', który musi mieć strukturę analogiczną do tej elementów 'wartosciStartowe' czy 'wartosciZakotwiczone', z tym wyjątkiem, że kolumna 'wartosc' musi być typu character, zamiast numeric. Pozwala to przypisać "equality constraint" dowolnym parametrom, o ile są one wprost zdefiniowane w modelu.
-  - W funkcji procedura_matura_m_rasch() dopisane zostao uwzględnenie parametru selekcji.
+  - W funkcji procedura_matura_m_rasch() dopisane zostało uwzględnenie parametru selekcji.
 
 --------------------
 Publikacja EWDskalowanie 0.1 (2014-03-28)

@@ -1,18 +1,19 @@
 #' @title Zapisywanie parametrow skalowan.
 #' @description
 #' Funkcja zapisuje parametry skalowania do bazy danych
-#' @param nazwa_skali nazwa skali. Kiedy nazwa skali przymuje wartość NULL nie jest brana pod 
+#' @param nazwa_skali nazwa skali. Kiedy nazwa skali przymuje wartość NULL nie jest brana pod
 #' uwagę w wyszukiwaniu. Wartość domyślna to NULL.
-#' @param id_testu id testu. Kiedy id testu przymuje wartość NULL nie jest brana pod 
+#' @param id_testu id testu. Kiedy id testu przymuje wartość NULL nie jest brana pod
 #' uwagę w wyszukiwaniu. Wartość domyślna to NULL.
 #' @param parametry ramka danych o strukturze zgodnej z tą, w jakiej zwraca oszacowania parametrów funkcja skaluj().
 #' @param opis opis estymacji
 #' @param estymacja parametr opisujący metodę estymacji - musi być jedną z wartości występujących w tablicy sl_estymacje_parametrow.
 #' @param zrodloDanychODBC string określający źródło danych. Wartość domyślna to 'EWD'.
 #' @return Funkcja nie zwraca żadnej wartości.
+#' @import RODBCext
 #' @export
 zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, parametry, opis, estymacja, zrodloDanychODBC='ewd_grzes') {
-  
+
   if( is.null(nazwa_skali) & is.null(id_testu) ){
     stop("Nazwa skali oraz id testu nie mogą mieć jednocześnie wartości null.")
   }
@@ -55,9 +56,9 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
   if( !is.numeric(parametry$'S.E.')){
     stop("Kolumna 'S.E.' nie jest ciągiem liczb. ")
   }
-  
+
   P = odbcConnect(zrodloDanychODBC)
-  
+
   tryCatch({
           # zapytanie
           if(!is.null(nazwa_skali)){
@@ -68,7 +69,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           } else{
             zapytanie = "SELECT id_skali FROM skale WHERE id_testu =  ? "
           }
-          
+
           if( !is.null(nazwa_skali) & is.null(id_testu) ){
             skaleZap = sqlExecute(P, zapytanie, data = nazwa_skali, fetch = TRUE)
           } else if( !is.null(nazwa_skali) & ! is.null(id_testu)    ){
@@ -76,7 +77,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
           } else{
             skaleZap = sqlExecute(P, zapytanie, data = id_testu, fetch = TRUE)
           }
-          
+
           if( length(na.omit(skaleZap))==0 ){
             odbcClose(P)
             stop("Nie ma skali w bazie danych.")
@@ -85,16 +86,16 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
             stop("Skala określona niejednoznacznie.")
           }
           idSkali = skaleZap$id_skali[1]
-          
-          estymacjeNumZap = sqlExecute(P, "SELECT count(*) FROM sl_estymacje_parametrow WHERE estymacja = ? ", 
+
+          estymacjeNumZap = sqlExecute(P, "SELECT count(*) FROM sl_estymacje_parametrow WHERE estymacja = ? ",
                                        data=estymacja, fetch=TRUE)
-          
+
           nazwyParametrow = sqlExecute(P, "SELECT parametr FROM sl_parametry", data=data.frame(NULL), fetch=TRUE)$parametr
-          
+
           zapytanie = "SELECT greatest(max(skalowanie), count(*)) + 1 AS skalowanie
           FROM skalowania WHERE id_skali = ? "
           numerSkalowania = sqlExecute(P, zapytanie, data=idSkali, fetch=TRUE)$skalowanie
-          
+
           odbcClose(P)
         },
         error=function(e){
@@ -105,95 +106,95 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
   if( estymacjeNumZap == 0 ){
     stop("Podanej metody estymacji nie ma w bazie danych.")
   }
-  
+
   P = odbcConnect(zrodloDanychODBC)
   tryCatch({
           parBy = parametry[parametry$typ=="by", ]
           parTreshold = parametry[parametry$typ=="threshold", ]
-          
+
           by = wydziel_kryteria_pseudokryteria(parBy$zmienna2)
           kryteriaBy = by$kryteria
           pseudokryteriaBy = by$pseudokryteria
-          
+
           tres = wydziel_kryteria_pseudokryteria(parTreshold$zmienna1)
           kryteriaTres = tres$kryteria
           pseudokryteriaTres = tres$pseudokryteria
-          
+
           liczbaParam = table(kryteriaTres)
-          
+
           zapytanie = "SELECT kolejnosc, id_kryterium, id_pseudokryterium FROM skale_elementy WHERE id_skali = ?"
           skaleElementy =  sqlExecute(P, zapytanie, data=idSkali, fetch=TRUE)
-          
+
           kryteriaBaza = na.omit(skaleElementy$id_kryterium)
           pseudokryteriaBaza = na.omit(skaleElementy$id_pseudokryterium)
-          
+
           sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBy  , "kryteria 'treshold'" , "kryteria 'by'")
           sprawdz_zgodnosc_kryteriow(kryteriaBy  , kryteriaTres, "kryteria 'by'"       , "kryteria 'treshold'")
           sprawdz_zgodnosc_kryteriow(kryteriaTres, kryteriaBaza, "kryteria z parametru", "kryteria z bazy")
           sprawdz_zgodnosc_kryteriow(kryteriaBaza, kryteriaTres, "kryteria z bazy"     , "kryteria z parametru", error=FALSE)
-          
+
           sprawdz_zgodnosc_kryteriow(pseudokryteriaTres, pseudokryteriaBy  , "pseudokryteria 'treshold'"         , "pseudokryteria 'by'")
           sprawdz_zgodnosc_kryteriow(pseudokryteriaBy  , pseudokryteriaTres, "pseudokryteria 'by'"               , "pseudokryteria 'treshold'")
           sprawdz_zgodnosc_kryteriow(pseudokryteriaTres, pseudokryteriaBaza, "pseudokryteria z parametru funkcji", "pseudokryteria z bazy")
           sprawdz_zgodnosc_kryteriow(pseudokryteriaBaza, pseudokryteriaTres, "pseudokryteria z bazy"             , "pseudokryteria z parametru funkcji", error=FALSE)
-          
+
           sqlPrepare(P, "BEGIN;")
           sqlExecute(P)
-          
-          insert = "INSERT INTO skalowania (skalowanie, opis , estymacja, id_skali)  VALUES (? , ? , ?, ?)" 
-          sqlExecute(P, insert , data=data.frame(numerSkalowania, opis,estymacja, idSkali)) 
-          
+
+          insert = "INSERT INTO skalowania (skalowanie, opis , estymacja, id_skali)  VALUES (? , ? , ?, ?)"
+          sqlExecute(P, insert , data=data.frame(numerSkalowania, opis,estymacja, idSkali))
+
           for(k in 1:length(liczbaParam)){
             krytNum = as.numeric(names(liczbaParam)[k])
-            
+
             kolejnoscTemp = NULL
             if(krytNum %in% kryteriaBaza){
               kolejnoscTemp = skaleElementy$kolejnosc[ (skaleElementy$id_kryterium == krytNum) %in% TRUE ]
             } else if(krytNum %in% pseudokryteriaBaza){
               kolejnoscTemp = skaleElementy$kolejnosc[ (skaleElementy$id_pseudokryterium == krytNum) %in% TRUE ]
             }
-      
+
             # model 2PL
             if( liczbaParam[k]== 1 ){
-              
+
               wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania,
-                                           "dyskryminacja","2PL", parBy$wartosc[kryteriaBy==krytNum], 
+                                           "dyskryminacja","2PL", parBy$wartosc[kryteriaBy==krytNum],
                                            parBy$'S.E.'[kryteriaBy==krytNum])
-              
+
               wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania,
                                            "trudność", "2PL",
                                            parTreshold$wartosc[kryteriaTres==krytNum]/parBy$wartosc[kryteriaBy==krytNum],
                                            parTreshold$'S.E.'[kryteriaTres==krytNum]/parBy$wartosc[kryteriaBy==krytNum] )
-              
-              
+
+
             } else if ( liczbaParam[k] > 1 ){ # model GRM
               dyskryminacja = parBy[kryteriaBy==krytNum,"wartosc"]
-              
+
               wstaw_do_skalowania_elementy (P, idSkali, kolejnoscTemp,
                                             numerSkalowania, "dyskryminacja",
                                             "GRM", dyskryminacja, parBy$'S.E.'[kryteriaBy==krytNum])
-              
+
               indTres = which(kryteriaTres==krytNum)
               srednia = mean(parTreshold[indTres, "wartosc"]) / parBy$wartosc[kryteriaBy==krytNum]
-              
+
               wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania,
                                            "trudność", "GRM", srednia, NULL)
-              
+
               for(m in indTres ){
                 nazwaPar = paste0("k", which(m==indTres))
-                
+
                 if( ! nazwaPar %in% nazwyParametrow ){
-                  insert = "INSERT INTO sl_parametry(parametr,opis) 
+                  insert = "INSERT INTO sl_parametry(parametr,opis)
                             values ( ? ,'kn - odchylenie krzywych opisujących poszczególne liczby punktów od średniej trudności całego zadania w modelu GRM')"
                   sqlExecute(P, insert, data = nazwaPar)
                 }
-                
+
                 wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania, nazwaPar, "GRM",
                                              parTreshold$wartosc[m]/parBy$wartosc[kryteriaBy==krytNum] - srednia,
                                              parTreshold$'S.E.'[m]/parBy$wartosc[kryteriaBy==krytNum])
               }
             }
-          } 
+          }
           sqlPrepare(P, "COMMIT;")
           sqlExecute(P)
           odbcClose(P)
@@ -218,7 +219,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
 #' @param zrodloODBC źródło danych ODBC.
 #' @param idSkali numer opisujący id skali
 #' @param kolejnosc liczba
-#' @param numerSkalowania liczba 
+#' @param numerSkalowania liczba
 #' @param nazwaParametru ciąg znaków określający nazwę parametru
 #' @param model ciąg znaków
 #' @param wartosc liczba
@@ -226,18 +227,18 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
 #' @return Funkcja nie zwraca żadnej wartości.
 wstaw_do_skalowania_elementy <- function(zrodloODBC, idSkali, kolejnosc, numerSkalowania,
                                          nazwaParametru, model, wartosc, odchylenie){
-  
+
   insSkalowania = paste0("INSERT INTO skalowania_elementy  (id_elementu, id_skali, kolejnosc,
                          skalowanie, parametr, model, wartosc, uwagi", ifelse(is.null(odchylenie), "",", bl_std"), ")
                          VALUES (nextval('skalowania_elementy_id_elementu_seq'), ?, ?, ?, ?, ?, ?,",
                          "''", ifelse(is.null(odchylenie), "", ", ?" ), ")"
                          )
-  
+
   if(is.null(odchylenie)){
-    sqlExecute(zrodloODBC, insSkalowania, 
+    sqlExecute(zrodloODBC, insSkalowania,
                data = data.frame(idSkali, kolejnosc, numerSkalowania, nazwaParametru, model, wartosc))
   } else{
-    sqlExecute(zrodloODBC, insSkalowania, 
+    sqlExecute(zrodloODBC, insSkalowania,
                data = data.frame(idSkali, kolejnosc, numerSkalowania, nazwaParametru, model, wartosc, odchylenie))
   }
   invisible(NULL)
@@ -276,7 +277,7 @@ wydziel_kryteria_pseudokryteria <- function(nazwy){
   poprawneKrytBy = grepl("^k_[0-9]", nazwy)
   poprawnePseudokrytBy = grepl("^p_[0-9]", nazwy)
   poprawneIinneKryteriaBy =  grepl("^([[:alnum:]]+_)+[[:digit:]]+", nazwy)
-  
+
   if(sum(! poprawneIinneKryteriaBy) > 0){
     stop("Nazwy nie pasujące do kryteriów i pseudokryteriów:\n",
          paste(nazwy[! poprawneIinneKryteriaBy], collapse="\n" ))
@@ -285,11 +286,11 @@ wydziel_kryteria_pseudokryteria <- function(nazwy){
     warning("Niepoprawne nazwy kryteriów:\n",
             paste(nazwy[poprawneIinneKryteriaBy & ! poprawneKrytBy & ! poprawnePseudokrytBy], collapse="\n" ))
   }
-  
+
   numery = as.numeric( sub("^[[:alnum:]]+_", "", nazwy) )
-  
+
   kryteria = numery[poprawneIinneKryteriaBy & ! poprawnePseudokrytBy]
   pseudokryteria = numery[poprawnePseudokrytBy]
-  
+
   return(list(kryteria=kryteria, pseudokryteria = pseudokryteria))
 }
