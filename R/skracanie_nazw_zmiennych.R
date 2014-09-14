@@ -86,9 +86,12 @@ zmien_nazwy_w_kroku_procedury = function(krok, nazwyDoZmiany) {
 
 	for (i in 1:length(krok$czescPomiarowa)) {
 		krok$czescPomiarowa[[i]]$zmienne = unlist(nazwyDoZmiany[krok$czescPomiarowa[[i]]$zmienne])
+		krok$wieleGrup$zmienneGrupujace = unlist(nazwyDoZmiany[krok$wieleGrup$zmienneGrupujace])
 		elementy = c("wartosciStartowe", "wartosciZakotwiczone", "ograniczeniaWartosci")
 		for (j in elementy) {
-			for (k in c("zmienna1", "zmienna2")) {
+      kolumny = c("zmienna1", "zmienna2")
+      if (is.character(krok$czescPomiarowa[[i]][[j]]$wartosc)) kolumny = c(kolumny, "wartosc")
+			for (k in kolumny) {
 				maska = krok$czescPomiarowa[[i]][[j]][, k] %in% names(nazwyDoZmiany)
 				krok$czescPomiarowa[[i]][[j]][maska, k] = unlist(nazwyDoZmiany[krok$czescPomiarowa[[i]][[j]][maska, k]])
 			}

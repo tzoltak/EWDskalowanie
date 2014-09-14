@@ -207,10 +207,75 @@ przygotuj_model = function(opisModelu) {
             )
           }
         }
+        if (!is.null(y$ograniczeniaWartosci)) {
+          dyskryminacje      = y$ograniczeniaWartosci[grep(paste0(       "^by", maskaGr, "$"), y$ograniczeniaWartosci$typ), ]
+          progi              = y$ograniczeniaWartosci[grep(paste0("^threshold", maskaGr, "$"), y$ograniczeniaWartosci$typ), ]
+          wariancje          = y$ograniczeniaWartosci[grep(paste0( "^variance", maskaGr, "$"), y$ograniczeniaWartosci$typ), ]  # to może być zarówno "variance" jak i "residual variance"
+          wartosciOczekiwane = y$ograniczeniaWartosci[grep(paste0(     "^mean", maskaGr, "$"), y$ograniczeniaWartosci$typ), ]
+          # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
+          # dodatkowa zabawa - jeśli coś już przypadkiem ma wartość zakotwiczoną, to nie przypisujemy temu wartości startowej
+          dyskryminacje = setNames(
+            as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
+            dyskryminacje$zmienna2[dyskryminacje$zmienna2 %in% zmienne]
+          )
+          dyskryminacje = unlist(dyskryminacje[y$zmienne[y$zmienne %in% names(dyskryminacje)]])
+          y$zmienne[zmienne %in% names(dyskryminacje)] = paste0(y$zmienne[zmienne %in% names(dyskryminacje)], " (", dyskryminacje, ")")
+          # z progami się tu niestety trzeba pobawić jeszcze więcej
+          if (nrow(progi) > 0) {
+            progi = with(progi, setNames(
+              paste0(" (", wartosc, ");"),
+              paste0(zmienna1, "$", zmienna2)
+            ))
+            maska = !(names(progi) %in% names(progiSyntax))
+            progiSyntax = c(
+              progiSyntax,
+              setNames(paste0("  [", names(progi)[maska], "]"), names(progi)[maska])
+            )
+            maska = names(progiSyntax) %in% names(progi)
+            progi = unlist(as.list(progi)[names(progiSyntax)[maska]])
+            progiSyntax[maska] = paste0(sub(";$", "", progiSyntax[maska]), progi)
+          }
+          # wariancje - choć w sumie te cuda trochę na wyrost
+          wariancje = wariancje[wariancje$zmienna1 == x, ]
+          if (nrow(wariancje) > 0) {
+            wariancje = with(wariancje, setNames(
+              paste0(" (", wartosc, ");"),
+              wariancje$zmienna1
+            ))
+            maska = !(names(wariancje) %in% names(wariancjeSyntax))
+            wariancjeSyntax = c(
+              wariancjeSyntax,
+              setNames(paste0("  [", names(wariancje)[maska], "]"), names(wariancje)[maska])
+            )
+            maska = names(wariancjeSyntax) %in% names(wariancje)
+            wariancje = unlist(as.list(wariancje)[names(wariancjeSyntax)[maska]])
+            wariancjeSyntax[maska] = paste0(sub(";$", "", wariancjeSyntax[maska]), wariancje)
+          }
+          # wartości oczekiwane - choć w sumie te cuda trochę na wyrost
+          wartosciOczekiwane = wartosciOczekiwane[wartosciOczekiwane$zmienna1 == x, ]
+          if (nrow(wartosciOczekiwane) > 0) {
+            wartosciOczekiwane = with(wartosciOczekiwane, setNames(
+              paste0(" (", wartosc, ");"),
+              wartosciOczekiwane$zmienna1
+            ))
+            maska = !(names(wartosciOczekiwane) %in% names(wartosciOczekiwaneSyntax))
+            wartosciOczekiwaneSyntax = c(
+              wartosciOczekiwaneSyntax,
+              setNames(paste0("  [", names(wartosciOczekiwane)[maska], "]"), names(wartosciOczekiwane)[maska])
+            )
+            maska = names(wartosciOczekiwaneSyntax) %in% names(wartosciOczekiwane)
+            wartosciOczekiwane = unlist(as.list(wartosciOczekiwane)[names(wartosciOczekiwaneSyntax)[maska]])
+            wartosciOczekiwaneSyntax[maska] = paste0(sub(";$", "", wartosciOczekiwaneSyntax[maska]), wartosciOczekiwane)
+          }
+        }
         # jeszcze trochę obsługi elementów 'rasch', 'var1' i 'e0'
         if (y$var1 & !any(grepl(paste0("^[ ]*", x, "@"), wariancjeSyntax))) {  # jeśli wariancja konstruktu ma być ustawiona na 1 i nie ma zakotwiczonych dyskryminacji
-          if (!grepl("[@*]", y$zmienne[1])) y$zmienne[1] = paste0(y$zmienne[1], "*")  # uwolnij dyskryminację pierwszej zmiennej związanej z konstruktem (dopisując '*' za jej nazwą)
-          wariancjeSyntax = paste0("  ", x, "@1;", wariancjeSyntax)  # i ustal wariancję konstruktu w 1
+          if (!grepl("[@*]", y$zmienne[1])) y$zmienne[1] = sub("^([^(]+)(| [(].*[)])$", "\\1*\\2", y$zmienne[1])  # uwolnij dyskryminację pierwszej zmiennej związanej z konstruktem (dopisując '*' za jej nazwą)
+          if (length(wariancjeSyntax) == 0) {
+            wariancjeSyntax = lam_wiersze(c(x, "@1"), 2, sep="")
+          } else {
+            wariancjeSyntax = sub("^([^(]+)(| [(].*[)])$", "\\1@1\\2", wariancjeSyntax)  # i ustal wariancję konstruktu w 1
+          }
         }
         if (y$rasch & !y$var1 & !any(grepl("@", y$zmienne))) {  # jeśli to ma być Rasch, dyskryminacje nie są zakotwiczone, a wariancja konstruktu ma być uwolniona
           wynik = c(lam_wiersze(c(x, "BY", paste0(y$zmienne, "@1")), 4))  # zakotwicz wartości wszystkich dyskryminacji w 1
@@ -220,7 +285,7 @@ przygotuj_model = function(opisModelu) {
         }
         else wynik = c(lam_wiersze(c(x, "BY", y$zmienne), 4))  # w innych przypadkach nie trzeba nic więcej cudować
         wynik[1] = substr(wynik[1], 3, nchar(wynik[1])) # wcinamy pierwszy wiersz o 2 znaki mniej, niż pozostałe
-        if (all(grepl("BY;", wynik))) {wynik=NULL}  # obsługa inwariancji pomiarowej w modelach wielogrupowych
+        if (all(grepl("BY(| @1);", wynik))) {wynik=NULL}  # obsługa inwariancji pomiarowej w modelach wielogrupowych
         if (length(wariancjeSyntax) == 0) wariancjeSyntax = lam_wiersze(c(x, "*"), 2, sep="")  # choć w zasadzie to niepotrzebne, dostawiamy do syntaxu polecenie opisujące wariancję konstruktu (w takim przypadku uwolnioną)
         if (length(wartosciOczekiwaneSyntax) == 0) {
           if (!e0) wynik = c(wynik, paste0(" [", x, "];"))  # uwalniamy wartość oczekiwaną konstruktu
@@ -235,6 +300,7 @@ przygotuj_model = function(opisModelu) {
       SIMPLIFY=FALSE
     ))
     model[[i]] = unname(c(opisModelu$wieleGrup[i], model[[i]]))
+    if (grepl("#", model[[i]][1])) model[[i]] = c("", model[[i]])  # linie odstępu przed definicjami kolejnych grup
   }
   return(model)
 }
@@ -246,12 +312,13 @@ przygotuj_model = function(opisModelu) {
 #' @param variable polecenia do bloku 'VARIABLE' - lista wektorów tekstowych z elmentami 'names', 'usevariables', 'categorical' i 'idvariable' oraz opcjonalnie 'missing' i/lub 'useobservations'
 #' @param analysis polecenie do bloku 'ANAlYSIS' - lista wektorów tekstowych z opcjonalnymi elementami 'estimator', 'processors', 'integration'
 #' @param model polecenia do bloku 'MODEL' - lista wektorów tekstowych, typowo będących wynikiem działania funkcji \code{\link{przygotuj_model}}
+#' @param modelConstraint ew. polecenia do bloku 'MODEL CONSTRAINT' wektor tekstowy
 #' @param output polecenia do bloku 'OUTPUT' - lista wektorów tekstowych
 #' @param savedata polecenia do bloku 'SAVEDATA' - lista wektorów tekstowych z opcjonalnymi elementami 'file' i 'save'
 #' @return wektorów tekstowy
 #' @details
 #' Elementy poszczególnych list, będących parametrami tej funkcji, są dosyć bezpośrednio wklejane do poleceń Mplusa. Jeśli chcesz zrozumieć, co to się dzieje, pewnie będziesz musiał posiłkować się manualem do Mplusa.
-przygotuj_inp = function(title="", data, variable, analysis=list(), model, output=list("STANDARDIZED", "TECH4", "TECH8"), savedata=list()) {
+przygotuj_inp = function(title="", data, variable, analysis=list(), model, modelConstraint=NULL, output=list("STANDARDIZED", "TECH4", "TECH8"), savedata=list()) {
   kod = c(
     paste0("TITLE: ", title),
     "",
@@ -285,10 +352,17 @@ przygotuj_inp = function(title="", data, variable, analysis=list(), model, outpu
   if ("integration" %in% names(analysis)) kod = c(kod, paste0("INTEGRATION IS ", analysis$integration, ";"))
   kod = c(kod,
           "",
-          "MODEL:"
+          "MODEL:",
+          unlist(model)
   )
+  if (!is.null(modelConstraint)) {
+    kod = c(kod,
+            "",
+            "MODEL CONSTRAINT:",
+            modelConstraint
+    )
+  }
   kod = c(kod,
-          unlist(model),
           "",
           "OUTPUT:",
           paste0(unlist(output), ifelse(length(output)>0,";",""))

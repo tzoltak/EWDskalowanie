@@ -14,7 +14,7 @@ procedura_matura_hm_gr(nazwyZmiennych, processors = 3)
 lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
 }
 \description{
-Procedura skalowania matury - przedmioty humanistyczne bez lauratów, w modelu wielogrupowym ze względu na typ szkoły.
+Procedura skalowania matury - przedmioty humanistyczne bez lauratów.
 Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
 }
 \examples{

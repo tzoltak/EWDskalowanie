@@ -12,32 +12,257 @@ skaluj(dane, opisProcedury, idObs, tytul = "", zmienneCiagle = NULL,
 
 \item{opisProcedury}{p. szczegóły}
 
-\item{idObs}{ciąg znaków z nazwą zmiennej będącej unikalnym identyfikatorem obserwacji (w \code{dane})}
+\item{idObs}{ciąg znaków z nazwą zmiennej będącej unikalnym identyfikatorem
+obserwacji (w \code{dane})}
 
-\item{tytul}{ciąg znaków, który będzie wstawiany w sekcji TITLE plików poleceń Mplusa, a jego 12 pierwszych znaków zostanie wykorzystane do tworzenia nazw plików z poleceniami Mplus}
+\item{tytul}{ciąg znaków, który będzie wstawiany w sekcji TITLE plików poleceń
+Mplusa, a jego 12 pierwszych znaków zostanie wykorzystane do tworzenia nazw plików
+z poleceniami Mplusa}
 
-\item{zmienneCiagle}{wektor tekstowy podający nazwy zmiennych, które mają być w analizie traktowane jako ciągłe (domyślnie wszystkie zmienne traktowane są jako porządkowe)}
+\item{zmienneCiagle}{wektor tekstowy podający nazwy zmiennych, które mają być
+w analizie traktowane jako ciągłe (domyślnie wszystkie zmienne traktowane są
+jako porządkowe)}
 
 \item{zmienneSpecjalne}{lista - na obecnym etapie rozwoju nie wykorzystywana}
 
-\item{zmienneDolaczaneDoOszacowan}{wektor tekstowy podajacy nazwy zmiennych, które mają zostać dołączone do zbioru(ów) z oszacowaniami natężania badanych cech}
+\item{zmienneDolaczaneDoOszacowan}{wektor tekstowy podajacy nazwy zmiennych,
+które mają zostać dołączone do zbioru(ów) z oszacowaniami natężania badanych cech}
 
-\item{zwrocOszacowania}{wartość logiczna - czy estymować (i zwrócić) również oszacowania natężenia badanych cech dla poszczególnych jednostek obserwacji?}
+\item{zwrocOszacowania}{wartość logiczna - czy estymować (i zwrócić) również
+oszacowania natężenia badanych cech dla poszczególnych jednostek obserwacji?}
 
-\item{usunFWF}{wartość logiczna - czy usuwać pliki o stałej szerokości, w których zapisywane są dane dla Mplusa?}
+\item{usunFWF}{wartość logiczna - czy usuwać pliki o stałej szerokości, w których
+zapisywane są dane dla Mplusa?}
 }
 \value{
-lista
+Lista, której każdy element opisuje wyniki skalowania każdego etapu procedury.
+Każdy jej elemement jest listą opisującą wyniki estymacji kolejnych kalibracji
+(których może być kilka, jeśli stosowano kryteria usuwania zadań). Elementy opisujące
+wyniki estymacji kalibracji są listami, składającymi sie z następujących elementów:
+\itemize{
+  \item{\code{podsumowanie} wektor tekstowy zawierający linie z pliku outputu Mplusa,
+        opisujące podsumowanie modelu i procesu estymacji.}
+  \item{\code{dopasowanie} data frame zawierający statystyki dopasowania modelu
+        (zwrócone przez Mplusa). UWaga, sposób przechowywania informacji w tym
+        data framie nie jest całkiem przyjazny (zanim coś z tym zrobisz, sprawdź,
+        jak to wygląda).}
+  \item{\code{parametry} lista składająca się z elementów: \code{surowe},
+        \code{stdyx}, \code{stdy}, \code{std} i \code{r2}, zawierająca wyestymowane
+        parametry modelu, odpowiednio: surowe, standaryzowane ze względu zarówno na
+        zmienną zależną jak i zmienną niezależną, standaryzowane tylko ze względu na
+        zmienną zależną, nie pamiętam co to za standaryzacja - sprawdź w dokumentacji
+        Mplusa i statystyki R-kwadrat.}
+  \item{\code{zapis} data frame zawierający wyliczone oszacowania (co do zasady EAP)
+        wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe,
+        a także zmienną/e z id obserwacji, ew. zmienne grupujące (w modelach
+        wielogrupowych) i zmienne wymienione w argumencie
+        \code{zmienneDolaczaneDoOszacowan}. Ten element występuje tylko, gdy funkcja
+        została wywołana z argumentem \code{zwrocOszacowania=TRUE} i w opisie danego
+        kroku procedury nie pojawiła się definicja \code{parametry$fscores=FALSE}.}
+  \item{\code{czas} wektor teskstowy zawierający linie z pliku outputu Mplusa,
+        opisujące czas estymacji modelu.}
+}
 }
 \description{
-Funkcja służąca do przeprowadzania potencjalnie złożonych procedur skalowania (typowo egzaminów) z wykorzystaniem Mplusa (a docelowo również pakietu \code{mirt}).
+Funkcja służąca do przeprowadzania potencjalnie złożonych procedur skalowania
+(typowo egzaminów) z wykorzystaniem Mplusa (a docelowo również pakietu \code{mirt}).
 }
 \details{
-Poniżej trzeba będzie dodać wyczerpujący opis parametru \code{opisProcedury}
+\bold{Struktura argumentu \code{opisProcedury}:}
+
+Argument \code{opisProcedury} jest listą, której kolejne elementy opisują kolejne
+zadania (kroki) w ramach procedury skalowania. Każdy jej element jest listą,
+składającą się z następujących elementów:
 \itemize{
-\item
-\item .
+  \item{\code{czescPomiarowa} lista zawierająca definicje konstruktów. Każdy jej
+        element musi mieć nazwę, składającą się wyłącznie z liter alfabetu łacińskiego
+        (ASCII) i cyfr (ale nie może zaczynać się od cyfry) i być listą, składającą
+        się z następujących elementów:
+        \itemize{
+          \item{\code{zmienne} jedno z dwóch:
+                \itemize{
+                  \item{Wektor tekstowy zawierający nazwy zmiennych (obserwowalnych)
+                        powiązanych z danym konstruktem.}
+                  \item{Lista \emph{definiująca konstrukt symbolicznie}, składająca
+                        się z:
+                        \itemize{
+                          \item{Prawostronnej formuły zawierającej nazwy konstruktów,
+                                występujących we wcześniejszych krokach procedury,
+                                z których (przynajmniej) niektóre zmienne mają zostać
+                                powiązane z właśnie definiowanym konstruktem.}
+                          \item{Dla każdego konstruktu występującego w ww. formule
+                                element listy o nazwie odpowiadającej nazwie
+                                konstruktu, zawierający wyrażenie regularne (ciąg
+                                znaków), identyfikujące (w grupie zmiennych
+                                powiązanych z danym konstruktem z któregoś
+                                z poprzednich kroków procedury) zmienne, które mają
+                                być wskaźnikami definiowanego właśnie konstruktu.}
+                        }}
+                }}
+          \item{\code{var1} opcjonalnie wartość logiczna - czy wariancja konstruktu
+                ma być zakotwiczona w jedności (a wszystkie ładunki
+                czynnikowe/dyskryminacje uwolnione)?  Jeśli element nie występuje,
+                funkcja \code{skaluj()} założy, że ma on wartość \code{TRUE}.}
+          \item{\code{rasch} opcjonalnie wartość logiczna - czy wszystkie
+               dyskryminacje w ramach konstruktu mają mieć równe wartości? Jeśli
+               element nie występuje, funkcja \code{skaluj()} założy, że ma on
+               wartość \code{FALSE}.}
+          \item{\code{kryteriaUsuwania} opcjonalnie lista zawierająca definicje
+                kryteriów usuwania pytan (zmiennych obserwowalnych). Obecnie
+                obsługiwane są:
+                \itemize{
+                  \item{\code{dyskryminacjaPonizej} liczba - zadania o dyskryminacji
+                        mniejszej niż zadany próg będą usuwane.}
+                  \item{\code{istotnoscPowyzej} liczba z zakresu (0;1] - zadania
+                        o wartości istotności parametru dyskryminacji większej niż
+                        zadany próg będą usuwane.}
+                  \item{\code{nigdyNieUsuwaj} wyrażenie regularne (ciąg znaków)
+                        identyfikujące nazwy zmiennych, które nigdy nie są usuwane
+                        (przydatne np. dla parametrów selekcji).}
+                }}
+          \item{\code{wartosciStartowe} data.frame zawierający ew. wartości startowe
+                dla (przynajmniej niektórych) parametrów modelu. Musi składać się
+                z kolumn:
+                \itemize{
+                  \item{\code{typ} typu "character", definiująca typ parametru: "by",
+                        "threshold", "mean" lub "variance".}
+                  \item{\code{zmienna1} typu "character". W przypadku parametrów "by",
+                        "mean" i "variance" zawiera nazwę konstruktu. W przypadku
+                        parametrów "threshold" zawiera nazwę zmiennej obserwowalnej.}
+                  \item{\code{zmienna2} typu "character". W przypadku parametrów "by"
+                        zawiera nazwę zmiennej obserwowalnej. W przypadku parametrów
+                        "threshold" zawiera numer progu (począwszy od 1). W przypadku
+                        parametrów "mean" i "variance" pusta.}
+                  \item{\code{wartosc} typu "numeric", zawiera wartość startową
+                        dla parametru.}
+                }
+                albo wartość \code{TRUE}. To drugie tylko w sytuacji, gdy konstrukt
+                jest definiowany w sposób \emph{symboliczny} - oznacza wtedy, że
+                wartości startowe mają zostać przepisane z wyników estymacji
+                w poprzednich krokach procedury.}
+          \item{\code{wartosciZakotwiczone} data frame o strukturze jw., z tym że
+                podane wartości parametrów definiują wartości zakotwiczone, albo
+                wartość \code{TRUE} (jw., tylko gdy konstrukt jest definiowany
+                w sposób \emph{symboliczny})}
+          \item{\code{ograniczeniaWartosci} jedno z dwojga:
+                \itemize{
+                  \item{Data frame o strukturze jw., poza tym, że kolumna 'wartosc'
+                        musi być typu "character". Podane w niej wartości parametrów
+                        definiują etykiety parametrów - jeśli kilka parametrów ma
+                        przypisaną tą samą etykietę, w estymacji nałożony zostanie na
+                        nie warunek, że muszą przyjmować taką samą wartość.}
+                  \item{Wektor wyrażeń regularnych (ciągów tekstu) identyfikujących
+                        grupy zmiennych obserwowalnych, w ramach których zachowana
+                        musi być taka sama suma wartości parametrów dyskryminacji.}
+                }
+        }}}
+  \item{\code{wieleGrup} opcjonalnie lista zawierająca specyfikację modelu
+        wielogrupowego (p . też sekcja \emph{Modele wielogrupowe} poniżej). Musi
+        zawierać elementy:
+        \itemize{
+          \item{\code{zmienneGrupujace} wektor tekstowy zawierający nazwy zmiennych,
+                których kombinacja wartości definiuje podział na grupy.}
+          \item{\code{uwolnijWartosciOczekiwane} wartość logiczna - czy uwolnić
+                wartości oczekiwane konstruktu w ramach grup? Jeśli element nie
+                występuje, funkcja \code{skaluj()} założy, że ma on wartość
+                \code{TRUE}.}
+          \item{\code{uwolnijWariancje} wartość logiczna - czy uwolnić wariancje
+                konstruktu w ramach grup? Jeśli element nie występuje, funkcja
+                \code{skaluj()} założy, że ma on wartość \code{TRUE}.}
+        }}
+  \item{\code{parametry} lista zawierająca parametry sterujące estymacją modelu.
+        Obecnie obsługiwane są:
+        \itemize{
+          \item{\code{estimator} ciąg znaków, który zostanie wstawiony w syntax
+                Mplusa jako wartość opcji \code{ESTIMATOR} w ramach komendy
+                \code{ANALYSIS}. Typowo \code{"MLR"}. \bold{Powinien być zawsze
+                podawany.}}
+          \item{\code{processors} liczba, która zostanie wstawiony w syntax Mplusa
+                jako wartość opcji \code{PROCESSORS} w ramach komendy \code{ANALYSIS}.}
+          \item{\code{integration} ciąg znaków, który zostanie wstawiony w syntax
+                Mplusa jako wartość opcji \code{INTEGRATION} w ramach komendy
+                \code{ANALYSIS}; typowo \code{"STANDARD (20)"}; \bold{Lepiej, by był
+                podany.}}
+          \item{\code{fscores} wartość logiczna - czy z kalibracji przeprowadzanych
+                w ramach danego zadania mają być zapisanywane pliki z ocenami
+                czynnikowymi? \bold{Jeśli przyjmuje wartość \code{FALSE}, ma
+                priorytet} nad "globalnym" argumentem \code{zwrocOszacowania},
+                z którym wywoływana jest funkcja \code{skaluj}.}
+        }}
 }
+\bold{Usuwanie zadań:}
+
+O ile zdefiniowane zostały kryteria usuwania, kalibracje w ramach danego kroku
+procedury ponawiane będą tak długo, aż we wszystkich konstruktach (w których
+zdefiniowane zostały kryteria usuwania) nie będzie już zadań (zmiennych
+obserwowalnych) kwalifikujących się do usunięcia.
+
+Po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności zadania
+z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
+dyskryminacji, to zadania z najwyższą wartością istotności dla parametru
+dyskryminacji.
+
+\bold{\emph{Symboliczne} definiowanie konstruktów:}
+
+Mechanizm ten przydaje się przede wszystkim w ramach wieloetapowych procedur
+skalowania modeli wielowymiarowych, gdzie początkowych krokach (etapach) dokonywane
+jest usunięcie zadań o szczególnie złych własnościach pomiarowych (realizowane
+w ramach oddzielnie estymowanych modeli jednowymiarowych, co pozwala zaoszczędzić
+czas). Jednocześnie wiedzę o tym, które pytania (zmienne obserwowalne) zostały
+usunięte chcemy wykorzystać podczas dalszych, bardziej złożonych etapów procedury
+(tak aby tam już nie przeszkadzały).
+
+\bold{Modele wielogrupowe:}
+
+Ogólnie rzecz biorąc możliwość estymacji modeli wielogrupowych dedykowana jest dla
+modeli z założeniem \bold{pełnej inwariancji pomiarowej} pomiędzy grupami, tj. przy
+założeniu, że część pomiarowa jest we wszystkich grupach identyczna, a różnią się one
+jedynie co do wartości oczekiwanych i/lub wariancji rozkładu cechy ukrytej.
+
+Zakotwiczenie wartości parametrów w ramach grup można osiągnąć standardowo przy pomocy
+elementu \code{wartościZakotwiczone} z tym, że w kolumnie \code{typ} należy podać
+\code{mean.grNR} lub \code{variance.grNR}, gdzie \code{NR} to numer grupy.
+
+Numery grup przypisywane są w ten sposób, że najpier wybierane są wszystkie
+\bold{występujące w danych} unikalne kombinacje wartości zmiennych definiujących
+grupowanie.
+Następnie układane są one w kolejności rosnącej według wartości pierwszej
+zmiennej, a w ramach kombinacji o takich samych wartościach pierwszej zmiennej,
+w kolejności według wartości drugiej zmiennej, itd. W związku z tym konieczne jest
+zachowanie \bold{daleko idącej ostrożności przy wykorzystywaniu wartości
+zakotwiczonych i/lub startowych} uzyskanych z wykonania funkcji \code{skaluj} na
+innych danych. Jeśli zestaw kombinacji zmiennych grupujących w jednych i drugich
+danych nie jest identyczny, to albo niemożliwa będzie estymacja modelu, albo, co
+gorsza, uzyska się nieoczekiwane wyniki.
+
+Estymacja modeli łamiących założenie o inwariancji pomiarowej w zasadzie jest możliwa,
+ale nie była testowana i nie ma gwarancji, że wszystko będzie działać dobrze.
+Uwolnienie parametrów w ramach grup można osiągnąć dodając dotyczące ich wpisy
+w elemecie \code{wartosciStartowe} danego konstruktu, przy czym w kolumnie \code{typ}
+należy podać \code{by.grNR} lub \code{threshold.grNR}, gdzie \code{NR} to numer grupy.
+Odpowiednio powinno działać również kotwiczenie parametrów w ramach grup przy pomocy
+elementu \code{wartosciZakotwiczone}.
+
+\bold{Ograniczenia na równość parametrów:}
+
+Funkcja umożliwia zastosowanie jednego z dwóch podejść do nakładania ograniczeń na
+równość parametrów. Nie mogą być one ze sobą łączone (chyba że podejście oparte na
+etykietach parametrów dotyczyć będzie parametrów innych niż dyskryminacja).
+
+Pierwsze - etykietowanie parametrów, które mają przyjmować takie same wartości -
+została opisana powyżej, w opisie struktury argumentu
+\code{opisProcedury$czescPomiarowa[[nr]]$ograniczeniaWartosci}.
+
+Drugie rozwiązanie jest bardzo specyficzne i odnosi się do sytuacji, w której chcemy,
+aby sumy wartości parametrów w ramach pewnych bloków zadań były sobie równe (taki
+nieco szalony pomysł na skolowanie matury). Można je zastosować podając jako wartość
+\code{opisProcedury$czescPomiarowa$ograniczeniaWartosci} wektor wyrażeń regularnych,
+z których każde wskazuje na nazwy zmiennych należących do jednej z ww. grup. Od strony
+technicznej wykorzystuje ono pierwszy mechaniz, tyle że odpowiednia data frame jest
+przygototwywana wewnątrz funcji \code{skaluj}. Nie może być stosowane razem
+z argumentem \code{opisProcedury$czescPomiarowa[[nr]]$rasch=TRUE}. Bardzo mało
+prawdopodobne, by dało się też sensowenie wykorzystać w modelach wielogrupowych
+łamiących założenie inwariancji pomiarowej.
 }
 \examples{
 # chwilowo brak

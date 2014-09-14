@@ -4,7 +4,8 @@
 \title{Przygotowywanie polecen Mplusa.}
 \usage{
 przygotuj_inp(title = "", data, variable, analysis = list(), model,
-  output = list("STANDARDIZED", "TECH4", "TECH8"), savedata = list())
+  modelConstraint = NULL, output = list("STANDARDIZED", "TECH4", "TECH8"),
+  savedata = list())
 }
 \arguments{
 \item{title}{tytuł pliku poleceń - tekst}
@@ -16,6 +17,8 @@ przygotuj_inp(title = "", data, variable, analysis = list(), model,
 \item{analysis}{polecenie do bloku 'ANAlYSIS' - lista wektorów tekstowych z opcjonalnymi elementami 'estimator', 'processors', 'integration'}
 
 \item{model}{polecenia do bloku 'MODEL' - lista wektorów tekstowych, typowo będących wynikiem działania funkcji \code{\link{przygotuj_model}}}
+
+\item{modelConstraint}{ew. polecenia do bloku 'MODEL CONSTRAINT' wektor tekstowy}
 
 \item{output}{polecenia do bloku 'OUTPUT' - lista wektorów tekstowych}
 

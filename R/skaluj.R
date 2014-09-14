@@ -1,22 +1,248 @@
 #' @title Skalowanie modeli IRT.
 #' @description
-#' Funkcja służąca do przeprowadzania potencjalnie złożonych procedur skalowania (typowo egzaminów) z wykorzystaniem Mplusa (a docelowo również pakietu \code{mirt}).
+#' Funkcja służąca do przeprowadzania potencjalnie złożonych procedur skalowania
+#' (typowo egzaminów) z wykorzystaniem Mplusa (a docelowo również pakietu \code{mirt}).
 #' @param dane data.frame z danymi
 #' @param opisProcedury p. szczegóły
-#' @param idObs ciąg znaków z nazwą zmiennej będącej unikalnym identyfikatorem obserwacji (w \code{dane})
-#' @param tytul ciąg znaków, który będzie wstawiany w sekcji TITLE plików poleceń Mplusa, a jego 12 pierwszych znaków zostanie wykorzystane do tworzenia nazw plików z poleceniami Mplus
-#' @param zmienneCiagle wektor tekstowy podający nazwy zmiennych, które mają być w analizie traktowane jako ciągłe (domyślnie wszystkie zmienne traktowane są jako porządkowe)
+#' @param idObs ciąg znaków z nazwą zmiennej będącej unikalnym identyfikatorem
+#' obserwacji (w \code{dane})
+#' @param tytul ciąg znaków, który będzie wstawiany w sekcji TITLE plików poleceń
+#' Mplusa, a jego 12 pierwszych znaków zostanie wykorzystane do tworzenia nazw plików
+#' z poleceniami Mplusa
+#' @param zmienneCiagle wektor tekstowy podający nazwy zmiennych, które mają być
+#' w analizie traktowane jako ciągłe (domyślnie wszystkie zmienne traktowane są
+#' jako porządkowe)
 #' @param zmienneSpecjalne lista - na obecnym etapie rozwoju nie wykorzystywana
-#' @param zwrocOszacowania wartość logiczna - czy estymować (i zwrócić) również oszacowania natężenia badanych cech dla poszczególnych jednostek obserwacji?
-#' @param zmienneDolaczaneDoOszacowan wektor tekstowy podajacy nazwy zmiennych, które mają zostać dołączone do zbioru(ów) z oszacowaniami natężania badanych cech
-#' @param usunFWF wartość logiczna - czy usuwać pliki o stałej szerokości, w których zapisywane są dane dla Mplusa?
+#' @param zwrocOszacowania wartość logiczna - czy estymować (i zwrócić) również
+#' oszacowania natężenia badanych cech dla poszczególnych jednostek obserwacji?
+#' @param zmienneDolaczaneDoOszacowan wektor tekstowy podajacy nazwy zmiennych,
+#' które mają zostać dołączone do zbioru(ów) z oszacowaniami natężania badanych cech
+#' @param usunFWF wartość logiczna - czy usuwać pliki o stałej szerokości, w których
+#' zapisywane są dane dla Mplusa?
 #' @details
-#' Poniżej trzeba będzie dodać wyczerpujący opis parametru \code{opisProcedury}
+#' \bold{Struktura argumentu \code{opisProcedury}:}
+#'
+#' Argument \code{opisProcedury} jest listą, której kolejne elementy opisują kolejne
+#' zadania (kroki) w ramach procedury skalowania. Każdy jej element jest listą,
+#' składającą się z następujących elementów:
 #' \itemize{
-#' \item
-#' \item .
+#'   \item{\code{czescPomiarowa} lista zawierająca definicje konstruktów. Każdy jej
+#'         element musi mieć nazwę, składającą się wyłącznie z liter alfabetu łacińskiego
+#'         (ASCII) i cyfr (ale nie może zaczynać się od cyfry) i być listą, składającą
+#'         się z następujących elementów:
+#'         \itemize{
+#'           \item{\code{zmienne} jedno z dwóch:
+#'                 \itemize{
+#'                   \item{Wektor tekstowy zawierający nazwy zmiennych (obserwowalnych)
+#'                         powiązanych z danym konstruktem.}
+#'                   \item{Lista \emph{definiująca konstrukt symbolicznie}, składająca
+#'                         się z:
+#'                         \itemize{
+#'                           \item{Prawostronnej formuły zawierającej nazwy konstruktów,
+#'                                 występujących we wcześniejszych krokach procedury,
+#'                                 z których (przynajmniej) niektóre zmienne mają zostać
+#'                                 powiązane z właśnie definiowanym konstruktem.}
+#'                           \item{Dla każdego konstruktu występującego w ww. formule
+#'                                 element listy o nazwie odpowiadającej nazwie
+#'                                 konstruktu, zawierający wyrażenie regularne (ciąg
+#'                                 znaków), identyfikujące (w grupie zmiennych
+#'                                 powiązanych z danym konstruktem z któregoś
+#'                                 z poprzednich kroków procedury) zmienne, które mają
+#'                                 być wskaźnikami definiowanego właśnie konstruktu.}
+#'                         }}
+#'                 }}
+#'           \item{\code{var1} opcjonalnie wartość logiczna - czy wariancja konstruktu
+#'                 ma być zakotwiczona w jedności (a wszystkie ładunki
+#'                 czynnikowe/dyskryminacje uwolnione)?  Jeśli element nie występuje,
+#'                 funkcja \code{skaluj()} założy, że ma on wartość \code{TRUE}.}
+#'           \item{\code{rasch} opcjonalnie wartość logiczna - czy wszystkie
+#'                dyskryminacje w ramach konstruktu mają mieć równe wartości? Jeśli
+#'                element nie występuje, funkcja \code{skaluj()} założy, że ma on
+#'                wartość \code{FALSE}.}
+#'           \item{\code{kryteriaUsuwania} opcjonalnie lista zawierająca definicje
+#'                 kryteriów usuwania pytan (zmiennych obserwowalnych). Obecnie
+#'                 obsługiwane są:
+#'                 \itemize{
+#'                   \item{\code{dyskryminacjaPonizej} liczba - zadania o dyskryminacji
+#'                         mniejszej niż zadany próg będą usuwane.}
+#'                   \item{\code{istotnoscPowyzej} liczba z zakresu (0;1] - zadania
+#'                         o wartości istotności parametru dyskryminacji większej niż
+#'                         zadany próg będą usuwane.}
+#'                   \item{\code{nigdyNieUsuwaj} wyrażenie regularne (ciąg znaków)
+#'                         identyfikujące nazwy zmiennych, które nigdy nie są usuwane
+#'                         (przydatne np. dla parametrów selekcji).}
+#'                 }}
+#'           \item{\code{wartosciStartowe} data.frame zawierający ew. wartości startowe
+#'                 dla (przynajmniej niektórych) parametrów modelu. Musi składać się
+#'                 z kolumn:
+#'                 \itemize{
+#'                   \item{\code{typ} typu "character", definiująca typ parametru: "by",
+#'                         "threshold", "mean" lub "variance".}
+#'                   \item{\code{zmienna1} typu "character". W przypadku parametrów "by",
+#'                         "mean" i "variance" zawiera nazwę konstruktu. W przypadku
+#'                         parametrów "threshold" zawiera nazwę zmiennej obserwowalnej.}
+#'                   \item{\code{zmienna2} typu "character". W przypadku parametrów "by"
+#'                         zawiera nazwę zmiennej obserwowalnej. W przypadku parametrów
+#'                         "threshold" zawiera numer progu (począwszy od 1). W przypadku
+#'                         parametrów "mean" i "variance" pusta.}
+#'                   \item{\code{wartosc} typu "numeric", zawiera wartość startową
+#'                         dla parametru.}
+#'                 }
+#'                 albo wartość \code{TRUE}. To drugie tylko w sytuacji, gdy konstrukt
+#'                 jest definiowany w sposób \emph{symboliczny} - oznacza wtedy, że
+#'                 wartości startowe mają zostać przepisane z wyników estymacji
+#'                 w poprzednich krokach procedury.}
+#'           \item{\code{wartosciZakotwiczone} data frame o strukturze jw., z tym że
+#'                 podane wartości parametrów definiują wartości zakotwiczone, albo
+#'                 wartość \code{TRUE} (jw., tylko gdy konstrukt jest definiowany
+#'                 w sposób \emph{symboliczny})}
+#'           \item{\code{ograniczeniaWartosci} jedno z dwojga:
+#'                 \itemize{
+#'                   \item{Data frame o strukturze jw., poza tym, że kolumna 'wartosc'
+#'                         musi być typu "character". Podane w niej wartości parametrów
+#'                         definiują etykiety parametrów - jeśli kilka parametrów ma
+#'                         przypisaną tą samą etykietę, w estymacji nałożony zostanie na
+#'                         nie warunek, że muszą przyjmować taką samą wartość.}
+#'                   \item{Wektor wyrażeń regularnych (ciągów tekstu) identyfikujących
+#'                         grupy zmiennych obserwowalnych, w ramach których zachowana
+#'                         musi być taka sama suma wartości parametrów dyskryminacji.}
+#'                 }
+#'         }}}
+#'   \item{\code{wieleGrup} opcjonalnie lista zawierająca specyfikację modelu
+#'         wielogrupowego (p . też sekcja \emph{Modele wielogrupowe} poniżej). Musi
+#'         zawierać elementy:
+#'         \itemize{
+#'           \item{\code{zmienneGrupujace} wektor tekstowy zawierający nazwy zmiennych,
+#'                 których kombinacja wartości definiuje podział na grupy.}
+#'           \item{\code{uwolnijWartosciOczekiwane} wartość logiczna - czy uwolnić
+#'                 wartości oczekiwane konstruktu w ramach grup? Jeśli element nie
+#'                 występuje, funkcja \code{skaluj()} założy, że ma on wartość
+#'                 \code{TRUE}.}
+#'           \item{\code{uwolnijWariancje} wartość logiczna - czy uwolnić wariancje
+#'                 konstruktu w ramach grup? Jeśli element nie występuje, funkcja
+#'                 \code{skaluj()} założy, że ma on wartość \code{TRUE}.}
+#'         }}
+#'   \item{\code{parametry} lista zawierająca parametry sterujące estymacją modelu.
+#'         Obecnie obsługiwane są:
+#'         \itemize{
+#'           \item{\code{estimator} ciąg znaków, który zostanie wstawiony w syntax
+#'                 Mplusa jako wartość opcji \code{ESTIMATOR} w ramach komendy
+#'                 \code{ANALYSIS}. Typowo \code{"MLR"}. \bold{Powinien być zawsze
+#'                 podawany.}}
+#'           \item{\code{processors} liczba, która zostanie wstawiony w syntax Mplusa
+#'                 jako wartość opcji \code{PROCESSORS} w ramach komendy \code{ANALYSIS}.}
+#'           \item{\code{integration} ciąg znaków, który zostanie wstawiony w syntax
+#'                 Mplusa jako wartość opcji \code{INTEGRATION} w ramach komendy
+#'                 \code{ANALYSIS}; typowo \code{"STANDARD (20)"}; \bold{Lepiej, by był
+#'                 podany.}}
+#'           \item{\code{fscores} wartość logiczna - czy z kalibracji przeprowadzanych
+#'                 w ramach danego zadania mają być zapisanywane pliki z ocenami
+#'                 czynnikowymi? \bold{Jeśli przyjmuje wartość \code{FALSE}, ma
+#'                 priorytet} nad "globalnym" argumentem \code{zwrocOszacowania},
+#'                 z którym wywoływana jest funkcja \code{skaluj}.}
+#'         }}
 #' }
-#' @return lista
+#' \bold{Usuwanie zadań:}
+#'
+#' O ile zdefiniowane zostały kryteria usuwania, kalibracje w ramach danego kroku
+#' procedury ponawiane będą tak długo, aż we wszystkich konstruktach (w których
+#' zdefiniowane zostały kryteria usuwania) nie będzie już zadań (zmiennych
+#' obserwowalnych) kwalifikujących się do usunięcia.
+#'
+#' Po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności zadania
+#' z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
+#' dyskryminacji, to zadania z najwyższą wartością istotności dla parametru
+#' dyskryminacji.
+#'
+#' \bold{\emph{Symboliczne} definiowanie konstruktów:}
+#'
+#' Mechanizm ten przydaje się przede wszystkim w ramach wieloetapowych procedur
+#' skalowania modeli wielowymiarowych, gdzie początkowych krokach (etapach) dokonywane
+#' jest usunięcie zadań o szczególnie złych własnościach pomiarowych (realizowane
+#' w ramach oddzielnie estymowanych modeli jednowymiarowych, co pozwala zaoszczędzić
+#' czas). Jednocześnie wiedzę o tym, które pytania (zmienne obserwowalne) zostały
+#' usunięte chcemy wykorzystać podczas dalszych, bardziej złożonych etapów procedury
+#' (tak aby tam już nie przeszkadzały).
+#'
+#' \bold{Modele wielogrupowe:}
+#'
+#' Ogólnie rzecz biorąc możliwość estymacji modeli wielogrupowych dedykowana jest dla
+#' modeli z założeniem \bold{pełnej inwariancji pomiarowej} pomiędzy grupami, tj. przy
+#' założeniu, że część pomiarowa jest we wszystkich grupach identyczna, a różnią się one
+#' jedynie co do wartości oczekiwanych i/lub wariancji rozkładu cechy ukrytej.
+#'
+#' Zakotwiczenie wartości parametrów w ramach grup można osiągnąć standardowo przy pomocy
+#' elementu \code{wartościZakotwiczone} z tym, że w kolumnie \code{typ} należy podać
+#' \code{mean.grNR} lub \code{variance.grNR}, gdzie \code{NR} to numer grupy.
+#'
+#' Numery grup przypisywane są w ten sposób, że najpier wybierane są wszystkie
+#' \bold{występujące w danych} unikalne kombinacje wartości zmiennych definiujących
+#' grupowanie.
+#' Następnie układane są one w kolejności rosnącej według wartości pierwszej
+#' zmiennej, a w ramach kombinacji o takich samych wartościach pierwszej zmiennej,
+#' w kolejności według wartości drugiej zmiennej, itd. W związku z tym konieczne jest
+#' zachowanie \bold{daleko idącej ostrożności przy wykorzystywaniu wartości
+#' zakotwiczonych i/lub startowych} uzyskanych z wykonania funkcji \code{skaluj} na
+#' innych danych. Jeśli zestaw kombinacji zmiennych grupujących w jednych i drugich
+#' danych nie jest identyczny, to albo niemożliwa będzie estymacja modelu, albo, co
+#' gorsza, uzyska się nieoczekiwane wyniki.
+#'
+#' Estymacja modeli łamiących założenie o inwariancji pomiarowej w zasadzie jest możliwa,
+#' ale nie była testowana i nie ma gwarancji, że wszystko będzie działać dobrze.
+#' Uwolnienie parametrów w ramach grup można osiągnąć dodając dotyczące ich wpisy
+#' w elemecie \code{wartosciStartowe} danego konstruktu, przy czym w kolumnie \code{typ}
+#' należy podać \code{by.grNR} lub \code{threshold.grNR}, gdzie \code{NR} to numer grupy.
+#' Odpowiednio powinno działać również kotwiczenie parametrów w ramach grup przy pomocy
+#' elementu \code{wartosciZakotwiczone}.
+#'
+#' \bold{Ograniczenia na równość parametrów:}
+#'
+#' Funkcja umożliwia zastosowanie jednego z dwóch podejść do nakładania ograniczeń na
+#' równość parametrów. Nie mogą być one ze sobą łączone (chyba że podejście oparte na
+#' etykietach parametrów dotyczyć będzie parametrów innych niż dyskryminacja).
+#'
+#' Pierwsze - etykietowanie parametrów, które mają przyjmować takie same wartości -
+#' została opisana powyżej, w opisie struktury argumentu
+#' \code{opisProcedury$czescPomiarowa[[nr]]$ograniczeniaWartosci}.
+#'
+#' Drugie rozwiązanie jest bardzo specyficzne i odnosi się do sytuacji, w której chcemy,
+#' aby sumy wartości parametrów w ramach pewnych bloków zadań były sobie równe (taki
+#' nieco szalony pomysł na skolowanie matury). Można je zastosować podając jako wartość
+#' \code{opisProcedury$czescPomiarowa$ograniczeniaWartosci} wektor wyrażeń regularnych,
+#' z których każde wskazuje na nazwy zmiennych należących do jednej z ww. grup. Od strony
+#' technicznej wykorzystuje ono pierwszy mechaniz, tyle że odpowiednia data frame jest
+#' przygototwywana wewnątrz funcji \code{skaluj}. Nie może być stosowane razem
+#' z argumentem \code{opisProcedury$czescPomiarowa[[nr]]$rasch=TRUE}. Bardzo mało
+#' prawdopodobne, by dało się też sensowenie wykorzystać w modelach wielogrupowych
+#' łamiących założenie inwariancji pomiarowej.
+#' @return
+#' Lista, której każdy element opisuje wyniki skalowania każdego etapu procedury.
+#' Każdy jej elemement jest listą opisującą wyniki estymacji kolejnych kalibracji
+#' (których może być kilka, jeśli stosowano kryteria usuwania zadań). Elementy opisujące
+#' wyniki estymacji kalibracji są listami, składającymi sie z następujących elementów:
+#' \itemize{
+#'   \item{\code{podsumowanie} wektor tekstowy zawierający linie z pliku outputu Mplusa,
+#'         opisujące podsumowanie modelu i procesu estymacji.}
+#'   \item{\code{dopasowanie} data frame zawierający statystyki dopasowania modelu
+#'         (zwrócone przez Mplusa). UWaga, sposób przechowywania informacji w tym
+#'         data framie nie jest całkiem przyjazny (zanim coś z tym zrobisz, sprawdź,
+#'         jak to wygląda).}
+#'   \item{\code{parametry} lista składająca się z elementów: \code{surowe},
+#'         \code{stdyx}, \code{stdy}, \code{std} i \code{r2}, zawierająca wyestymowane
+#'         parametry modelu, odpowiednio: surowe, standaryzowane ze względu zarówno na
+#'         zmienną zależną jak i zmienną niezależną, standaryzowane tylko ze względu na
+#'         zmienną zależną, nie pamiętam co to za standaryzacja - sprawdź w dokumentacji
+#'         Mplusa i statystyki R-kwadrat.}
+#'   \item{\code{zapis} data frame zawierający wyliczone oszacowania (co do zasady EAP)
+#'         wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe,
+#'         a także zmienną/e z id obserwacji, ew. zmienne grupujące (w modelach
+#'         wielogrupowych) i zmienne wymienione w argumencie
+#'         \code{zmienneDolaczaneDoOszacowan}. Ten element występuje tylko, gdy funkcja
+#'         została wywołana z argumentem \code{zwrocOszacowania=TRUE} i w opisie danego
+#'         kroku procedury nie pojawiła się definicja \code{parametry$fscores=FALSE}.}
+#'   \item{\code{czas} wektor teskstowy zawierający linie z pliku outputu Mplusa,
+#'         opisujące czas estymacji modelu.}
+#' }
 #' @examples
 #' # chwilowo brak
 #' @export
@@ -40,7 +266,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   # wywalanie zmiennych posiadających same braki danych
   maskaSameNA = unlist(lapply(dane, function(x) return(all(is.na(x)))))
   if (any(maskaSameNA)) {
-    warning(paste0("Z danych usunięto zmienne, które przyjmowały wyłącznie wartości 'brak danych':\n - ", paste0(names(dane)[maskaSameNA], collapse="\n - "), "\n"), immediate.=TRUE)
+    warning(paste0("Z danych usunięto zmienne, które przyjmowały wyłącznie wartości 'brak danych':\n - ", paste0(names(dane)[maskaSameNA], collapse="\n  - "), "\n"), immediate.=TRUE)
     opisProcesury = lapply(opisProcedury,
                            function(x, zmienneSameNA) {
                              x$czescPomiarowa = lapply(x$czescPomiarowa,
@@ -58,7 +284,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   # wywalanie zmiennych z zerową wariancją
   maskaWariancja0 = unlist(lapply(dane, function(x) return(length(unique(na.omit(x))) == 1)))
   if (any(maskaWariancja0)) {
-    warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n - ", paste0(names(dane)[maskaWariancja0], collapse="\n - "), "\n"), immediate.=TRUE)
+    warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n - ", paste0(names(dane)[maskaWariancja0], collapse="\n  - "), "\n"), immediate.=TRUE)
     opisProcedury = lapply(opisProcedury,
                            function(x, zmienneWariancja0) {
                              x$czescPomiarowa = lapply(x$czescPomiarowa,
@@ -75,14 +301,14 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   }
   # sprawdzanie, czy zmienne występują w danych
   stopifnot(
-  	all(idObs %in% names(dane)),
-  	all(zmienneCiagle %in% names(dane)),
-  	all(zmienneDolaczaneDoOszacowan %in% names(dane))
+    all(idObs %in% names(dane)),
+    all(zmienneCiagle %in% names(dane)),
+    all(zmienneDolaczaneDoOszacowan %in% names(dane))
   )
   # sprawdzanie poprawności struktury argumentu opisProcedury
   dozwoloneElementy = list(
     krok             = c("czescPomiarowa", "wieleGrup", "parametry"),
-    konstrukt        = c("zmienne", "var1", "rasch", "kryteriaUsuwania", "wartosciStartowe", "wartosciZakotwiczone"),
+    konstrukt        = c("zmienne", "var1", "rasch", "kryteriaUsuwania", "wartosciStartowe", "wartosciZakotwiczone", "ograniczeniaWartosci"),
     kryteriaUsuwania = c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj"),
     parametry        = c("estimator", "processors", "integration", "fscores"),
     wartosci         = c("typ", "zmienna1", "zmienna2", "wartosc"),  # akurat te w roli niezbędnych, a nie dozwolonych
@@ -145,8 +371,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       if (!is.null(konstrukt$wartosciStartowe)) {
         if (is.vector(konstrukt$wartosciStartowe)) {
           if (!all(konstrukt$wartosciStartowe %in% c(TRUE)) | length(konstrukt$wartosciStartowe) > 1 | !is.list(konstrukt$zmienne)) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'wartosciStartowe' może przyjąć wartość 'TRUE' tylko, jeśli konstrukt jest zdefiniowany symbolicznie.\n"))
-        }
-        else{
+        } else {
           blad = paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'wartosciStartowe' musi być data framem z kolumnami 'typ' (character), 'zmienna1' (character), 'zmienna2' (character), 'wartosc' (numeric).\n")
           if (!is.data.frame(konstrukt$wartosciStartowe)) {
             stop(blad)
@@ -189,40 +414,57 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
           if (nrow(konflikty) > 0) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nKonflikt elementów 'wartosciStartowe' i 'wartosciZakotwiczone' (nie chce mi się pisać kodu, który powiedział by Ci dokładnie, co się dubluje).\n"))
         }
       }
+      # sprawdzanie poprawności komponentu 'ograniczeniaWartosci'
+      if (!is.null(konstrukt$ograniczeniaWartosci)) {
+        if (opisProcedury[[i]]$czescPomiarowa[[j]]$rasch == TRUE) stop("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'ograniczeniaWartosci' nie może być zdefiniowany, jeśli element 'rasch' przyjmuje wartość TRUE.\n")
+        if (is.vector(konstrukt$ograniczeniaWartosci)) {
+          if (!is.character(konstrukt$ograniczeniaWartosci) | length(konstrukt$ograniczeniaWartosci) < 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'ograniczeniaWartosci' jest niepoprawny.\n"))
+        } else {
+          blad = paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], ".\nElement 'ograniczeniaWartosci' musi być data framem z kolumnami 'typ' (character), 'zmienna1' (character), 'zmienna2' (character), 'wartosc' (character).\n")
+          if (!is.data.frame(konstrukt$ograniczeniaWartosci)) {
+            stop(blad)
+          } else if (!all(dozwoloneElementy$wartosci %in% names(konstrukt$ograniczeniaWartosci))) {
+            stop(blad)
+          } else if (!(with(konstrukt$ograniczeniaWartosci, {mode(typ) == "character" & mode(zmienna1) == "character" & mode(zmienna2) == "character" & mode(wartosc) == "character"}))) {
+            stop(blad)
+          }
+        }
+      }
     }
     # sprawdzanie poprawności elementu 'wieleGrup' (o ile jest)
     if (!("parametry" %in% names(krok))) opisProcedury[[i]]$wieleGrup = NULL
     wieleGrup = opisProcedury[[i]]$wieleGrup
     if (!is.null(wieleGrup)) {
-    	if (!all(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' pojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(wieleGrup)[!(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
+      if (!all(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)) warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' pojawiły się elementy listy, które nie są rozpoznawane przez funkcję:\n - ", paste0(names(wieleGrup)[!(names(wieleGrup) %in% dozwoloneElementy$wieleGrup)], collapse="\n - "), "\nZostaną one przez funkcję pominięte.\n"), immediate.=TRUE)
 
-    	# sprawdzanie poprawności komponentu 'zmienneGrupujace'
-    	if (!"zmienneGrupujace" %in% names(wieleGrup)) {
-    		opisProcedury[[i]]$wieleGrup = NULL
-    		warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowano element 'wieleGrup', ale nie zdefiniowano w nim elementu 'zmienneGrupujace'.\nModel zostanie wyestymowany jako przy założeniu homogeniczności populacji (bez podziału na grupy)."), immediate.=TRUE)
-    	}
-    	if (!is.character(wieleGrup$zmienneGrupujace) | length(wieleGrup$zmienneGrupujace) < 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'zmienneGrupujace' musi być wektorem tekstowym (typu character), podającym nazwy zmiennych mierzalnych związanych z konstruktem.\n"))
-   		if (!all(wieleGrup$zmienneGrupujace %in% names(dane))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'zmienneGrupujace' elementu 'wieleGrup' podane zostały nazwy zmiennych, które nie występują w danych:\n - ", paste0(wieleGrup$zmienneGrupujace[!(wieleGrup$zmienneGrupujace %in% names(dane))], collapse="\n - "), "\n"))
-    	# i dwa pozostałe
-    	if (!("uwolnijWartosciOczekiwane" %in% names(wieleGrup))) {
-    		opisProcedury[[i]]$wieleGrup$uwolnijWartosciOczekiwane = TRUE
-    	} else {
-    		if (length(wieleGrup$uwolnijWartosciOczekiwane) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
-    		if (!(wieleGrup$uwolnijWartosciOczekiwane %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
-    	}
-    	if (!("uwolnijWariancje" %in% names(wieleGrup))) {
-    		opisProcedury[[i]]$wieleGrup$uwolnijWariancje = TRUE
-    	} else {
-    		if (length(wieleGrup$uwolnijWariancje) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
-    		if (!(wieleGrup$uwolnijWariancje %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
-    	}
-    	# tworzenie zmiennej opisującej podział na grupy w obiekcie 'dane'
-    	if (paste0("gr_tmp", i) %in% names(dane)) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowany został model wielogrupowy.\nW takim przypadku w danych nie może występować zmienna o nazwie zaczynającej się od 'gr_tmp'."))
-    	grupyMapowanie[[i]] = unique(dane[, wieleGrup$zmienneGrupujace, drop=FALSE])
-    	grupyMapowanie[[i]] = cbind(gr_tmp=1:nrow(grupyMapowanie[[i]]), grupyMapowanie[[i]])
-    	names(grupyMapowanie[[i]]) = sub("gr_tmp", paste0("gr_tmp", i), names(grupyMapowanie[[i]]))
-    	dane = merge(dane, grupyMapowanie[[i]], all.x=TRUE)
-    	if (any(is.na(dane[, paste0("gr_tmp", i)]))) stop("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' podane zmienne nie definiują wyczerpującego podziału na grupy.")
+      # sprawdzanie poprawności komponentu 'zmienneGrupujace'
+      if (!"zmienneGrupujace" %in% names(wieleGrup)) {
+        opisProcedury[[i]]$wieleGrup = NULL
+        warning(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowano element 'wieleGrup', ale nie zdefiniowano w nim elementu 'zmienneGrupujace'.\nModel zostanie wyestymowany jako przy założeniu homogeniczności populacji (bez podziału na grupy)."), immediate.=TRUE)
+      }
+      if (!is.character(wieleGrup$zmienneGrupujace) | length(wieleGrup$zmienneGrupujace) < 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'zmienneGrupujace' musi być wektorem tekstowym (typu character), podającym nazwy zmiennych mierzalnych związanych z konstruktem.\n"))
+      if (!all(wieleGrup$zmienneGrupujace %in% names(dane))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'zmienneGrupujace' elementu 'wieleGrup' podane zostały nazwy zmiennych, które nie występują w danych:\n - ", paste0(wieleGrup$zmienneGrupujace[!(wieleGrup$zmienneGrupujace %in% names(dane))], collapse="\n - "), "\n"))
+      # i dwa pozostałe
+      if (!("uwolnijWartosciOczekiwane" %in% names(wieleGrup))) {
+        opisProcedury[[i]]$wieleGrup$uwolnijWartosciOczekiwane = TRUE
+      } else {
+        if (length(wieleGrup$uwolnijWartosciOczekiwane) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
+        if (!(wieleGrup$uwolnijWartosciOczekiwane %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWartosciOczekiwane' musi być jednoelementowym wektorem logicznym."))
+      }
+      if (!("uwolnijWariancje" %in% names(wieleGrup))) {
+        opisProcedury[[i]]$wieleGrup$uwolnijWariancje = TRUE
+      } else {
+        if (length(wieleGrup$uwolnijWariancje) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
+        if (!(wieleGrup$uwolnijWariancje %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
+      }
+      # tworzenie zmiennej opisującej podział na grupy w obiekcie 'dane'
+      if (paste0("gr_tmp", i) %in% names(dane)) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowany został model wielogrupowy.\nW takim przypadku w danych nie może występować zmienna o nazwie zaczynającej się od 'gr_tmp'."))
+      grupyMapowanie[[i]] = unique(dane[, wieleGrup$zmienneGrupujace, drop=FALSE])
+      for (j in ncol(grupyMapowanie[[i]]):1) grupyMapowanie[[i]] = grupyMapowanie[[i]][order(grupyMapowanie[[i]][, j]), , drop=FALSE]  # posortujmy to jeszcze tak, żeby numery grup nie były zbyt przypadkowe (może to mieć znaczenie, jak się chce robić dziwne rzeczy z modelami łamiącymi założenie inwariancji pomiarowej)
+      grupyMapowanie[[i]] = cbind(gr_tmp=1:nrow(grupyMapowanie[[i]]), grupyMapowanie[[i]])
+      names(grupyMapowanie[[i]]) = sub("gr_tmp", paste0("gr_tmp", i), names(grupyMapowanie[[i]]))
+      dane = merge(dane, grupyMapowanie[[i]], all.x=TRUE)
+      if (any(is.na(dane[, paste0("gr_tmp", i)]))) stop("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' podane zmienne nie definiują wyczerpującego podziału na grupy.")
     }
     # sprawdzanie poprawności parametrów estymacji
     if (!("parametry" %in% names(krok))) opisProcedury[[i]]$parametry = list()
@@ -253,14 +495,14 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   # rozszerzone id obserwacji
   if (any(idObs == "id_temp")) stop("Parametr idObs nie może mieć przypisanej wartości 'id_temp'.")
   if (length(idObs) > 1) {
-  	if ("id_temp" %in% names(dane)) stop("Niestety jeśli argument idObs wskazuje kilka zmiennych, to w danych nie może znajdować się kolumna o nazwie 'id_temp'.")
-  	idObsMapowanie = unique(dane[, idObs])
-  	if (nrow(idObsMapowanie) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
-  	idObsMapowanie = cbind(id_temp=1:nrow(idObsMapowanie), idObsMapowanie)
-  	dane = merge(dane, idObsMapowanie)
-  	idObs = "id_temp"
+    if ("id_temp" %in% names(dane)) stop("Niestety jeśli argument idObs wskazuje kilka zmiennych, to w danych nie może znajdować się kolumna o nazwie 'id_temp'.")
+    idObsMapowanie = unique(dane[, idObs])
+    if (nrow(idObsMapowanie) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
+    idObsMapowanie = cbind(id_temp=1:nrow(idObsMapowanie), idObsMapowanie)
+    dane = merge(dane, idObsMapowanie)
+    idObs = "id_temp"
   } else if (length(idObs) == 1) {
-  	if (length(unique(dane[, idObs])) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
+    if (length(unique(dane[, idObs])) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
   }
   # zapis pliku z danymi w formie stałoszerokościowej
   message("Zapis danych do pliku tekstowego o stałej szerokości kolumn...")
@@ -274,21 +516,21 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   maxLZn = 8
   nazwyKonstruktow = unlist(lapply(opisProcedury, function(x) {return(names(x$czescPomiarowa))}))
   if (max(nchar(nazwyKonstruktow)) > maxLZn) {
-  	nazwyKonstruktowSkrocone = skroc_nazwy_zmiennych(nazwyKonstruktow, maxLZn)
+    nazwyKonstruktowSkrocone = skroc_nazwy_zmiennych(nazwyKonstruktow, maxLZn)
   } else {
-  	nazwyKonstruktowSkrocone = nazwyKonstruktow
+    nazwyKonstruktowSkrocone = nazwyKonstruktow
   }
   nazwyKonstruktow         = c(nazwyKonstruktow        , paste0(nazwyKonstruktow        , "_se"))
   nazwyKonstruktowSkrocone = c(nazwyKonstruktowSkrocone, paste0(nazwyKonstruktowSkrocone, "_se"))
 
   nazwyPierwotne = c(
-  	names(dane),
-  	unlist(lapply(opisProcedury, function(x) {return(names(x$czescPomiarowa))}))  # nazwy konstruktow
+    names(dane),
+    unlist(lapply(opisProcedury, function(x) {return(names(x$czescPomiarowa))}))  # nazwy konstruktow
   )
   if (max(nchar(nazwyPierwotne)) > maxLZn) {
-  	nazwySkrocone = skroc_nazwy_zmiennych(nazwyPierwotne, maxLZn)
+    nazwySkrocone = skroc_nazwy_zmiennych(nazwyPierwotne, maxLZn)
   } else {
-  	nazwySkrocone = nazwyPierwotne
+    nazwySkrocone = nazwyPierwotne
   }
 
   nazwyPierwotne = as.list(tolower(unique(c(nazwyPierwotne, nazwyKonstruktow))))
@@ -298,47 +540,47 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   # zamiana zmiennych na ciągi znaków o stałej długości
   dane = as.data.frame(
     lapply(dane,
-      function(x) {
-        y = as.character(x)
-        y[is.na(x)] = ""
-        pozycjaKropki = regexpr(".", y, fixed=TRUE)
-        if (any(pozycjaKropki != -1)) {  # liczby niecałkowite
-          maxDoKropki = max(c(max(pozycjaKropki[pozycjaKropki >= 0]), 1 + max(nchar(y[pozycjaKropki == -1]))))
-          poKropce = nchar(y[pozycjaKropki >= 0])-pozycjaKropki[pozycjaKropki >= 0]
-          maxPoKropce = max(poKropce)
-          x = format(x, width=maxDoKropki + maxPoKropce, justify="right", nsmall=maxPoKropce)
-        } else {  # liczby całkowite
-          maxPoKropce = 0
-          maxDoKropki = max(nchar(y))
-          x = format(y, width=maxDoKropki, justify="right")
-        }
-        attributes(x)$format = paste0("F", maxDoKropki, ".", maxPoKropce)
-        return(x)
-      }
+           function(x) {
+             y = as.character(x)
+             y[is.na(x)] = ""
+             pozycjaKropki = regexpr(".", y, fixed=TRUE)
+             if (any(pozycjaKropki != -1)) {  # liczby niecałkowite
+               maxDoKropki = max(c(max(pozycjaKropki[pozycjaKropki >= 0]), 1 + max(nchar(y[pozycjaKropki == -1]))))
+               poKropce = nchar(y[pozycjaKropki >= 0])-pozycjaKropki[pozycjaKropki >= 0]
+               maxPoKropce = max(poKropce)
+               x = format(x, width=maxDoKropki + maxPoKropce, justify="right", nsmall=maxPoKropce)
+             } else {  # liczby całkowite
+               maxPoKropce = 0
+               maxDoKropki = max(nchar(y))
+               x = format(y, width=maxDoKropki, justify="right")
+             }
+             attributes(x)$format = paste0("F", maxDoKropki, ".", maxPoKropce)
+             return(x)
+           }
     ),
     stringsAsFactors=FALSE
   )
   szerokosciKolumn = unlist(lapply(dane, function(x) return(attributes(x)$format)))
   # nadawanie szerokosciKolumn bardzie zwartej formy (co by Mplus nie pluł się błędem-nie błędem
-  l = 1
-  temp = szerokosciKolumn[1]
-  for (k in 2:length(szerokosciKolumn)) {
-    if (szerokosciKolumn[k] == szerokosciKolumn[k - 1]) {
-      l = l + 1
-      if (k < length(szerokosciKolumn)) next
-      else if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
-    } else {
-      if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
-      temp = c(temp, szerokosciKolumn[k])
-      l = 1
-    }
-  }
-  szerokosciKolumn = temp
+#   l = 1
+#   temp = szerokosciKolumn[1]
+#   for (k in 2:length(szerokosciKolumn)) {
+#     if (szerokosciKolumn[k] == szerokosciKolumn[k - 1]) {
+#       l = l + 1
+#       if (k < length(szerokosciKolumn)) next
+#       else if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
+#     } else {
+#       if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
+#       temp = c(temp, szerokosciKolumn[k])
+#       l = 1
+#     }
+#   }
+#   szerokosciKolumn = temp
   # zapis
-  tryCatch(
-  	write.table(apply(dane, 1, paste0, collapse=""), "daneMplusTemp.fwf", row.names=FALSE, col.names=FALSE, quote=FALSE),
-  	error = function(e) {stop("Nie udało się zapisać danych do pliku.")}
-  )
+#  tryCatch(
+#    write.table(apply(dane, 1, paste0, collapse=""), "daneMplusTemp.fwf", row.names=FALSE, col.names=FALSE, quote=FALSE),
+#    error = function(e) {stop("Nie udało się zapisać danych do pliku.")}
+#  )
   # pętla główna
   wyniki = vector(mode="list", length=length(opisProcedury))
   names(wyniki) = names(opisProcedury)
@@ -386,6 +628,41 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     while (kalibrujDalej) {
       message("   ###################################   \n    Kalibracja ", j, ".\n   ###################################")
       krok = opisProcedury[[i]]	# tu, a nie przed pętlą, bo opisProcedury jest (może być) modyfikowany na podstawie wyników estymacji
+      # obsługa ograniczeń wartości parametrów zdefiniowanych jako wektor wyrażeń regularnych
+      modelConstraint = NULL
+      for (j in 1:length(krok$czescPomiarowa)) {
+        if ("ograniczeniaWartosci" %in% names(krok$czescPomiarowa[[j]])) {
+          if (is.vector(krok$czescPomiarowa[[j]]$ograniczeniaWartosci)) {
+            temp = krok$czescPomiarowa[[j]]$ograniczeniaWartosci
+            temp = lapply(as.list(temp),
+                          function(x, zmienne) {
+                            return(zmienne[grepl(x, zmienne)])
+                          },
+                          zmienne = krok$czescPomiarowa[[j]]$zmienne
+            )
+            modelConstraint = c(
+              modelConstraint,
+              paste0("  NEW (", names(krok$czescPomiarowa)[j], ");"),
+              unlist(lapply(temp,
+                            function(x, nazwa) {
+                              x = paste0(x, collapse=" + ")
+                              x = lam_wiersze(c(nazwa, " = ", x), wciecie = 5 + nchar(nazwa))
+                              x[1] = gsub("^ +", "  ", x[1])
+                              return(x)
+                            },
+                            nazwa = names(krok$czescPomiarowa)[j]
+              ))
+            )
+            krok$czescPomiarowa[[j]]$ograniczeniaWartosci = data.frame(
+              typ = "by",
+              zmienna1 = names(krok$czescPomiarowa)[j],
+              zmienna2 = unlist(temp),
+              wartosc = unlist(temp),
+              stringsAsFactors = FALSE
+            )
+          }
+        }
+      }
       # przygotowanie obiektów dla funkcji tworzącej polecenia Mplusa
       title = paste0(tytul, " Krok ", i, ". ", names(opisProcedury)[i])
       data=list(
@@ -403,11 +680,11 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       )
       analysis = krok$parametry[names(krok$parametry) %in% c("estimator", "processors", "integration")]
       if (!is.null(krok$wieleGrup)) {
-      	wartosciZmGrupujacej = unique(dane[, paste0("gr_tmp", i)])
-      	variable$classes = krok$wieleGrup$liczbaGrup = length(wartosciZmGrupujacej)
-      	variable$knownclass = paste0(paste0("gr_tmp", i), " = ", wartosciZmGrupujacej)
-      	analysis$type = "MIXTURE"
-      	analysis$algorithm = "INTEGRATION"
+        wartosciZmGrupujacej = unique(dane[, paste0("gr_tmp", i)])
+        variable$classes = krok$wieleGrup$liczbaGrup = length(wartosciZmGrupujacej)
+        variable$knownclass = paste0(paste0("gr_tmp", i), " = ", wartosciZmGrupujacej)
+        analysis$type = "MIXTURE"
+        analysis$algorithm = "INTEGRATION"
       }
       model = przygotuj_model(zmien_nazwy_w_kroku_procedury(krok, nazwySkrocone))
       output = list("STANDARDIZED", "TECH4", "TECH8")
@@ -422,7 +699,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       # zapis pliku poleceń Mplusa
       nazwaInp = paste0(substr(tytul, 1, min(12, nchar(tytul))), "_krok_", i, "_kalibr_", j, ".inp")
       write.table(
-        przygotuj_inp(title, data, variable, analysis, model, output, savedata),
+        przygotuj_inp(title, data, variable, analysis, model, modelConstraint, output, savedata),
         nazwaInp, row.names=FALSE, col.names=FALSE, quote=FALSE
       )
       # kalibracja w Mplusie
@@ -446,17 +723,17 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         )]
         # dopisanie do pliku z ocenami czynnikowymi innych zmiennych, o które prosił użytkownik
         if (!is.null(zmienneDolaczaneDoOszacowan)) {
-        	ocCzyn = merge(ocCzyn, daneDolaczaneDoOszacowan)
+          ocCzyn = merge(ocCzyn, daneDolaczaneDoOszacowan)
         }
         # dopisanie do pliku z ocenami czynnikowymi kolumn tworzących id obserwacji - jeśli było ich więcej niż jedna
         if (idObs == "id_temp") {
-        	ocCzyn = merge(idObsMapowanie, ocCzyn)
-        	ocCzyn = ocCzyn[, names(ocCzyn) != "id_temp"]
+          ocCzyn = merge(idObsMapowanie, ocCzyn)
+          ocCzyn = ocCzyn[, names(ocCzyn) != "id_temp"]
         }
         # zapis na dysk
         tryCatch(
-        	write.csv2(ocCzyn, sub("[.]inp$", ".csv", nazwaInp), row.names=FALSE, na=""),
-        	error = function(e) {stop("Nie udało się zapisać pliku z ocenami czynnikowymi!")}
+          write.csv2(ocCzyn, sub("[.]inp$", ".csv", nazwaInp), row.names=FALSE, na=""),
+          error = function(e) {stop("Nie udało się zapisać pliku z ocenami czynnikowymi!")}
         )
         unlink(savedata$file)
         if (zwrocOszacowania) wyniki[[i]][[j]]$zapis = ocCzyn
