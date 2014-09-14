@@ -562,25 +562,25 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   )
   szerokosciKolumn = unlist(lapply(dane, function(x) return(attributes(x)$format)))
   # nadawanie szerokosciKolumn bardzie zwartej formy (co by Mplus nie pluł się błędem-nie błędem
-#   l = 1
-#   temp = szerokosciKolumn[1]
-#   for (k in 2:length(szerokosciKolumn)) {
-#     if (szerokosciKolumn[k] == szerokosciKolumn[k - 1]) {
-#       l = l + 1
-#       if (k < length(szerokosciKolumn)) next
-#       else if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
-#     } else {
-#       if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
-#       temp = c(temp, szerokosciKolumn[k])
-#       l = 1
-#     }
-#   }
-#   szerokosciKolumn = temp
+  l = 1
+  temp = szerokosciKolumn[1]
+  for (k in 2:length(szerokosciKolumn)) {
+    if (szerokosciKolumn[k] == szerokosciKolumn[k - 1]) {
+      l = l + 1
+      if (k < length(szerokosciKolumn)) next
+      else if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
+    } else {
+      if (l > 1) temp[length(temp)] = paste0(l, temp[length(temp)])
+      temp = c(temp, szerokosciKolumn[k])
+      l = 1
+    }
+  }
+  szerokosciKolumn = temp
   # zapis
-#  tryCatch(
-#    write.table(apply(dane, 1, paste0, collapse=""), "daneMplusTemp.fwf", row.names=FALSE, col.names=FALSE, quote=FALSE),
-#    error = function(e) {stop("Nie udało się zapisać danych do pliku.")}
-#  )
+  tryCatch(
+    write.table(apply(dane, 1, paste0, collapse=""), "daneMplusTemp.fwf", row.names=FALSE, col.names=FALSE, quote=FALSE),
+    error = function(e) {stop("Nie udało się zapisać danych do pliku.")}
+  )
   # pętla główna
   wyniki = vector(mode="list", length=length(opisProcedury))
   names(wyniki) = names(opisProcedury)
