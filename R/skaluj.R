@@ -576,9 +576,10 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     }
   }
   szerokosciKolumn = temp
+  nazwaPlikuDane = paste0("daneMplus", paste0(LETTERS[sample(1:length(LETTERS), 8, replace=TRUE)], collapse=""), ".fwf")
   # zapis
   tryCatch(
-    write.table(apply(dane, 1, paste0, collapse=""), "daneMplusTemp.fwf", row.names=FALSE, col.names=FALSE, quote=FALSE),
+    write.table(apply(dane, 1, paste0, collapse=""), nazwaPlikuDane, row.names=FALSE, col.names=FALSE, quote=FALSE),
     error = function(e) {stop("Nie udało się zapisać danych do pliku.")}
   )
   # pętla główna
@@ -666,7 +667,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       # przygotowanie obiektów dla funkcji tworzącej polecenia Mplusa
       title = paste0(tytul, " Krok ", i, ". ", names(opisProcedury)[i])
       data=list(
-        file   = "daneMplusTemp.fwf",
+        file   = nazwaPlikuDane,
         format = szerokosciKolumn
       )
       zmienneWModelu = unique(unlist(lapply(krok[names(krok) %in% c("czescPomiarowa")], function(x) return(lapply(x, function(x) return(x$zmienne))))))
@@ -690,7 +691,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       output = list("STANDARDIZED", "TECH4", "TECH8")
       if (krok$parametry$fscores) {
         savedata = list(
-          file = "ocCzynMplusTemp.fwf",
+          file = paste0("ocCzynMplus", paste0(LETTERS[sample(1:length(LETTERS), 8, replace=TRUE)], collapse=""), ".fwf"),
           save = "FSCORES"
         )
       } else {
@@ -816,7 +817,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     names(wyniki[[i]])=paste0("kalibracja", 1:length(wyniki[[i]]))
   }
   # kończenie
-  if (usunFWF) unlink("daneMplusTemp.fwf")
+  if (usunFWF) unlink(nazwaPlikuDane)
   message("")
   return(wyniki)
 }
