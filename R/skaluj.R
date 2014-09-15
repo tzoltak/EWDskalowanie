@@ -630,19 +630,19 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       krok = opisProcedury[[i]]	# tu, a nie przed pętlą, bo opisProcedury jest (może być) modyfikowany na podstawie wyników estymacji
       # obsługa ograniczeń wartości parametrów zdefiniowanych jako wektor wyrażeń regularnych
       modelConstraint = NULL
-      for (j in 1:length(krok$czescPomiarowa)) {
-        if ("ograniczeniaWartosci" %in% names(krok$czescPomiarowa[[j]])) {
-          if (is.vector(krok$czescPomiarowa[[j]]$ograniczeniaWartosci)) {
-            temp = krok$czescPomiarowa[[j]]$ograniczeniaWartosci
+      for (k in 1:length(krok$czescPomiarowa)) {
+        if ("ograniczeniaWartosci" %in% names(krok$czescPomiarowa[[k]])) {
+          if (is.vector(krok$czescPomiarowa[[k]]$ograniczeniaWartosci)) {
+            temp = krok$czescPomiarowa[[k]]$ograniczeniaWartosci
             temp = lapply(as.list(temp),
                           function(x, zmienne) {
                             return(zmienne[grepl(x, zmienne)])
                           },
-                          zmienne = krok$czescPomiarowa[[j]]$zmienne
+                          zmienne = krok$czescPomiarowa[[k]]$zmienne
             )
             modelConstraint = c(
               modelConstraint,
-              paste0("  NEW (", names(krok$czescPomiarowa)[j], ");"),
+              paste0("  NEW (", names(krok$czescPomiarowa)[k], ");"),
               unlist(lapply(temp,
                             function(x, nazwa) {
                               x = paste0(x, collapse=" + ")
@@ -650,12 +650,12 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
                               x[1] = gsub("^ +", "  ", x[1])
                               return(x)
                             },
-                            nazwa = names(krok$czescPomiarowa)[j]
+                            nazwa = names(krok$czescPomiarowa)[k]
               ))
             )
-            krok$czescPomiarowa[[j]]$ograniczeniaWartosci = data.frame(
+            krok$czescPomiarowa[[k]]$ograniczeniaWartosci = data.frame(
               typ = "by",
-              zmienna1 = names(krok$czescPomiarowa)[j],
+              zmienna1 = names(krok$czescPomiarowa)[k],
               zmienna2 = unlist(temp),
               wartosc = unlist(temp),
               stringsAsFactors = FALSE
