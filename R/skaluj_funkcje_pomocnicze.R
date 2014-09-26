@@ -218,7 +218,7 @@ przygotuj_model = function(opisModelu) {
             as.list(dyskryminacje$wartosc[dyskryminacje$zmienna2 %in% zmienne]),
             dyskryminacje$zmienna2[dyskryminacje$zmienna2 %in% zmienne]
           )
-          dyskryminacje = unlist(dyskryminacje[y$zmienne[y$zmienne %in% names(dyskryminacje)]])
+          dyskryminacje = unlist(dyskryminacje[zmienne[zmienne %in% names(dyskryminacje)]])
           y$zmienne[zmienne %in% names(dyskryminacje)] = paste0(y$zmienne[zmienne %in% names(dyskryminacje)], " (", dyskryminacje, ")")
           # z progami się tu niestety trzeba pobawić jeszcze więcej
           if (nrow(progi) > 0) {
@@ -282,8 +282,9 @@ przygotuj_model = function(opisModelu) {
         } else if (y$rasch) {  # jeśli to ma być Rasch, a wariancja konstruktu ma być ustalona w 1 (co obsłużyliśmy kilka linii kodu wcześniej)
           wynik = c(paste0("  ", x, " BY"), paste0("    ", y$zmienne, " (", x, ")"))  # dopisz ograniczenia na równość dyskryminacji
           wynik[length(wynik)] = paste0(wynik[length(wynik)], ";")  # teraz każda zmienną związana z konstruktem jest w oddzielnej linii, ale na końcu ostatniej trzeba dopisać ';'
+        } else {
+          wynik = c(lam_wiersze(c(x, "BY", y$zmienne), 4))  # w innych przypadkach nie trzeba nic więcej cudować
         }
-        else wynik = c(lam_wiersze(c(x, "BY", y$zmienne), 4))  # w innych przypadkach nie trzeba nic więcej cudować
         wynik[1] = substr(wynik[1], 3, nchar(wynik[1])) # wcinamy pierwszy wiersz o 2 znaki mniej, niż pozostałe
         if (all(grepl("BY(| @1);", wynik))) {wynik=NULL}  # obsługa inwariancji pomiarowej w modelach wielogrupowych
         if (length(wariancjeSyntax) == 0) wariancjeSyntax = lam_wiersze(c(x, "*"), 2, sep="")  # choć w zasadzie to niepotrzebne, dostawiamy do syntaxu polecenie opisujące wariancję konstruktu (w takim przypadku uwolnioną)
