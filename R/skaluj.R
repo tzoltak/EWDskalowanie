@@ -807,8 +807,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       }
       # jeśli kalibrujemy dalej, to zapiszmy sobie wartości startowe
       if (kalibrujDalej) {
-        for (k in 1:(length(opisProcedury[[i]]$czescPomiarowa))){
+        for (k in 1:(length(opisProcedury[[i]]$czescPomiarowa))){  # nie przepisujemy wartości, które były zakotwiczone (co generalnie nie sprawia dużych problemów, ale odnośnie wartości oczekiwanych konstruktu w grupie odniesienia modelu wielogrupowego już tak)
           opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe = wyniki[[i]][[j]]$parametry$surowe[wyniki[[i]][[j]]$parametry$surowe$zmienna1 %in% c(names(opisProcedury[[i]]$czescPomiarowa)[k], wyniki[[i]][[j]]$parametry$surowe$zmienna2[wyniki[[i]][[j]]$parametry$surowe$typ == "by" & wyniki[[i]][[j]]$parametry$surowe$zmienna1 == names(opisProcedury[[i]]$czescPomiarowa)[k]]), ]
+          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe = opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[!is.na(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$Est..S.E.), ]
         }
       }
       # inkrementacja na koniec iteracji

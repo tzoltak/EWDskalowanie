@@ -169,9 +169,7 @@ przygotuj_model = function(opisModelu) {
           dyskryminacje      = y$wartosciStartowe[grep(paste0(       "^by", maskaGr, "$"), y$wartosciStartowe$typ), ]
           progi              = y$wartosciStartowe[grep(paste0("^threshold", maskaGr, "$"), y$wartosciStartowe$typ), ]
           wariancje          = y$wartosciStartowe[grep(paste0(  "variance", maskaGr, "$"), y$wartosciStartowe$typ), ]  # to może być zarówno "variance" jak i "residual variance"
-          if (maskaGr %in% c("", ".gr1")) {  # nie strzelajmy sobie w stopę uwalniając wartość oczekiwaną konstruktu (w grupie odniesienia)
-            wartosciOczekiwane = y$wartosciStartowe[grep(paste0(     "^mean", maskaGr, "$"), y$wartosciStartowe$typ), ]
-          }
+          wartosciOczekiwane = y$wartosciStartowe[grep(paste0(     "^mean", maskaGr, "$"), y$wartosciStartowe$typ), ]
           # zabawy z wybraniem tylko tego, co jest w 'zmienne' i ustawieniem w takiej samej kolejności, jak tam
           # dodatkowa zabawa - jeśli coś już przypadkiem ma wartość zakotwiczoną, to nie przypisujemy temu wartości startowej
           dyskryminacje = setNames(
