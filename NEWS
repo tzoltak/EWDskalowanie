@@ -1,4 +1,12 @@
 --------------------
+Zmiany w EWDskalowanie 0.4.2 (2014-10-04)
+
+- Naprawione błędy:
+  - W modelach wielogrupowych funkcja skaluj() teraz już dołącza do pliku z ocenami
+    czynnikowymi zmienne definiujące podział na grupy (a nie tylko tymczasową zmienną
+    wygenerowaną dla Mplusa).
+
+--------------------
 Zmiany w EWDskalowanie 0.4.1 (2014-09-26)
 
 - Naprawione błędy:

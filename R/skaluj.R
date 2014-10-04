@@ -234,12 +234,14 @@
 #'         zmienną zależną, nie pamiętam co to za standaryzacja - sprawdź w dokumentacji
 #'         Mplusa i statystyki R-kwadrat.}
 #'   \item{\code{zapis} data frame zawierający wyliczone oszacowania (co do zasady EAP)
-#'         wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe,
-#'         a także zmienną/e z id obserwacji, ew. zmienne grupujące (w modelach
-#'         wielogrupowych) i zmienne wymienione w argumencie
-#'         \code{zmienneDolaczaneDoOszacowan}. Ten element występuje tylko, gdy funkcja
-#'         została wywołana z argumentem \code{zwrocOszacowania=TRUE} i w opisie danego
-#'         kroku procedury nie pojawiła się definicja \code{parametry$fscores=FALSE}.}
+#'         wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe
+#'         (z wyjątkiem modeli wielogrupowych, bo Mplus nie zwraca dla nich obecnie
+#'         oszacowań błędów standardowych - jest to zapewne jakiś głupi błąd), a także
+#'         zmienną/e z id obserwacji, ew. zmienne grupujące (w modelach wielogrupowych)
+#'         i zmienne wymienione w argumencie \code{zmienneDolaczaneDoOszacowan}. Ten
+#'         element występuje tylko, gdy funkcja została wywołana z argumentem
+#'         \code{zwrocOszacowania=TRUE} i w opisie danego kroku procedury nie pojawiła
+#'         się definicja \code{parametry$fscores=FALSE}.}
 #'   \item{\code{czas} wektor teskstowy zawierający linie z pliku outputu Mplusa,
 #'         opisujące czas estymacji modelu.}
 #' }
@@ -315,6 +317,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     wieleGrup        = c("zmienneGrupujace", "uwolnijWartosciOczekiwane", "uwolnijWariancje")
   )
   grupyMapowanie = vector(mode="list", length=length(opisProcedury))
+  zmGrupujace    = vector(mode="list", length=length(opisProcedury))
   # pętla po krokach procedury
   for (i in 1:length(opisProcedury)) {
     krok = opisProcedury[[i]]  # mały aliasik, żeby mniej pisać
@@ -457,6 +460,8 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         if (length(wieleGrup$uwolnijWariancje) != 1) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
         if (!(wieleGrup$uwolnijWariancje %in% c(TRUE, FALSE))) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w elemencie 'wieleGrup' element 'uwolnijWariancje' musi być jednoelementowym wektorem logicznym."))
       }
+      # wyłączanie zmiennych grupujących do oddzielnego obiektu (żeby móc je potem dopisać do ocen czynnikowych niezmaskarowane konwersją poprzedzającą zapis danych do pliku .fwf)
+      zmGrupujace[[i]] = dane[, c(idObs, wieleGrup$zmienneGrupujace)]
       # tworzenie zmiennej opisującej podział na grupy w obiekcie 'dane'
       if (paste0("gr_tmp", i) %in% names(dane)) stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", zdefiniowany został model wielogrupowy.\nW takim przypadku w danych nie może występować zmienna o nazwie zaczynającej się od 'gr_tmp'."))
       grupyMapowanie[[i]] = unique(dane[, wieleGrup$zmienneGrupujace, drop=FALSE])
@@ -492,6 +497,8 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     }
     else opisProcedury[[i]]$parametry$fscores = FALSE
   }
+  # wyłączenie do oddzielnego obiektu zmiennych, które mają być potem przyłączane do oszacowań (po skonwertowaniu obiektu 'dane' na teksty nie da się z niego do tego skorzystać)
+  if (!is.null(zmienneDolaczaneDoOszacowan)) daneDolaczaneDoOszacowan = dane[, c(idObs, zmienneDolaczaneDoOszacowan)]
   # rozszerzone id obserwacji
   if (any(idObs == "id_temp")) stop("Parametr idObs nie może mieć przypisanej wartości 'id_temp'.")
   if (length(idObs) > 1) {
@@ -506,8 +513,6 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   }
   # zapis pliku z danymi w formie stałoszerokościowej
   message("Zapis danych do pliku tekstowego o stałej szerokości kolumn...")
-  # wyłączenie do oddzielnego obiektu zmiennych, które mają być potem przyłączane do oszacowań (po skonwertowaniu obiektu 'dane' na teksty nie da się z niego do tego skorzystać)
-  if (!is.null(zmienneDolaczaneDoOszacowan)) daneDolaczaneDoOszacowan = dane[, c(idObs, zmienneDolaczaneDoOszacowan)]
   # kowersja factorów na liczby
   maskaFactory = (1:ncol(dane))[unlist(lapply(dane, is.factor))]
   for (i in maskaFactory) dane[, i]=as.numeric(dane[, i])
@@ -674,7 +679,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       zmienneWModelu = zmienneWModelu[zmienneWModelu %in% names(dane) & !(zmienneWModelu %in% zmienneCiagle)]	# trzeba wykluczyć składowe
       variable = list(
         missing     = "BLANK",
-        names       = unlist(nazwySkrocone),
+        names       = unlist(nazwySkrocone[nazwySkrocone %in% names(dane)]),
         usevariables= unlist(nazwySkrocone[zmienneWModelu[  zmienneWModelu %in% names(dane)   ]]),
         categorical = unlist(nazwySkrocone[zmienneWModelu[!(zmienneWModelu %in% zmienneCiagle)]]),
         idvariable  = nazwySkrocone[[idObs]]
@@ -722,14 +727,18 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
           ),
           names(ocCzyn)
         )]
-        # dopisanie do pliku z ocenami czynnikowymi innych zmiennych, o które prosił użytkownik
-        if (!is.null(zmienneDolaczaneDoOszacowan)) {
-          ocCzyn = merge(ocCzyn, daneDolaczaneDoOszacowan)
-        }
         # dopisanie do pliku z ocenami czynnikowymi kolumn tworzących id obserwacji - jeśli było ich więcej niż jedna
         if (idObs == "id_temp") {
           ocCzyn = merge(idObsMapowanie, ocCzyn)
           ocCzyn = ocCzyn[, names(ocCzyn) != "id_temp"]
+        }
+        # dopisanie do pliku z ocenami czynnikowymi zmiennych definiujących grupowanie
+        if (!is.null(krok$wieleGrup)) {
+          ocCzyn = merge(ocCzyn, zmGrupujace[[i]])
+        }
+        # dopisanie do pliku z ocenami czynnikowymi innych zmiennych, o które prosił użytkownik
+        if (!is.null(zmienneDolaczaneDoOszacowan)) {
+          ocCzyn = merge(ocCzyn, daneDolaczaneDoOszacowan)
         }
         # zapis na dysk
         tryCatch(

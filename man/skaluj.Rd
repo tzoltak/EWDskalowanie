@@ -53,12 +53,14 @@ wyniki estymacji kalibracji są listami, składającymi sie z następujących el
         zmienną zależną, nie pamiętam co to za standaryzacja - sprawdź w dokumentacji
         Mplusa i statystyki R-kwadrat.}
   \item{\code{zapis} data frame zawierający wyliczone oszacowania (co do zasady EAP)
-        wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe,
-        a także zmienną/e z id obserwacji, ew. zmienne grupujące (w modelach
-        wielogrupowych) i zmienne wymienione w argumencie
-        \code{zmienneDolaczaneDoOszacowan}. Ten element występuje tylko, gdy funkcja
-        została wywołana z argumentem \code{zwrocOszacowania=TRUE} i w opisie danego
-        kroku procedury nie pojawiła się definicja \code{parametry$fscores=FALSE}.}
+        wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe
+        (z wyjątkiem modeli wielogrupowych, bo Mplus nie zwraca dla nich obecnie
+        oszacowań błędów standardowych - jest to zapewne jakiś głupi błąd), a także
+        zmienną/e z id obserwacji, ew. zmienne grupujące (w modelach wielogrupowych)
+        i zmienne wymienione w argumencie \code{zmienneDolaczaneDoOszacowan}. Ten
+        element występuje tylko, gdy funkcja została wywołana z argumentem
+        \code{zwrocOszacowania=TRUE} i w opisie danego kroku procedury nie pojawiła
+        się definicja \code{parametry$fscores=FALSE}.}
   \item{\code{czas} wektor teskstowy zawierający linie z pliku outputu Mplusa,
         opisujące czas estymacji modelu.}
 }
