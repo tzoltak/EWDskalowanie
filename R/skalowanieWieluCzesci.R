@@ -200,7 +200,7 @@ laczenie_wykresy_zapis <- function(dane, plikDoZapisu, folderWykresy, folderWyni
                                             h2 = FALSE, czyLiczyc1 = TRUE)
   } else{
     dwaKonstruktyRet = skaluj_polichorycznie(dane, proceduraEG = NULL, 
-                                             korelacjaWiazki = NULL, plik, 
+                                             korelacjaWiazki = NULL, plikDoZapisu, 
                                              minMiara = 0.5)
   }
   
