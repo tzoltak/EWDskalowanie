@@ -22,7 +22,7 @@ kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, z
   
   P = odbcConnect(as.character(zrodloDanychODBC))
   
-  zapytanie = "select distinct TK.id_kryterium, PY.opis
+  zapytanie = "select distinct TK.id_kryterium, PY.opis, TE.id_testu
   from arkusze as AR
   join testy as TE using(arkusz)
   join testy_kryteria as TK using(id_testu)
@@ -62,6 +62,63 @@ kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, z
   ret = list()
   for(i in seq_along(opisyDoPolaczenia)){
     ret[[i]] = tablicaDanych$id_kryterium[tablicaDanych$opis == opisyDoPolaczenia[i]]
+    names(ret)[i] = opisyDoPolaczenia[i]
+  }
+  attributes(ret)$id_testu = tablicaDanych$id_testu[1]
+  
+  return(ret)
+}
+#' @title Przygotowanie obiektu do edycji skali
+#' @description
+#' Funkcja przygotowuje ramkę danych, która może zostać wygodnie użyta do edycji skali przez funkcję \code{\link[ZPD]{edytuj_skale}} z pakietu ZPD.
+#' @param kryt lista zwrócona przez funkcję \code{\link{kryteria_do_polaczenia}}
+#' @param zrodloDanychODBC żródło danych
+#' @return Funkcja zwraca ramkę danych, której wiersze albo zawierają id istniejącego pseudokryterium albo id wszystkich kryteriów, które mają zostać połączone w jedno pseudokryterium.
+#' @export 
+przygotuj_kryteria <- function(kryt, zrodloDanychODBC = "EWD"){
+  idTestu = attributes(kryt)$id_testu
+  
+  # stworzenie ramki danych z kolumnami opis i id_skrotu
+  ret = data.frame(opis = character(0), id_skrotu = numeric(0))
+  
+  for(ind in seq_along(kryt)){
+    kryteria = kryt[[ind]]
+    
+    zapytanie = paste0("select TK.id_kryterium, POK.id_pseudokryterium, P.opis
+                       from testy_kryteria as TK 
+                       join pseudokryteria_oceny_kryteria as POK using(id_kryterium)
+                       join pseudokryteria_oceny as P using(id_pseudokryterium)
+                       where  id_pseudokryterium in
+                       (select distinct POK2.id_pseudokryterium
+                       from testy_kryteria 
+                       join pseudokryteria_oceny_kryteria as POK2 using(id_kryterium)
+                       join pseudokryteria_oceny as P using(id_pseudokryterium)
+                       where  id_kryterium in (", paste0(rep("?", length(kryteria)), collapse=", "), ") and id_testu = ?) and id_testu = ?")
+    
+    P = odbcConnect(as.character(zrodloDanychODBC))
+    
+    tryCatch({
+      # pobranie danych o pseudokryterium
+      psk = sqlExecute(P, zapytanie, data =data.frame(cbind(t(kryteria), idTestu, idTestu))  , fetch = TRUE, stringsAsFactors = FALSE)
+      odbcClose(P)
+    },
+    error=function(e) {
+      odbcClose(P)
+      stop(e)
+    }
+    ) 
+    
+    # Jeżeli informacje z bazy o kryteriach pokrywają się z danymi do połączenia to zmienna wiersz zawiera tylko pseudokryterium.
+    # W przeciwnym wypadku zmienna wiersz zawiera wszystkie id kryteriów.
+    # w powyższym zapytaniu sql zakładam, że kryterium nie może należeć do kilku pseudokryteriów w ramech tego samego egzaminu
+    if ( nrow(psk)!=0 &  all(sort(psk$id_kryterium)==sort(kryteria))){
+      wiersz = data.frame(id_pseudokryterium  = psk$id_pseudokryterium[1])
+    } else {
+      wiersz = data.frame(t(c(kryteria, names(kryt)[ind])))
+      names(wiersz) = c(paste0("id_kryterium_", seq_along(kryteria)), "opis")
+    }
+    
+    ret = rbind.fill(ret, wiersz)
   }
   
   return(ret)
