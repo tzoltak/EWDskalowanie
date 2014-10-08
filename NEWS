@@ -1,4 +1,15 @@
 --------------------
+Zmiany w EWDskalowanie 0.5 (2014-10-08)
+
+- Nowe funkcje:
+  - procedura_spr() i skaluj_spr() implementujące nowy workflow przy skalowaniu
+    sprawdzianu;
+
+- Naprawione błędy:
+  - Nazwy zmiennych definiujących id obserwacji nie były dobrze zapisywane do sekcji
+    'NAMES' pliku .inp Mplusa, jeśli trzeba było skrócić ich nazwy.
+
+--------------------
 Zmiany w EWDskalowanie 0.4.2 (2014-10-04)
 
 - Naprawione błędy:

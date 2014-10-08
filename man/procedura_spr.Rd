@@ -3,14 +3,24 @@
 \alias{procedura_spr}
 \title{Procedury skalowania egzaminow.}
 \usage{
-procedura_spr(nazwyZmiennych, nazwaKonstruktu = "s", processors = 3)
+procedura_spr(nazwyZmiennych, wartosciZakotwiczone = NULL,
+  maskaZmienne = "^[kp]_[[:digit:]]+$", nazwaKonstruktu = "s",
+  nazwaKroku = "sprawdzian", processors = 3, integrPt = 20)
 }
 \arguments{
-\item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja}
+\item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na których ma być prowadzona estymacja (funkcja sama wybierze tylko te, które pasują do wyrażenia regularnego podanego w argumencie \code{maskaZmienne})}
 
-\item{nazwaKonstruktu}{nazwa zmiennej opisującej mierzony konstrukt}
+\item{wartosciZakotwiczone}{opcjonalnie data frame definiujący zakotwiczone wartości parametrów modelu (p. \code{\link{skaluj}})}
+
+\item{maskaZmienne}{wyrażenie regularne (ciąg znaków), które spełniają nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu}
+
+\item{nazwaKonstruktu}{ciąg znaków - nazwa zmiennej opisującej mierzony konstrukt}
+
+\item{nazwaKroku}{ciąg znaków - nazwa jedynego kroku tej procedury}
 
 \item{processors}{liczba rdzeni do wykorzystania przy estymacji}
+
+\item{integrPt}{liczba punktów siatki do całkowania numerycznego (po rozkładzie cechy ukrytej)}
 }
 \value{
 lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}

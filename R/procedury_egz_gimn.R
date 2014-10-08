@@ -1,45 +1,5 @@
 #' @title Procedury skalowania egzaminow.
 #' @description
-#' Procedura skalowania sprawdzianu.
-#' Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
-#' @param nazwyZmiennych nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja
-#' @param nazwaKonstruktu nazwa zmiennej opisującej mierzony konstrukt
-#' @param processors liczba rdzeni do wykorzystania przy estymacji
-#' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
-#' @seealso \code{\link{skaluj}}
-#' @examples
-#' # chwilowo brak
-#' @export
-procedura_spr = function(nazwyZmiennych, nazwaKonstruktu="s", processors=3) {
-  opis = list(
-    "kalibracja na danych CKE" = list(
-      czescPomiarowa = list(
-        spr = list(
-          zmienne = nazwyZmiennych[grep("^s[01]{0,1}_[[:digit:]]", nazwyZmiennych)],
-          var1 = TRUE,
-          rasch = FALSE,
-          kryteriaUsuwania = list(
-            dyskryminacjaPonizej = 0.2,
-            istotnoscPowyzej = 1,
-            nigdyNieUsuwaj = NULL
-          ),
-          wartosciStartowe = NULL,
-          wartosciZakotwiczone = NULL
-        )
-      ),
-      parametry = list(
-        estimator = "MLR",
-        processors = processors,
-        integration = "STANDARD (15)",
-        fscores = TRUE
-      )
-    )
-  )
-  names(opis[[1]]$czescPomiarowa)[1] = nazwaKonstruktu
-  return(opis)
-}
-#' @title Procedury skalowania egzaminow.
-#' @description
 #' Procedura skalowania egzaminu gimnazjalnego - w formule od 2012 r.
 #' Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\link{skaluj}}.
 #' @param nazwyZmiennych nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja

@@ -679,7 +679,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       zmienneWModelu = zmienneWModelu[zmienneWModelu %in% names(dane) & !(zmienneWModelu %in% zmienneCiagle)]	# trzeba wykluczyć składowe
       variable = list(
         missing     = "BLANK",
-        names       = unlist(nazwySkrocone[nazwySkrocone %in% names(dane)]),
+        names       = unlist(nazwySkrocone[nazwyPierwotne %in% names(dane)]),
         usevariables= unlist(nazwySkrocone[zmienneWModelu[  zmienneWModelu %in% names(dane)   ]]),
         categorical = unlist(nazwySkrocone[zmienneWModelu[!(zmienneWModelu %in% zmienneCiagle)]]),
         idvariable  = nazwySkrocone[[idObs]]
