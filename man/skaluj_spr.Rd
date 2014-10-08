@@ -6,16 +6,17 @@
 skaluj_spr(daneWzorcowe, daneWszyscy, processors = 2)
 }
 \arguments{
-\item{daneWzorcowe}{}
+\item{daneWzorcowe}{data frame zawierający dane do skalowania wzorcowego}
 
-\item{daneWszyscy}{}
+\item{daneWszyscy}{data frame zawierający dane wszystkich zdających (do wyliczenia
+oszacowań umiejętności na podstawe parametrów ze skalowania wzorcowego)}
 
 \item{processors}{liczba rdzeni do wykorzystania przy estymacji}
 }
 \value{
 lista z elementami:
 \itemize{
-  \item{\code{usunieteKryteria} wektor tekstowy z nazwami (pseudo)konstruktów, które
+  \item{\code{usunieteKryteria} wektor tekstowy z nazwami (pseudo)kryteriów, które
         zostały usunięte podczas skalowania wzorcowego.}
   \item{\code{parametry} data frame z wyestymowanymi parametrami modelu w jego
         ostatecznej postaci (tj. takiej, jak w ostatnim kroku skalowania wzorcowego
@@ -25,12 +26,12 @@ lista z elementami:
 }
 }
 \description{
-Procedura skalowania sprawdzianu.
+Funkcja przeprowadza skalowanie wyników sprawdzianu.
 }
 \examples{
 # chwilowo brak
 }
 \seealso{
-\code{\link{skaluj}}, \code{\link{procedura_spr}}
+\code{\link{skaluj}}, \code{\link{procedura_1k_1w}}
 }
 

@@ -2,12 +2,18 @@
 Zmiany w EWDskalowanie 0.5 (2014-10-08)
 
 - Nowe funkcje:
-  - procedura_spr() i skaluj_spr() implementujące nowy workflow przy skalowaniu
-    sprawdzianu;
+  - skaluj_spr() implementuje nowy workflow przy skalowaniu sprawdzianu;
+  - skaluj_egz_gimn() implementuje nowy workflow przy skalowaniu egz. gimn.;
+  - procedura_1k_1w() prosta i uniwersalna procedura ("jeden krok, jeden wymiar"),
+    wykorzystywana przez ww. funkcje.
 
 - Naprawione błędy:
   - Nazwy zmiennych definiujących id obserwacji nie były dobrze zapisywane do sekcji
     'NAMES' pliku .inp Mplusa, jeśli trzeba było skrócić ich nazwy.
+
+- Usunięte funkcje:
+  - procedura_eg();
+  - procedura_eg_sf();
 
 --------------------
 Zmiany w EWDskalowanie 0.4.2 (2014-10-04)
