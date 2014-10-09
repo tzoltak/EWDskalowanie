@@ -81,8 +81,8 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     # sztuczka, żeby przy skalowaniu gh i gm w nowej formule już nie usuwał (pseudo)kryteriów
     if ( ((names(daneWzorcowe)[i] == "gh") & all(c("gh_h", "gh_p") %in% names(daneWzorcowe))) |
            ((names(daneWzorcowe)[i] == "gm") & all(c("gm_p", "gm_m") %in% names(daneWzorcowe))) ) {
-      # pusty data frame z odpowiednimi kolumnami
-      wartosciZakotwiczone = as.data.frame(list(typ=character(), zmienna1=character(), zmienna2=character(), wartosc=numeric()), stringsAsFactors=FALSE)
+      # dajemy tu data frame, żeby nie było usuwania kryteriów, ale wtedy trzeba zadać w nim wartość oczekiwaną i wariancję
+      wartosciZakotwiczone = data.frame(typ=c("mean", "variance"), zmienna1=names(daneWzorcowe)[i], zmienna2="", wartosc=c(0, 1), stringsAsFactors=FALSE)
     } else {
       wartosciZakotwiczone = NULL
     }
