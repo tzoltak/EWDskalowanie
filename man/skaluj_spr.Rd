@@ -23,6 +23,8 @@ lista z elementami:
         i w jedynym kroku skalowania na wszystkich zdających).}
   \item{\code{oszacowania} data frame zawierający id_obserwacji i wyliczone
         oszacowania umiejętności dla wszystkich zdających.}
+  \item{\code{rzetelnoscEmpiryczna} rzetelność wyliczona na podstawie oszacowań ze
+        skalowania wzorcowego (jako wariancja oszacowań EAP).}
 }
 }
 \description{

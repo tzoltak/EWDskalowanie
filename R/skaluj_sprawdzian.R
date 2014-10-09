@@ -15,6 +15,8 @@
 #'         i w jedynym kroku skalowania na wszystkich zdających).}
 #'   \item{\code{oszacowania} data frame zawierający id_obserwacji i wyliczone
 #'         oszacowania umiejętności dla wszystkich zdających.}
+#'   \item{\code{rzetelnoscEmpiryczna} rzetelność wyliczona na podstawie oszacowań ze
+#'         skalowania wzorcowego (jako wariancja oszacowań EAP).}
 #' }
 #' @seealso \code{\link{skaluj}}, \code{\link{procedura_1k_1w}}
 #' @examples
@@ -50,7 +52,10 @@ skaluj_spr = function(daneWzorcowe, daneWszyscy, processors=2) {
   # skalowanie jako takie
   message("\n### Skalowanie wzorcowe ###\n")
   opisWzorcowe = procedura_1k_1w(zmienneKryteria, "s", processors=processors)
-  sprWzorcowe  = skaluj(daneWzorcowe, opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zwrocOszacowania=FALSE)
+  sprWzorcowe  = skaluj(daneWzorcowe, opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe)
+  # wyliczanie rzetelności empirycznej
+  rzetelnoscEmpiryczna = sprWzorcowe[[1]][[length(sprWzorcowe[[1]])]]$zapis[["s"]]
+  rzetelnoscEmpiryczna = var(rzetelnoscEmpiryczna)
 
   message("\n### Wyliczanie oszacowań dla wszystkich zdających ###\n")
   wartosciZakotwiczone = sprWzorcowe[[1]][[length(sprWzorcowe[[1]])]]$parametry$surowe
@@ -62,6 +67,7 @@ skaluj_spr = function(daneWzorcowe, daneWszyscy, processors=2) {
   return(list(
     usunieteKryteria = zmienneKryteria[!(zmienneKryteria %in% zmienneKryteriaPoUsuwaniu)],
     parametry = wartosciZakotwiczone,
-    oszacowania = sprWszyscy[[1]][[length(sprWszyscy[[1]])]]$zapis
+    oszacowania = sprWszyscy[[1]][[length(sprWszyscy[[1]])]]$zapis,
+    rzetelnoscEmpiryczna = rzetelnoscEmpiryczna
   ))
 }

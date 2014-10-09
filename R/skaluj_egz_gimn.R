@@ -24,6 +24,8 @@
 #'         i w jedynym kroku skalowania na wszystkich zdających).}
 #'   \item{\code{oszacowania} lista data frame'ów zawierających id_obserwacji i wyliczone
 #'         oszacowania umiejętności dla wszystkich zdających.}
+#'   \item{\code{rzetelnoscEmpiryczna} rzetelność wyliczona na podstawie oszacowań ze
+#'         skalowania wzorcowego (jako wariancja oszacowań EAP).}
 #' }
 #' @seealso \code{\link{skaluj}}, \code{\link{procedura_1k_1w}}
 #' @examples
@@ -76,22 +78,41 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     tytulWszyscy  = paste0(names(daneWzorcowe)[i], rok, " wszyscy")
     zmienneKryteria = names(daneWzorcowe[[i]])[grepl("^[kp]_[[:digit:]]+$", names(daneWzorcowe[[i]]))]
 
+    # sztuczka, żeby przy skalowaniu gh i gm w nowej formule już nie usuwał (pseudo)kryteriów
+    if ( ((names(daneWzorcowe)[i] == "gh") & all(c("gh_h", "gh_p") %in% names(daneWzorcowe))) |
+           ((names(daneWzorcowe)[i] == "gm") & all(c("gm_p", "gm_m") %in% names(daneWzorcowe))) ) {
+      # pusty data frame z odpowiednimi kolumnami
+      wartosciZakotwiczone = as.data.frame(list(typ=character(), zmienna1=character(), zmienna2=character(), wartosc=numeric()), stringsAsFactors=FALSE)
+    } else {
+      wartosciZakotwiczone = NULL
+    }
     message("### Skalowanie wzorcowe ", names(daneWzorcowe)[i], " ###\n")
-    opisWzorcowe = procedura_1k_1w(zmienneKryteria, names(daneWzorcowe)[i], processors=processors)
-    egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zwrocOszacowania=FALSE)
+    opisWzorcowe = procedura_1k_1w(zmienneKryteria          , names(daneWzorcowe)[i], wartosciZakotwiczone, processors=processors)
+    egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe)
+    # wyliczanie rzetelności empirycznej
+    rzetelnoscEmpiryczna = egWzorcowe[[1]][[length(egWzorcowe[[1]])]]$zapis[[names(daneWzorcowe)[i]]]
+    rzetelnoscEmpiryczna = var(rzetelnoscEmpiryczna)
 
     message("### Wyliczanie oszacowań dla wszystkich zdających ", names(daneWzorcowe)[i], " ###\n")
     wartosciZakotwiczone = egWzorcowe[[1]][[length(egWzorcowe[[1]])]]$parametry$surowe
     wartosciZakotwiczone = wartosciZakotwiczone[!(wartosciZakotwiczone$typ %in% c("mean", "variance")), ]
     zmienneKryteriaPoUsuwaniu = wartosciZakotwiczone$zmienna2[wartosciZakotwiczone$typ == "by"]
+    if ( ((names(daneWzorcowe)[i] == "gh") & all(c("gh_h", "gh_p") %in% names(daneWzorcowe))) ) {
+      usunieteKryteria = c(wyniki$gh_h$usunieteKryteria, wyniki$gh_p$usunieteKryteria)
+    } else if ( (names(daneWzorcowe)[i] == "gm") & all(c("gm_p", "gm_m") %in% names(daneWzorcowe))) {
+      usunieteKryteria = c(wyniki$gm_p$usunieteKryteria, wyniki$gm_m$usunieteKryteria)
+    } else {
+      usunieteKryteria = zmienneKryteria[!(zmienneKryteria %in% zmienneKryteriaPoUsuwaniu)]
+    }
 
     opisWszyscy  = procedura_1k_1w(zmienneKryteriaPoUsuwaniu, names(daneWzorcowe)[i], wartosciZakotwiczone, processors=processors)
     egWszyscy    = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul=tytulWszyscy )
 
     wyniki[[i]] = list(
-      usunieteKryteria = zmienneKryteria[!(zmienneKryteria %in% zmienneKryteriaPoUsuwaniu)],
+      usunieteKryteria = usunieteKryteria,
       parametry = wartosciZakotwiczone,
-      oszacowania = egWszyscy[[1]][[length(egWszyscy[[1]])]]$zapis
+      oszacowania = egWszyscy[[1]][[length(egWszyscy[[1]])]]$zapis,
+      rzetelnoscEmpiryczna = rzetelnoscEmpiryczna
     )
     # ew. wyrzucanie (pseudo)kryteriów z gh i gm na podstawie tego, co wyszło w poszczególnych testach
     if ( (names(daneWzorcowe)[i] %in% c("gh_h", "gh_p")) & ("gh" %in% names(daneWzorcowe)) ) {
