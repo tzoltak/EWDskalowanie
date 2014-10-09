@@ -4,8 +4,8 @@
 \title{Procedury skalowania egzaminow.}
 \usage{
 procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = NULL,
-  wartosciZakotwiczone = NULL, maskaZmienne = "^[kp]_[[:digit:]]+$",
-  processors = 3, integrPt = 20)
+  wartosciZakotwiczone = NULL, wartosciStartowe = NULL,
+  maskaZmienne = "^[kp]_[[:digit:]]+$", processors = 3, integrPt = 20)
 }
 \arguments{
 \item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na których ma być prowadzona estymacja (funkcja sama wybierze tylko te, które pasują do wyrażenia regularnego podanego w argumencie \code{maskaZmienne})}
@@ -13,6 +13,8 @@ procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = NULL,
 \item{nazwaKonstruktu}{ciąg znaków - nazwa zmiennej opisującej mierzony konstrukt}
 
 \item{wartosciZakotwiczone}{opcjonalnie data frame definiujący zakotwiczone wartości parametrów modelu (p. \code{\link{skaluj}})}
+
+\item{wartosciStartowe}{opcjonalnie data frame definiujący wartości startowe parametrów modelu (p. \code{\link{skaluj}})}
 
 \item{maskaZmienne}{wyrażenie regularne (ciąg znaków), które spełniają nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu}
 

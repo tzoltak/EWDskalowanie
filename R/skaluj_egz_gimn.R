@@ -52,8 +52,8 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     }
     # wyrzucamy wszystko, co niepotrzebne do skalowania (rypanie po dysku zajmuje potem cenny czas)
     zmienneKryteria = zmienneKryteria[[1]]
-    daneWzorcowe = daneWzorcowe[, c("id_obserwacji", zmienneKryteria)]
-    daneWszyscy  = daneWszyscy[, c("id_obserwacji", zmienneKryteria)]
+    daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", zmienneKryteria)]
+    daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", zmienneKryteria)]
   }
 
   # ew. dopisywanie części zbierających po dwa testy z nowej formuły
@@ -65,6 +65,10 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     daneWzorcowe$gm = merge(daneWzorcowe$gm_p, daneWzorcowe$gm_m)
      daneWszyscy$gm = merge( daneWszyscy$gm_p,  daneWszyscy$gm_m)
   }
+  # przemieszczanie gh i gm na koniec list z danymi, żeby można było do nich wprowadzić poprawki (wyrzucić (pseudo)kryteria) na podstawie skalowania testów składowych
+  kolejnosc = c(grep("^g[hm]_", names(daneWzorcowe)), grep("^g[hm]$", names(daneWzorcowe)))
+  daneWzorcowe = daneWzorcowe[kolejnosc]
+   daneWszyscy =  daneWszyscy[kolejnosc]
   # skalowanie jako takie
   wyniki = setNames(vector(mode="list", length=length(daneWzorcowe)), names(daneWzorcowe))
   for (i in 1:length(daneWzorcowe)) {
@@ -72,11 +76,11 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     tytulWszyscy  = paste0(names(daneWzorcowe)[i], rok, " wszyscy")
     zmienneKryteria = names(daneWzorcowe[[i]])[grepl("^[kp]_[[:digit:]]+$", names(daneWzorcowe[[i]]))]
 
-    message("\n### Skalowanie wzorcowe ", names(daneWzorcowe)[i], " ###\n")
+    message("### Skalowanie wzorcowe ", names(daneWzorcowe)[i], " ###\n")
     opisWzorcowe = procedura_1k_1w(zmienneKryteria, names(daneWzorcowe)[i], processors=processors)
     egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zwrocOszacowania=FALSE)
 
-    message("\n### Wyliczanie oszacowań dla wszystkich zdających ", names(daneWzorcowe)[i], " ###\n")
+    message("### Wyliczanie oszacowań dla wszystkich zdających ", names(daneWzorcowe)[i], " ###\n")
     wartosciZakotwiczone = egWzorcowe[[1]][[length(egWzorcowe[[1]])]]$parametry$surowe
     wartosciZakotwiczone = wartosciZakotwiczone[!(wartosciZakotwiczone$typ %in% c("mean", "variance")), ]
     zmienneKryteriaPoUsuwaniu = wartosciZakotwiczone$zmienna2[wartosciZakotwiczone$typ == "by"]
@@ -89,6 +93,15 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
       parametry = wartosciZakotwiczone,
       oszacowania = egWszyscy[[1]][[length(egWszyscy[[1]])]]$zapis
     )
+    # ew. wyrzucanie (pseudo)kryteriów z gh i gm na podstawie tego, co wyszło w poszczególnych testach
+    if ( (names(daneWzorcowe)[i] %in% c("gh_h", "gh_p")) & ("gh" %in% names(daneWzorcowe)) ) {
+      daneWzorcowe$gh = daneWzorcowe$gh[, !(names(daneWzorcowe$gh) %in% wyniki[[i]]$usunieteKryteria)]
+      daneWzorcowe$gh = daneWzorcowe$gh[, !(names(daneWzorcowe$gh) %in% wyniki[[i]]$usunieteKryteria)]
+    }
+    if ( (names(daneWzorcowe)[i] %in% c("gm_p", "gm_m")) & ("gm" %in% names(daneWzorcowe)) ) {
+      daneWzorcowe$gm = daneWzorcowe$gm[, !(names(daneWzorcowe$gm) %in% wyniki[[i]]$usunieteKryteria)]
+      daneWzorcowe$gm = daneWzorcowe$gm[, !(names(daneWzorcowe$gm) %in% wyniki[[i]]$usunieteKryteria)]
+    }
   }
   return(wyniki)
 }

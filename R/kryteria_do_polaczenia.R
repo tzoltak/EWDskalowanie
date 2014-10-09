@@ -17,11 +17,11 @@
 #' kryteria_do_polaczenia(rodzajEgzaminu, czescEgzaminu, rokEgzaminu)
 #' }
 #' @export
-kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, zrodloDanychODBC = "EWD_grzes", 
+kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, zrodloDanychODBC = "EWD_grzes",
                                    czyPolski = grepl("polski", czescEgzaminu), czesciWypracowania = 6){
-  
+
   P = odbcConnect(as.character(zrodloDanychODBC))
-  
+
   zapytanie = "select distinct TK.id_kryterium, PY.opis, TE.id_testu
   from arkusze as AR
   join testy as TE using(arkusz)
@@ -29,25 +29,25 @@ kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, z
   join kryteria_oceny as KO using(id_kryterium)
   join pytania as PY using(id_pytania)
   where  rodzaj_egzaminu= ? and czesc_egzaminu = ?  and EXTRACT(YEAR from data_egzaminu) = ?"
-  
+
   tryCatch({
     # pobranie numerow kryteriow oraz ich opisow
     tablicaDanych = sqlExecute(P, zapytanie, data =data.frame(rodzajEgzaminu, czescEgzaminu, rokEgzaminu)  , fetch = TRUE, stringsAsFactors = FALSE)
-    
+
     odbcClose(P)
   },
   error=function(e) {
     odbcClose(P)
     stop(e)
   }
-  ) 
-  
+  )
+
   # usuniecie z opisów '_numer'
   tablicaDanych$opis = gsub("_[[:digit:]]+$", "", tablicaDanych$opis)
-  
+
   # wskazanie duplikarow opisow
   dupl = unique(tablicaDanych$opis[duplicated(tablicaDanych$opis)])
-  
+
   # jeżeli mamy do czynienia z jezykiem polskim to opisy, które pojawiają się 6 razy nie bedą brane pod uwagę
   if(czyPolski){
     tab = table(tablicaDanych$opis)
@@ -55,17 +55,17 @@ kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, z
   } else {
     six = NULL
   }
-  
+
   # finalnie opisy do połączeń:
   opisyDoPolaczenia = unique(tablicaDanych$opis[tablicaDanych$opis %in% dupl & ! tablicaDanych$opis %in% six])
-  
+
   ret = list()
   for(i in seq_along(opisyDoPolaczenia)){
     ret[[i]] = tablicaDanych$id_kryterium[tablicaDanych$opis == opisyDoPolaczenia[i]]
     names(ret)[i] = opisyDoPolaczenia[i]
   }
   attributes(ret)$id_testu = tablicaDanych$id_testu[1]
-  
+
   return(ret)
 }
 #' @title Przygotowanie obiektu do edycji skali
@@ -74,29 +74,29 @@ kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, z
 #' @param kryt lista zwrócona przez funkcję \code{\link{kryteria_do_polaczenia}}
 #' @param zrodloDanychODBC żródło danych
 #' @return Funkcja zwraca ramkę danych, której wiersze albo zawierają id istniejącego pseudokryterium albo id wszystkich kryteriów, które mają zostać połączone w jedno pseudokryterium.
-#' @export 
+#' @export
 przygotuj_kryteria <- function(kryt, zrodloDanychODBC = "EWD"){
   idTestu = attributes(kryt)$id_testu
-  
+
   # stworzenie ramki danych z kolumnami opis i id_skrotu
   ret = data.frame(opis = character(0), id_skrotu = numeric(0))
-  
+
   for(ind in seq_along(kryt)){
     kryteria = kryt[[ind]]
-    
+
     zapytanie = paste0("select TK.id_kryterium, POK.id_pseudokryterium, P.opis
-                       from testy_kryteria as TK 
+                       from testy_kryteria as TK
                        join pseudokryteria_oceny_kryteria as POK using(id_kryterium)
                        join pseudokryteria_oceny as P using(id_pseudokryterium)
                        where  id_pseudokryterium in
                        (select distinct POK2.id_pseudokryterium
-                       from testy_kryteria 
+                       from testy_kryteria
                        join pseudokryteria_oceny_kryteria as POK2 using(id_kryterium)
                        join pseudokryteria_oceny as P using(id_pseudokryterium)
                        where  id_kryterium in (", paste0(rep("?", length(kryteria)), collapse=", "), ") and id_testu = ?) and id_testu = ?")
-    
+
     P = odbcConnect(as.character(zrodloDanychODBC))
-    
+
     tryCatch({
       # pobranie danych o pseudokryterium
       psk = sqlExecute(P, zapytanie, data =data.frame(cbind(t(kryteria), idTestu, idTestu))  , fetch = TRUE, stringsAsFactors = FALSE)
@@ -106,8 +106,8 @@ przygotuj_kryteria <- function(kryt, zrodloDanychODBC = "EWD"){
       odbcClose(P)
       stop(e)
     }
-    ) 
-    
+    )
+
     # Jeżeli informacje z bazy o kryteriach pokrywają się z danymi do połączenia to zmienna wiersz zawiera tylko pseudokryterium.
     # W przeciwnym wypadku zmienna wiersz zawiera wszystkie id kryteriów.
     # w powyższym zapytaniu sql zakładam, że kryterium nie może należeć do kilku pseudokryteriów w ramech tego samego egzaminu
@@ -117,9 +117,9 @@ przygotuj_kryteria <- function(kryt, zrodloDanychODBC = "EWD"){
       wiersz = data.frame(t(c(kryteria, names(kryt)[ind])))
       names(wiersz) = c(paste0("id_kryterium_", seq_along(kryteria)), "opis")
     }
-    
+
     ret = rbind.fill(ret, wiersz)
   }
-  
+
   return(ret)
 }
