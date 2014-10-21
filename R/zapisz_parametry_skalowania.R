@@ -12,8 +12,7 @@
 #' @return Funkcja nie zwraca żadnej wartości.
 #' @import RODBCext
 #' @export
-zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, parametry, opis, estymacja, zrodloDanychODBC='ewd_grzes') {
-
+zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, parametry, opis, estymacja, zrodloDanychODBC="EWD") {
   if( is.null(nazwa_skali) & is.null(id_testu) ){
     stop("Nazwa skali oraz id testu nie mogą mieć jednocześnie wartości null.")
   }
@@ -158,7 +157,7 @@ zapisz_parametry_skalowania <- function(nazwa_skali=NULL, id_testu=NULL, paramet
             if( liczbaParam[k]== 1 ){
 
               wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania,
-                                           "dyskryminacja","2PL", parBy$wartosc[kryteriaBy==krytNum],
+                                           "dyskryminacja", "2PL", parBy$wartosc[kryteriaBy==krytNum],
                                            parBy$'S.E.'[kryteriaBy==krytNum])
 
               wstaw_do_skalowania_elementy(P, idSkali, kolejnoscTemp, numerSkalowania,

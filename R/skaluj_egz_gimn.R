@@ -54,8 +54,8 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     }
     # wyrzucamy wszystko, co niepotrzebne do skalowania (rypanie po dysku zajmuje potem cenny czas)
     zmienneKryteria = zmienneKryteria[[1]]
-    daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", zmienneKryteria)]
-    daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", zmienneKryteria)]
+    daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
+    daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
   }
 
   # ew. dopisywanie części zbierających po dwa testy z nowej formuły
@@ -88,7 +88,7 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     }
     message("### Skalowanie wzorcowe ", names(daneWzorcowe)[i], " ###\n")
     opisWzorcowe = procedura_1k_1w(zmienneKryteria          , names(daneWzorcowe)[i], wartosciZakotwiczone, processors=processors)
-    egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe)
+    egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zmienneDolaczaneDoOszacowan="id_testu")
     # wyliczanie rzetelności empirycznej
     rzetelnoscEmpiryczna = egWzorcowe[[1]][[length(egWzorcowe[[1]])]]$zapis[[names(daneWzorcowe)[i]]]
     rzetelnoscEmpiryczna = var(rzetelnoscEmpiryczna)
@@ -106,7 +106,7 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     }
 
     opisWszyscy  = procedura_1k_1w(zmienneKryteriaPoUsuwaniu, names(daneWzorcowe)[i], wartosciZakotwiczone, processors=processors)
-    egWszyscy    = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul=tytulWszyscy )
+    egWszyscy    = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul=tytulWszyscy , zmienneDolaczaneDoOszacowan="id_testu")
 
     wyniki[[i]] = list(
       usunieteKryteria = usunieteKryteria,

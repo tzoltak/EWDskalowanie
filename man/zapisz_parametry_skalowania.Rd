@@ -4,7 +4,7 @@
 \title{Zapisywanie parametrow skalowan.}
 \usage{
 zapisz_parametry_skalowania(nazwa_skali = NULL, id_testu = NULL, parametry,
-  opis, estymacja, zrodloDanychODBC = "ewd_grzes")
+  opis, estymacja, zrodloDanychODBC = "EWD")
 }
 \arguments{
 \item{nazwa_skali}{nazwa skali. Kiedy nazwa skali przymuje wartość NULL nie jest brana pod
