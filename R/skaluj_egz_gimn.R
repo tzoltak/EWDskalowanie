@@ -56,6 +56,11 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     zmienneKryteria = zmienneKryteria[[1]]
     daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
     daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
+    # i dopisujemy do "id_testu" sufiks, żeby mieć szansę połączyć dane z nowej formuły
+    names(daneWzorcowe[[i]]) = sub("^(id_testu)$", paste0("\\1_", names(daneWzorcowe)[i]),
+                                   names(daneWzorcowe[[i]]))
+    names( daneWszyscy[[i]]) = sub("^(id_testu)$", paste0("\\1_", names(daneWszyscy )[i]),
+                                   names (daneWszyscy[[i]]))
   }
 
   # ew. dopisywanie części zbierających po dwa testy z nowej formuły
@@ -82,13 +87,17 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     if ( ((names(daneWzorcowe)[i] == "gh") & all(c("gh_h", "gh_p") %in% names(daneWzorcowe))) |
            ((names(daneWzorcowe)[i] == "gm") & all(c("gm_p", "gm_m") %in% names(daneWzorcowe))) ) {
       # dajemy tu data frame, żeby nie było usuwania kryteriów, ale wtedy trzeba zadać w nim wartość oczekiwaną i wariancję
-      wartosciZakotwiczone = data.frame(typ=c("mean", "variance"), zmienna1=names(daneWzorcowe)[i], zmienna2="", wartosc=c(0, 1), stringsAsFactors=FALSE)
+      wartosciZakotwiczone = data.frame(typ = c("mean", "variance"),
+                                        zmienna1 = names(daneWzorcowe)[i], zmienna2 = "",
+                                        wartosc=c(0, 1), stringsAsFactors=FALSE)
     } else {
       wartosciZakotwiczone = NULL
     }
     message("### Skalowanie wzorcowe ", names(daneWzorcowe)[i], " ###\n")
-    opisWzorcowe = procedura_1k_1w(zmienneKryteria          , names(daneWzorcowe)[i], wartosciZakotwiczone, processors=processors)
-    egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zmienneDolaczaneDoOszacowan="id_testu")
+    opisWzorcowe = procedura_1k_1w(zmienneKryteria, names(daneWzorcowe)[i],
+                                   wartosciZakotwiczone, processors=processors)
+    egWzorcowe   = skaluj(daneWzorcowe[[i]], opisWzorcowe, "id_obserwacji", tytul = tytulWzorcowe,
+                          zmienneDolaczaneDoOszacowan = names(daneWzorcowe[[i]])[grepl("^id_testu", names(daneWzorcowe[[i]]))])
     # wyliczanie rzetelności empirycznej
     rzetelnoscEmpiryczna = egWzorcowe[[1]][[length(egWzorcowe[[1]])]]$zapis[[names(daneWzorcowe)[i]]]
     rzetelnoscEmpiryczna = var(rzetelnoscEmpiryczna)
@@ -105,8 +114,10 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
       usunieteKryteria = zmienneKryteria[!(zmienneKryteria %in% zmienneKryteriaPoUsuwaniu)]
     }
 
-    opisWszyscy  = procedura_1k_1w(zmienneKryteriaPoUsuwaniu, names(daneWzorcowe)[i], wartosciZakotwiczone, processors=processors)
-    egWszyscy    = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul=tytulWszyscy , zmienneDolaczaneDoOszacowan="id_testu")
+    opisWszyscy  = procedura_1k_1w(zmienneKryteriaPoUsuwaniu, names(daneWzorcowe)[i],
+                                   wartosciZakotwiczone, processors=processors)
+    egWszyscy    = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul = tytulWszyscy,
+                          zmienneDolaczaneDoOszacowan = names(daneWszyscy[[i]])[grepl("^id_testu", names(daneWszyscy[[i]]))])
 
     wyniki[[i]] = list(
       usunieteKryteria = usunieteKryteria,
