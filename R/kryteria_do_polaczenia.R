@@ -79,7 +79,8 @@ przygotuj_kryteria <- function(kryt, zrodloDanychODBC = "EWD"){
   idTestu = attributes(kryt)$id_testu
 
   # stworzenie ramki danych z kolumnami opis i id_skrotu
-  ret = data.frame(opis = character(0), id_skrotu = numeric(0))
+  ret = data.frame(opis = character(0), id_skrotu = numeric(0), 
+                   id_pseudokryterium = numeric(0), id_kryterium = numeric(0))
 
   for(ind in seq_along(kryt)){
     kryteria = kryt[[ind]]
