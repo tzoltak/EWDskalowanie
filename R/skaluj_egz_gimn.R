@@ -57,10 +57,10 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
     daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
     # i dopisujemy do "id_testu" sufiks, żeby mieć szansę połączyć dane z nowej formuły
-    names(daneWzorcowe[[i]]) = sub("^(id_testu)$", paste0("\\1_", names(daneWzorcowe)[i]),
+    names(daneWzorcowe[[i]]) = sub("^id_testu$", paste0("\\1_", names(daneWzorcowe)[i]),
                                    names(daneWzorcowe[[i]]))
-    names( daneWszyscy[[i]]) = sub("^(id_testu)$", paste0("\\1_", names(daneWszyscy )[i]),
-                                   names (daneWszyscy[[i]]))
+    names( daneWszyscy[[i]]) = sub("^id_testu$", paste0("\\1_", names(daneWszyscy )[i]),
+                                   names( daneWszyscy[[i]]))
   }
 
   # ew. dopisywanie części zbierających po dwa testy z nowej formuły

@@ -48,11 +48,14 @@ skaluj_spr = function(daneWzorcowe, daneWszyscy, processors=2) {
   zmienneKryteria = zmienneKryteria[[1]]
   daneWzorcowe = daneWzorcowe[, c("id_obserwacji", "id_testu", zmienneKryteria)]
   daneWszyscy  =  daneWszyscy[, c("id_obserwacji", "id_testu", zmienneKryteria)]
+  # sufiks do 'id_testu'
+  names(daneWzorcowe) = sub("^id_testu$", "id_testu_s", names(daneWzorcowe))
+  names( daneWszyscy) = sub("^id_testu$", "id_testu_s", names( daneWszyscy))
 
   # skalowanie jako takie
   message("\n### Skalowanie wzorcowe ###\n")
   opisWzorcowe = procedura_1k_1w(zmienneKryteria, "s", processors=processors)
-  sprWzorcowe  = skaluj(daneWzorcowe, opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zmienneDolaczaneDoOszacowan="id_testu")
+  sprWzorcowe  = skaluj(daneWzorcowe, opisWzorcowe, "id_obserwacji", tytul=tytulWzorcowe, zmienneDolaczaneDoOszacowan="id_testu_s")
   # wyliczanie rzetelności empirycznej
   rzetelnoscEmpiryczna = sprWzorcowe[[1]][[length(sprWzorcowe[[1]])]]$zapis[["s"]]
   rzetelnoscEmpiryczna = var(rzetelnoscEmpiryczna)
@@ -62,7 +65,7 @@ skaluj_spr = function(daneWzorcowe, daneWszyscy, processors=2) {
   wartosciZakotwiczone = wartosciZakotwiczone[!(wartosciZakotwiczone$typ %in% c("mean", "variance")), ]
   zmienneKryteriaPoUsuwaniu = wartosciZakotwiczone$zmienna2[wartosciZakotwiczone$typ == "by"]
   opisWszyscy  = procedura_1k_1w(zmienneKryteriaPoUsuwaniu, "s", wartosciZakotwiczone, processors=processors)
-  sprWszyscy   = skaluj(daneWszyscy , opisWszyscy , "id_obserwacji", tytul=tytulWszyscy , zmienneDolaczaneDoOszacowan="id_testu")
+  sprWszyscy   = skaluj(daneWszyscy , opisWszyscy , "id_obserwacji", tytul=tytulWszyscy , zmienneDolaczaneDoOszacowan="id_testu_s")
 
   return(list(
     usunieteKryteria = zmienneKryteria[!(zmienneKryteria %in% zmienneKryteriaPoUsuwaniu)],
