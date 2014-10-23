@@ -285,6 +285,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
   }
   # wywalanie zmiennych z zerową wariancją
   maskaWariancja0 = unlist(lapply(dane, function(x) return(length(unique(na.omit(x))) == 1)))
+  maskaWariancja0 = maskaWariancja0 & !(names(dane) %in% zmienneDolaczaneDoOszacowan)
   if (any(maskaWariancja0)) {
     warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n - ", paste0(names(dane)[maskaWariancja0], collapse="\n  - "), "\n"), immediate.=TRUE)
     opisProcedury = lapply(opisProcedury,
