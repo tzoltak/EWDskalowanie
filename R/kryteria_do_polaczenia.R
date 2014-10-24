@@ -17,7 +17,7 @@
 #' kryteria_do_polaczenia(rodzajEgzaminu, czescEgzaminu, rokEgzaminu)
 #' }
 #' @export
-kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, zrodloDanychODBC = "EWD_grzes",
+kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, zrodloDanychODBC = "EWD",
                                    czyPolski = grepl("polski", czescEgzaminu), czesciWypracowania = 6){
 
   P = odbcConnect(as.character(zrodloDanychODBC))
@@ -58,12 +58,22 @@ kryteria_do_polaczenia <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, z
 
   # finalnie opisy do połączeń:
   opisyDoPolaczenia = unique(tablicaDanych$opis[tablicaDanych$opis %in% dupl & ! tablicaDanych$opis %in% six])
-
+  
+  polaczoneKryteria = NULL
   ret = list()
   for(i in seq_along(opisyDoPolaczenia)){
     ret[[i]] = tablicaDanych$id_kryterium[tablicaDanych$opis == opisyDoPolaczenia[i]]
     names(ret)[i] = opisyDoPolaczenia[i]
+    polaczoneKryteria = c(polaczoneKryteria, ret[[i]])
   }
+  
+  tablicaDanych = tablicaDanych[!tablicaDanych$id_kryterium %in% polaczoneKryteria, ]
+  
+  for(i in  seq_len(nrow(tablicaDanych))){
+    ret[[length(ret)+1]] = tablicaDanych$id_kryterium[i]
+    names(ret)[length(ret)] = tablicaDanych$opis[i]
+  }
+  
   attributes(ret)$id_testu = tablicaDanych$id_testu[1]
 
   return(ret)
@@ -84,6 +94,13 @@ przygotuj_kryteria <- function(kryt, zrodloDanychODBC = "EWD"){
 
   for(ind in seq_along(kryt)){
     kryteria = kryt[[ind]]
+    
+    # jeżeli mamy jedno kryterium do połączenia to dołączamy do skali to kryteriu
+    if(length(kryteria)==1){
+      wiersz = data.frame(id_kryterium = kryteria)
+      ret = rbind.fill(ret, wiersz)
+      next;
+    }
 
     zapytanie = paste0("select TK.id_kryterium, POK.id_pseudokryterium, P.opis
                        from testy_kryteria as TK
