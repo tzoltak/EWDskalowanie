@@ -177,7 +177,7 @@ zapisz_skrot_do_bazy <- function(polaczenie, numerPytania, idSkali, czyPseudokry
   
   odbcSetAutoCommit(P, FALSE) # rozpocznij transakcję
   
-  zapytanie = "insert into skroty_skal values (nextval('skroty_skal_id_skrotu'), ?) returning id_skrotu"
+  zapytanie = "insert into skroty_skal values (nextval('skroty_skal_id_skrotu_seq'), ?) returning id_skrotu"
   idSkrotu = sqlExecute(P, zapytanie, data = data.frame(opisSkrotu), fetch = TRUE)
   
   zapytanie2 = "insert into skroty_skal_mapowania values (?, ?, ?)"
