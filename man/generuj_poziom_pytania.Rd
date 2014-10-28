@@ -3,11 +3,9 @@
 \alias{generuj_poziom_pytania}
 \title{Generowanie poziomów dla (pseudo)kryterium}
 \usage{
-generuj_poziom_pytania(vec, nazwa_pytania, zrodloDanychODBC = "EWD")
+generuj_poziom_pytania(nazwa_pytania, zrodloDanychODBC = "EWD")
 }
 \arguments{
-\item{vec}{wektor z odpowiedziami na (pseudo)kryterium}
-
 \item{nazwa_pytania}{nazwa pytania}
 
 \item{zrodloDanychODBC}{źródło danych ODBC}

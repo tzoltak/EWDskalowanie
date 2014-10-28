@@ -1,13 +1,11 @@
 #' @title Generowanie poziomów dla (pseudo)kryterium
 #' @description
 #' Funkcja na podstawie bazy danych oraz samych danych uczniów określa liczbę potencjalnych poziomów dla podanego (pseudo)kryterium.
-#' @param vec wektor z odpowiedziami na (pseudo)kryterium
 #' @param nazwa_pytania nazwa pytania
 #' @param zrodloDanychODBC źródło danych ODBC
 #' @return wektor poziomów
 #' @import RODBCext 
-generuj_poziom_pytania <- function(vec, nazwa_pytania, zrodloDanychODBC = "EWD"){
-  
+generuj_poziom_pytania <- function( nazwa_pytania, zrodloDanychODBC = "EWD"){
   numerPytania = as.numeric(gsub("([[:alnum:]]+_)", "", nazwa_pytania))
   
   if(grepl("k_", nazwa_pytania)){
@@ -19,20 +17,21 @@ generuj_poziom_pytania <- function(vec, nazwa_pytania, zrodloDanychODBC = "EWD")
   }
   
   if(czyPseudokryterium){
-    zapytanie = "select sum(l_punktow) from pseudokryteria_oceny
-                join pseudokryteria_oceny_kryteria as POK using(id_pseudokryterium)
-                join kryteria_oceny as KO on POK.id_kryterium = KO.id_kryterium
-                where id_pseudokryterium = ?
-                group by id_pseudokryterium"
+    zapytanie = "select KO.id_kryterium, wartosc from pseudokryteria_oceny
+              join pseudokryteria_oceny_kryteria as POK using(id_pseudokryterium)
+              join kryteria_oceny as KO on POK.id_kryterium = KO.id_kryterium
+              join sl_schematy_pkt_wartosci using(schemat_pkt)
+              where id_pseudokryterium = ?"
     
   } else {
-    zapytanie = "select l_punktow from kryteria_oceny 
-                where id_kryterium  = ?"
+    zapytanie = "select id_kryterium, wartosc from kryteria_oceny
+              join sl_schematy_pkt_wartosci using(schemat_pkt)
+              where id_kryterium = ?"
   }
   
   tryCatch({
     P = odbcConnect(zrodloDanychODBC)
-    maksymalnePunkty = sqlExecute(P, zapytanie, data = data.frame(numerPytania), fetch = TRUE)[[1]]
+    wynik = sqlExecute(P, zapytanie, data = data.frame(numerPytania), fetch = TRUE)
     odbcClose(P)
   },
   error=function(e) {
@@ -40,20 +39,19 @@ generuj_poziom_pytania <- function(vec, nazwa_pytania, zrodloDanychODBC = "EWD")
     stop(e)
   })
   
-  if( all(vec%%1==0) ){
-    # w przypadku zadań punktowanych 0-2 to poziom 1 nie występuje, jednak w skróceniu będzie notka, że poziom 1 jest zamieniany na któryś z sąsiednich.
-    # ta sytuacja i tak nie będzie w praktyce występować.
-    poziomy = 0:maksymalnePunkty
-  } else if( all(vec%%0.5==0) ){
-    # dla połówek
-    poziomy = seq(0, maksymalnePunkty, by=0.5)
-  } else{
-    stop("Punktacja zawiera liczby, które nie są całkowite oraz połówkowe")
+  if(czyPseudokryterium){
+    kryteria = unique(wynik$id_kryterium)
+    poziomy = 0 
+    for(kry in kryteria){
+      tmp =  wynik$wartosc[wynik$id_kryterium == kry]
+      poziomy = unique(as.vector(outer(poziomy, tmp, function(x,y) x+y )))
+    }
+  } else {
+    poziomy = wynik$wartosc
   }
   
-  return(poziomy)
+  return(sort(poziomy))
 }
-
 #' @title Łączenie dwóch poziomów dla wektora klasy factor
 #' @description
 #' Pomocnicza funkcja, która łączy dwa poziomy sprawdzając wcześniej, czy spełniają one dopuszczalne warunki (patrz opis funkcji \code{\link{czy_poziomy_sa_okej}}).
@@ -229,7 +227,7 @@ zapisz_skrocenia_do_bazy <- function(dane, idSkali, maxLPozWyk=5, minLiczebnPozW
     }
     
     vec = dane[, ind]
-    poziomy = generuj_poziom_pytania(vec, names(dane)[ind], zrodloDanychODBC)
+    poziomy = generuj_poziom_pytania(names(dane)[ind], zrodloDanychODBC)
     skrocenie = okresl_skrocenie(vec, poziomy, maxLPozWyk, minLiczebnPozWyk, minOdsPozWyk)
     polaczenie = attributes(skrocenie)$polaczenie
     numerPytania = as.numeric(gsub("([[:alnum:]]+_)", "", names(dane)[ind]))
