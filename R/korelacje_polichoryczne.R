@@ -423,9 +423,25 @@ korelacjePolihoryczne <- function(dane){
 #' @param wiazki_pyt_kryt ramka danych, która zawiera informacje o przynależności pytań do poszczególnych wiązek.
 #' @return
 #' Funkcja zwraca ramkę danych, w której znajdują się obliczone korelacje polichoryczne.
+#' @import RODBCext
 policz_korelacje_wiazki <- function (dane_pytan, wiazki_pyt_kryt){
   kryt_nazwy = colnames(dane_pytan)[grepl("^([[:alnum:]]+_)+[[:digit:]]+", colnames(dane_pytan))]
   kryt = as.numeric(gsub("^([[:alnum:]]+_)+", "", kryt_nazwy))
+  
+  sprawdz_zgodnosc_kryteriow <- function(kryt1, kryt2, nazwa1, nazwa2, error=TRUE){
+    if(  length(fInds <- which( ! unique(kryt1) %in% unique(kryt2))) !=0  ){
+      if(error){
+        stop(paste0(nazwa1, " i ", nazwa2," nie pokrywają się.",
+                    " Brakujące ", nazwa1, ":\n"),
+             paste(unique(kryt1)[fInds], collapse="\n"))
+      } else {
+        warning(paste0(nazwa1, " i ", nazwa2, " nie pokrywają się.",
+                       " Brakujące ", nazwa1, ":\n"),
+                paste(unique(kryt1)[fInds], collapse="\n"))
+      }
+    }
+    invisible(NULL)
+  }
 
   sprawdz_zgodnosc_kryteriow(kryt, wiazki_pyt_kryt$id_kryterium, "Kryteria z pytan", "Kryteria z wiazek")
   sprawdz_zgodnosc_kryteriow(wiazki_pyt_kryt$id_kryterium, kryt, "Kryteria z wiazek", "Kryteria z pytan")
