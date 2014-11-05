@@ -5,6 +5,8 @@
 #' @param rodzajEgzaminu ciąg znaków - rodzaj egzaminu
 #' @param czescEgzaminu ciąg znaków - część egzaminu
 #' @param rokEgzaminu liczba całkowita - rok egzaminu
+#' @param nieLacz wartość logiczna - czy nie łączyć kryteriów w pseudokryteria, a tylko
+#' zwrócić kryteria z podanych części egzaminów?
 #' @param zrodloDanychODBC żródło ODBC
 #' @return Funkcja zwraca data frame, który można uzyć jako argument \code{elementy}
 #' funkcji \code{edytuj_skale()} z pakietu \code{ZPD}.
@@ -17,11 +19,12 @@
 #' }
 #' @import plyr
 #' @export
-lacz_kryteria_zadan <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, zrodloDanychODBC = "EWD"){
+lacz_kryteria_zadan <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, nieLacz=FALSE, zrodloDanychODBC = "EWD"){
   stopifnot(
     is.character(rodzajEgzaminu), length(rodzajEgzaminu) == 1,
     is.numeric(rokEgzaminu)     , length(rokEgzaminu) == 1,
     is.character(czescEgzaminu),
+    is.logical(nieLacz), length(nieLacz) == 1,
     is.character(zrodloDanychODBC), length(zrodloDanychODBC) == 1 )
   # pobranie numerow kryteriow oraz ich opisow
   zapytanie = "SELECT DISTINCT id_kryterium, pytania.opis AS opis, typ, czesc_egzaminu
@@ -47,20 +50,25 @@ lacz_kryteria_zadan <- function(rodzajEgzaminu, czescEgzaminu, rokEgzaminu, zrod
     warning("W kryteriach o podanych opisach zmieniono nazwę części egzaminu:\n",
             paste0(tablicaDanych$opis, " -> ", tablicaDanych$czesc_egzaminu, "\n"))
   }
-  # usuniecie z opisów '_numer'
-  tablicaDanych$opis = gsub("_[[:digit:]_]+$", "", tablicaDanych$opis)
-  # wskazanie duplikatów opisów
-  opisyDoPolaczenia = with(tablicaDanych, {
-    unique(opis[duplicated(opis) & !(typ == "rozprawka" & grepl("j. polski", opis))])
-  })
-  pseudokryteria = vector(mode="list", length=length(opisyDoPolaczenia))
-  for(i in seq_along(opisyDoPolaczenia)){
-    pseudokryteria[[i]] = with(tablicaDanych, {id_kryterium[opis == opisyDoPolaczenia[i]]})
-    pseudokryteria[[i]] = as.list(pseudokryteria[[i]])
-    names(pseudokryteria[[i]]) = paste0("id_kryterium_", 1:length(pseudokryteria[[i]]))
-    pseudokryteria[[i]]$opis = paste0("ewd;", opisyDoPolaczenia[i])
+  if (!nieLacz) {
+    # usuniecie z opisów '_numer'
+    tablicaDanych$opis = gsub("_[[:digit:]_]+$", "", tablicaDanych$opis)
+    # wskazanie duplikatów opisów
+    opisyDoPolaczenia = with(tablicaDanych, {
+      unique(opis[duplicated(opis) & !(typ == "rozprawka" & grepl("j. polski", opis))])
+    })
+    pseudokryteria = vector(mode="list", length=length(opisyDoPolaczenia))
+    for(i in seq_along(opisyDoPolaczenia)){
+      pseudokryteria[[i]] = with(tablicaDanych, {id_kryterium[opis == opisyDoPolaczenia[i]]})
+      pseudokryteria[[i]] = as.list(pseudokryteria[[i]])
+      names(pseudokryteria[[i]]) = paste0("id_kryterium_", 1:length(pseudokryteria[[i]]))
+      pseudokryteria[[i]]$opis = paste0("ewd;", opisyDoPolaczenia[i])
+    }
+    pseudokryteria = ldply(pseudokryteria, as.data.frame)
+  } else {
+    opisyDoPolaczenia = NULL
+    pseudokryteria = NULL
   }
-  pseudokryteria = ldply(pseudokryteria, as.data.frame)
   # łączenie
   tablicaDanych = subset(tablicaDanych, !(tablicaDanych$opis %in% opisyDoPolaczenia))
   ret = rbind.fill(list(

@@ -1,4 +1,30 @@
 --------------------
+Zmiany w EWDskalowanie 0.6 (2014-11-04)
+
+- Nowe funkcje:
+  - skaluj_egz_gimn_rasch() implementuje workflow skalowania egz. gimn. (dokładnie części
+    mat.-przyr.) na potrzeby Kalkulatora maturalnego;
+  - skaluj_matura_rasch() implementuje workflow skalowania matury z matematyki (poziomy
+    podstawowy i rozszerzony), na potrzeby Kalkulatora maturalnego;
+  - przewidywanie_rasch() generuje, poprzez uśrednianie, mapowanie sumy punktów na
+    oszacowania poziomu umiejętności z modeli Rascha wyestymowanych na danych
+    zawierających zadania o wielu (więcej niż dwóch) poziomach wykonania; wykorzystywana
+    przez dwie powyższe funkcje;
+  - lacz_kryteria_zadan() łączy kryteria w pseudokryteria na podstawie informacji
+    o powiązaniach kryteriów z zadaniami (z arkusza),
+  - skracanie_poziomow() skraca skale oceny (pseudo)kryteriów;
+  - sprawdz_wyniki_skalowania() wyrysowuje zestaw wykresów diagnostycznych pozwalających
+    przyjrzeć się wynikom uzyskanym z modelu skalowania.
+
+- Nowe funkcjonalności:
+  - procedura_1k_1w() nowe parametry umożliwiające estymację modelu Rascha i/lub
+    modeli wielogrupowych.
+
+- Usunięte funkcje:
+  - pobierz_parametry_skalowania() - przeniesiona do pakietu EWDdane;
+  - zapisz_parametry_skalowania() - przeniesiona do pakietu EWDdane.
+
+--------------------
 Zmiany w EWDskalowanie 0.5 (2014-10-08)
 
 - Nowe funkcje:
@@ -13,7 +39,7 @@ Zmiany w EWDskalowanie 0.5 (2014-10-08)
 
 - Usunięte funkcje:
   - procedura_eg();
-  - procedura_eg_sf();
+  - procedura_eg_sf().
 
 --------------------
 Zmiany w EWDskalowanie 0.4.2 (2014-10-04)

@@ -11,26 +11,40 @@
 #' kryterium usuwania zadań \code{dyskryminacjaPonizej = 0.2}. Jeśli został on podany, to
 #' nie będą stosowane kryteria usuwania zadań oraz uwolnione zostaną wartość oczekiwana
 #' i wariancja konstruktu.
-#' @param nazwyZmiennych wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na których ma być prowadzona estymacja (funkcja sama wybierze tylko te, które pasują do wyrażenia regularnego podanego w argumencie \code{maskaZmienne})
+#' @param nazwyZmiennych wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na
+#' których ma być prowadzona estymacja (funkcja sama wybierze tylko te, które pasują do
+#' wyrażenia regularnego podanego w argumencie \code{maskaZmienne})
 #' @param nazwaKonstruktu ciąg znaków - nazwa zmiennej opisującej mierzony konstrukt
-#' @param wartosciZakotwiczone opcjonalnie data frame definiujący zakotwiczone wartości parametrów modelu (p. \code{\link{skaluj}})
-#' @param wartosciStartowe opcjonalnie data frame definiujący wartości startowe parametrów modelu (p. \code{\link{skaluj}})
-#' @param maskaZmienne wyrażenie regularne (ciąg znaków), które spełniają nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu
-#' @param processors liczba rdzeni do wykorzystania przy estymacji
-#' @param integrPt liczba punktów siatki do całkowania numerycznego (po rozkładzie cechy ukrytej)
-#' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
+#' @param wartosciZakotwiczone opcjonalnie data frame definiujący zakotwiczone wartości
+#' parametrów modelu (p. \code{\link{skaluj}})
+#' @param wartosciStartowe opcjonalnie data frame definiujący wartości startowe parametrów
+#' modelu (p. \code{\link{skaluj}})
+#' @param rasch opcjonalnie wartość logiczna - czy estymować model Rascha?
+#' @param wieleGrup opcjonalnie wektor tekstowy z nazwami zmiennych (lub zmiennej)
+#' definiujących podział na grupy w modelu wielogrupowym (w ramach grup uwolnione zostaną
+#' wartości oczekiwane konstruktu )
+#' @param maskaZmienne opcjonalnie wyrażenie regularne (ciąg znaków), które spełniają
+#' nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu
+#' @param processors opcjonalnie liczba rdzeni do wykorzystania przy estymacji
+#' @param integrPt opcjonalnie liczba punktów siatki do całkowania numerycznego (po
+#' rozkładzie cechy ukrytej)
+#' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
+#' \code{\link{skaluj}}
 #' @seealso \code{\link{skaluj}}, \code{\link{skaluj_spr}}, \code{\link{skaluj_egz_gimn}}
 #' @examples
 #' # chwilowo brak
 #' @export
-procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu=NULL, wartosciZakotwiczone=NULL, wartosciStartowe=NULL, maskaZmienne="^[kp]_[[:digit:]]+$", processors=3, integrPt=20) {
+procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwiczone=NULL,
+                           wartosciStartowe=NULL, rasch=FALSE, wieleGrup=NULL,
+                           maskaZmienne="^[kps]_[[:digit:]]+$",
+                           processors=3, integrPt=20) {
   opis = list(
     list(
       czescPomiarowa = list(
-        spr = list(
+        list(
           zmienne = nazwyZmiennych[grep(maskaZmienne, nazwyZmiennych)],
           var1 = ifelse(is.null(wartosciZakotwiczone), TRUE, FALSE),
-          rasch = FALSE,
+          rasch = ifelse(is.null(wartosciZakotwiczone), rasch, FALSE),
           kryteriaUsuwania = if(is.null(wartosciZakotwiczone)) {
             list(
               dyskryminacjaPonizej = 0.2,
@@ -51,5 +65,9 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu=NULL, wartosciZakotwi
     )
   )
   names(opis[[1]]$czescPomiarowa)[1] = nazwaKonstruktu
+  if (!is.null(wieleGrup)) opis[[1]]$wieleGrup = list(
+    zmienneGrupujace = wieleGrup,
+    uwolnijWartosciOczekiwane = TRUE,
+    uwolnijWariancje = TRUE)
   return(opis)
 }

@@ -3,27 +3,41 @@
 \alias{procedura_1k_1w}
 \title{Procedury skalowania egzaminow.}
 \usage{
-procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = NULL,
-  wartosciZakotwiczone = NULL, wartosciStartowe = NULL,
-  maskaZmienne = "^[kp]_[[:digit:]]+$", processors = 3, integrPt = 20)
+procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = "f1",
+  wartosciZakotwiczone = NULL, wartosciStartowe = NULL, rasch = FALSE,
+  wieleGrup = NULL, maskaZmienne = "^[kps]_[[:digit:]]+$", processors = 3,
+  integrPt = 20)
 }
 \arguments{
-\item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na których ma być prowadzona estymacja (funkcja sama wybierze tylko te, które pasują do wyrażenia regularnego podanego w argumencie \code{maskaZmienne})}
+\item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na
+których ma być prowadzona estymacja (funkcja sama wybierze tylko te, które pasują do
+wyrażenia regularnego podanego w argumencie \code{maskaZmienne})}
 
 \item{nazwaKonstruktu}{ciąg znaków - nazwa zmiennej opisującej mierzony konstrukt}
 
-\item{wartosciZakotwiczone}{opcjonalnie data frame definiujący zakotwiczone wartości parametrów modelu (p. \code{\link{skaluj}})}
+\item{wartosciZakotwiczone}{opcjonalnie data frame definiujący zakotwiczone wartości
+parametrów modelu (p. \code{\link{skaluj}})}
 
-\item{wartosciStartowe}{opcjonalnie data frame definiujący wartości startowe parametrów modelu (p. \code{\link{skaluj}})}
+\item{wartosciStartowe}{opcjonalnie data frame definiujący wartości startowe parametrów
+modelu (p. \code{\link{skaluj}})}
 
-\item{maskaZmienne}{wyrażenie regularne (ciąg znaków), które spełniają nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu}
+\item{rasch}{opcjonalnie wartość logiczna - czy estymować model Rascha?}
 
-\item{processors}{liczba rdzeni do wykorzystania przy estymacji}
+\item{wieleGrup}{opcjonalnie wektor tekstowy z nazwami zmiennych (lub zmiennej)
+definiujących podział na grupy w modelu wielogrupowym (w ramach grup uwolnione zostaną
+wartości oczekiwane konstruktu )}
 
-\item{integrPt}{liczba punktów siatki do całkowania numerycznego (po rozkładzie cechy ukrytej)}
+\item{maskaZmienne}{opcjonalnie wyrażenie regularne (ciąg znaków), które spełniają
+nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu}
+
+\item{processors}{opcjonalnie liczba rdzeni do wykorzystania przy estymacji}
+
+\item{integrPt}{opcjonalnie liczba punktów siatki do całkowania numerycznego (po
+rozkładzie cechy ukrytej)}
 }
 \value{
-lista, która zostanie użyta jako argument \code{opisProcedury} funkcji \code{\link{skaluj}}
+lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
+\code{\link{skaluj}}
 }
 \description{
 Procedura skalowania "jeden krok, jeden wymiar".

@@ -4,7 +4,7 @@
 \title{Laczenie kryteriow wedlug numerow zadan}
 \usage{
 lacz_kryteria_zadan(rodzajEgzaminu, czescEgzaminu, rokEgzaminu,
-  zrodloDanychODBC = "EWD")
+  nieLacz = FALSE, zrodloDanychODBC = "EWD")
 }
 \arguments{
 \item{rodzajEgzaminu}{ciąg znaków - rodzaj egzaminu}
@@ -12,6 +12,9 @@ lacz_kryteria_zadan(rodzajEgzaminu, czescEgzaminu, rokEgzaminu,
 \item{czescEgzaminu}{ciąg znaków - część egzaminu}
 
 \item{rokEgzaminu}{liczba całkowita - rok egzaminu}
+
+\item{nieLacz}{wartość logiczna - czy nie łączyć kryteriów w pseudokryteria, a tylko
+zwrócić kryteria z podanych części egzaminów?}
 
 \item{zrodloDanychODBC}{żródło ODBC}
 }

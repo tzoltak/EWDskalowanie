@@ -1,249 +1,195 @@
-#' @title Generowanie poziomów dla (pseudo)kryterium
+#' @title Skracanie skal oceny
 #' @description
-#' Funkcja na podstawie bazy danych oraz samych danych uczniów określa liczbę potencjalnych poziomów dla podanego (pseudo)kryterium.
-#' @param nazwa_pytania nazwa pytania
-#' @param zrodloDanychODBC źródło danych ODBC
-#' @return wektor poziomów
-#' @import RODBCext 
-generuj_poziom_pytania <- function( nazwa_pytania, zrodloDanychODBC = "EWD"){
-  numerPytania = as.numeric(gsub("([[:alnum:]]+_)", "", nazwa_pytania))
-  
-  if(grepl("k_", nazwa_pytania)){
-    czyPseudokryterium = FALSE
-  } else if (grepl("p_", nazwa_pytania)){
-    czyPseudokryterium = TRUE
-  } else {
-    stop("Nie można zidentyfikować rodzaju pytania o nazwie: ", nazwa_pytania)
-  }
-  
-  if(czyPseudokryterium){
-    zapytanie = "select KO.id_kryterium, wartosc from pseudokryteria_oceny
-              join pseudokryteria_oceny_kryteria as POK using(id_pseudokryterium)
-              join kryteria_oceny as KO on POK.id_kryterium = KO.id_kryterium
-              join sl_schematy_pkt_wartosci using(schemat_pkt)
-              where id_pseudokryterium = ?"
-    
-  } else {
-    zapytanie = "select id_kryterium, wartosc from kryteria_oceny
-              join sl_schematy_pkt_wartosci using(schemat_pkt)
-              where id_kryterium = ?"
-  }
-  
-  tryCatch({
-    P = odbcConnect(zrodloDanychODBC)
-    wynik = sqlExecute(P, zapytanie, data = data.frame(numerPytania), fetch = TRUE)
-    odbcClose(P)
-  },
-  error=function(e) {
-    odbcClose(P)
-    stop(e)
-  })
-  
-  if(czyPseudokryterium){
-    kryteria = unique(wynik$id_kryterium)
-    poziomy = 0 
-    for(kry in kryteria){
-      tmp =  wynik$wartosc[wynik$id_kryterium == kry]
-      poziomy = unique(as.vector(outer(poziomy, tmp, function(x,y) x+y )))
+#' Funkcja dokonuje skrótu skali oceny (pseudo)kryterium w oparciu o rozkład jego
+#' wyników w grupie kalibracyjnej i informację o wszystkich możliwych wartościach,
+#' jakie może przyjąć dane (pseudo)kryterium.
+#' @param x data frame zawierający wyniki cześći egzaminu (typowo pobrane przy pomocy
+#' funkcji \code{pobierz_czesc_egzaminu()} z pakietu \code{ZPD}) lub lista takich
+#' data frame'ów
+#' @param maxLPozWyk maksymalna liczba poziomów pytania
+#' @param minLiczebnPozWyk minimalna liczebność obserwacji w każdym z poziomów
+#' @param minOdsPozWyk minimalny odsetek obserwacji, które ma zawierać każdy poziom
+#' @param print wartość logiczna - czy pokazywać informacje o skracaniu?
+#' @param zrodloDanychODBC opcjonalnie nazwa źródła danych ODBC, dającego dostęp do
+#' bazy (domyślnie "EWD")
+#' @return Data frame, pasujący swoją strukturą jako argument \code{elementy} do
+#' funkcji \code{edytuj_skale} z pakietu \code{ZPD} lub lista takich data frame'ów.
+#' @export
+skroc_skale <- function(x, maxLPozWyk=5, minLiczebnPozWyk=100, minOdsPozWyk=0.05, print=TRUE, zrodloDanychODBC="EWD") {
+  stopifnot(is.data.frame(x) | is.list(x),
+            is.numeric(maxLPozWyk)      , length(maxLPozWyk      ) == 1,
+            is.numeric(minLiczebnPozWyk), length(minLiczebnPozWyk) == 1,
+            is.numeric(minLiczebnPozWyk), length(minLiczebnPozWyk) == 1)
+  stopifnot(maxLPozWyk >= 2,
+            minLiczebnPozWyk>=0, minLiczebnPozWyk < Inf,
+            minOdsPozWyk >= 0, minOdsPozWyk <= 1)
+  if (is.data.frame(x)) x = list(x)
+
+  elementy = vector(mode="list", length=length(x))
+  names(elementy) = names(x)
+  for (j in names(x)) {
+    nazwyKryteriow =  # właściwie kryteriów i pseudokryteriów
+      names(x[[j]])[grep("^[kp]_[[:digit:]]+$", names(x[[j]]))]
+    mozliweWartosci = pobierz_mozliwe_wartosci(nazwyKryteriow, zrodloDanychODBC)
+    skroty = vector(mode="list", length=length(nazwyKryteriow))
+    names(skroty) = nazwyKryteriow
+    for (k in nazwyKryteriow) {
+      message(j, ": ", k)
+      temp = okresl_wzor_skracania(x[[j]][, k], mozliweWartosci[[k]],
+                                   maxLPozWyk, minLiczebnPozWyk, minOdsPozWyk)
+      #print(data.frame(as.list(temp$rozkladPrzed), check.names=FALSE), row.names=FALSE)
+      print(matrix(temp$rozkladPrzed, ncol=1, dimnames=list(names(temp$rozkladPrzed), "liczebność")))
+      if (length(unique(temp$poSkroceniu)) < length(unique(temp$przedSkroceniem))) {
+        print(as.data.frame(temp[c("przedSkroceniem", "poSkroceniu")]), row.names=FALSE)
+        print(matrix(temp$rozkladPo, ncol=1, dimnames=list(names(temp$rozkladPo), "liczebność")))
+        skroty[[k]] = paste0(paste0(temp$przedSkroceniem, collapse=";"), "|",
+                             paste0(temp$poSkroceniu, collapse=";"), collapse="")
+      } else {
+        skroty[[k]] = NA
+      }
     }
-  } else {
-    poziomy = wynik$wartosc
+    elementy[[j]] = data.frame(id_kryterium = nazwyKryteriow,
+                               id_pseudokryterium = nazwyKryteriow,
+                               id_skrotu = unlist(skroty))
+    elementy[[j]] = within(elementy[[j]], {
+      id_kryterium[grep("^p_", id_kryterium)] = NA
+      id_pseudokryterium[grep("^k_", id_pseudokryterium)] = NA
+    })
+    elementy[[j]] = within(elementy[[j]], {
+      id_kryterium = as.numeric(sub("^k_", "", id_kryterium))
+      id_pseudokryterium = as.numeric(sub("^p_", "", id_pseudokryterium))
+    })
   }
-  
-  return(sort(poziomy))
+  if(length(elementy) == 1) elementy = elementy[[1]]
+  return(elementy)
 }
-#' @title Łączenie dwóch poziomów dla wektora klasy factor
+#' @title Okreslenie wzoru skrocenia skali oceny
 #' @description
-#' Pomocnicza funkcja, która łączy dwa poziomy sprawdzając wcześniej, czy spełniają one dopuszczalne warunki (patrz opis funkcji \code{\link{czy_poziomy_sa_okej}}).
-#' @param vecFactor wektor factorów
+#' Funkcja dokonuje skrótu skali oceny (pseudo)kryterium w oparciu o rozkład jego
+#' wyników w grupie kalibracyjnej i informację o wszystkich możliwych wartościach,
+#' jakie może przyjąć dane (pseudo)kryterium.
+#' @param x wektor z wynikami danego pytania
+#' @param mozliweWartosci wektor z dopuszczalnymi poziomami dla danego pytania
 #' @param maxLPozWyk maksymalna liczba poziomów pytania
 #' @param minLiczebnPozWyk minimalna liczebność obserwacji w każdym z poziomów
 #' @param minOdsPozWyk minimalny odsetek obserwacji, które ma zawierać każdy poziom.
-#' @return Funkcja zwraca wektor klasy factor, który dodatkowo posiada atrybuty. Pierwszy 'czy_poziomy_sa_okej' określa, czy poziomy spełniają zadane warunki.
-#' Drugi atrybut 'polaczenie' zawiera tablicę z połączeniami. Jeżeli wektor wejściowy zawierał ten argument to funkcja dopisuje do niego wiersz z wykonanym połączniem
-#' oraz aktualizuje poprzenie wiersze tego atrybutu.
-#' @export
-polacz_poziom <- function(vecFactor, maxLPozWyk=5, minLiczebnPozWyk=100, minOdsPozWyk=0.05){
-  
-  tab = table(vecFactor)
-  len = length(tab)
-  
-  pol = attributes(vecFactor)$polaczenie 
-  
-  if(!is.null(pol)){
-    tab = tab[!names(tab) %in% pol$zmieniany]
-  }
-  
-  ret = vecFactor
-  attributes(ret)$czy_poziomy_sa_okej = czy_poziomy_sa_okej(tab, maxLPozWyk, minLiczebnPozWyk, minOdsPozWyk)
-  
-  if(attributes(ret)$czy_poziomy_sa_okej == TRUE){
-    return(ret)
-  }
-  
-  toPol1 = which.min(tab)[1]
-  
-  toPol2 = NULL
-  if( toPol1 - 1 > 0 ){
-    toPol2 = toPol1 - 1
-  }
-  
-  if( toPol1 + 1 <= length(tab)  & (is.null(toPol2) || tab[toPol1 + 1] < tab[toPol2])){
-    toPol2 = toPol1 + 1
-  } 
-  
-  ret[!is.na(ret) & ret==names(tab)[toPol1]] = as.numeric(names(tab)[toPol2])
-  
-  attributes(ret)$polaczenie = data.frame(rbind(attributes(vecFactor)$polaczenie, c(names(tab)[toPol1], names(tab)[toPol2])), stringsAsFactors= FALSE)
-  colnames(attributes(ret)$polaczenie) <- c("zmieniany", "zastepujacy")
-  
-  # w kolumnie zastepujacy też należy zmienić poziom na nowy
-  attributes(ret)$polaczenie$zastepujacy[attributes(ret)$polaczenie$zastepujacy == names(tab)[toPol1]] = names(tab)[toPol2]
-  
-  attributes(ret)$czy_poziomy_sa_okej = czy_poziomy_sa_okej(tab, maxLPozWyk, minLiczebnPozWyk, minOdsPozWyk)
-  return(ret)
-}
+#' @return Funkcja zwraca trzyelementową listę, której elementy zawierają:
+#' \itemize{
+#'   \item{\code{przedSkroceniem} wartość parametru \code{mozliweWartosci},}
+#'   \item{\code{poSkroceniu} wartości po skróceniu, odpowiadające wartościom pierwszego
+#'         elementu,}
+#'   \item{\code{rozkladPrzed} rozkład \code{x},}
+#'   \item{\code{rozkladPo} rozkład \code{x} po skróceniu skali.}
+#' }
+okresl_wzor_skracania <- function(x, mozliweWartosci, maxLPozWyk=5, minLiczebnPozWyk=100, minOdsPozWyk=0.05) {
+  stopifnot(is.numeric(x)               , length(x) > 0,
+            is.numeric(mozliweWartosci) , length(mozliweWartosci) > 1,
+            is.numeric(maxLPozWyk)      , length(maxLPozWyk      ) == 1,
+            is.numeric(minLiczebnPozWyk), length(minLiczebnPozWyk) == 1,
+            is.numeric(minLiczebnPozWyk), length(minLiczebnPozWyk) == 1)
+  stopifnot(maxLPozWyk >= 2,
+            minLiczebnPozWyk>=0, minLiczebnPozWyk < Inf,
+            minOdsPozWyk >= 0, minOdsPozWyk <= 1)
+  stopifnot(all( unique(x) %in% c(mozliweWartosci, NA) ))
 
-#' @title Funkcja określająca skrótcenie
-#' @description
-#' Pomocnicza funkcja, która łączy dwa poziomy sprawdzając wcześniej, czy spełniają one dopuszczalne warunki (patrz pis funkcji \code{\link{czy_poziomy_sa_okej}}).
-#' @param vec wektor z wynikami danego pytania
-#' @param poziomy wektor z dopuszczalnymi poziomami dla danego pytania
-#' @param maxLPozWyk maksymalna liczba poziomów pytania
-#' @param minLiczebnPozWyk minimalna liczebność obserwacji w każdym z poziomów
-#' @param minOdsPozWyk minimalny odsetek obserwacji, które ma zawierać każdy poziom.
-#' @return Funkcja zwraca skrócony wektor - factor, którego atrybut 'polaczenie' zawiera tabelę z zastępowanymi i zastępującym poziomami.
-#' @export
-okresl_skrocenie <- function(vec, poziomy, maxLPozWyk=5, minLiczebnPozWyk=100, minOdsPozWyk=0.05){
-  
-  vecFaktor = factor(vec, levels = poziomy)
-  czy_poziomy_okej = FALSE
-  
-  zamiany = NULL
-  while( !czy_poziomy_okej ){
-    vecFaktor = polacz_poziom(vecFaktor, maxLPozWyk, minLiczebnPozWyk, minOdsPozWyk)
-    czy_poziomy_okej = attributes(vecFaktor)$czy_poziomy_sa_okej
-  }
-  return(vecFaktor)
-}
+  rozklad = table(factor(x, levels=mozliweWartosci))
+  rekodowanie = mozliweWartosci
+  while(TRUE) {
+    koniecSkracania =
+      (length(rozklad) <= maxLPozWyk) &
+      (min(rozklad) > minLiczebnPozWyk) &
+      (min(rozklad / sum(rozklad)) > minOdsPozWyk)
+    if (koniecSkracania | (length(rozklad) <= 2)) break
 
-#' @title Sprawdzanie czy poziomy spełniają określone kryteria
-#' @description
-#' Funkcja na podstawie tablicy poziomów zwróconych przez funkcję \code{\link[base]{table}} określa,
-#' czy spełnione są określone warunki.
-#' @param tablicaPoziomow tablica poziomów
-#' @param maxLPozWyk maksymalna liczba poziomów pytania
-#' @param minLiczebnPozWyk minimalna liczebność obserwacji w każdym z poziomów
-#' @param minOdsPozWyk minimalny odsetek obserwacji, które ma zawierać każdy poziom.
-#' @return wartość logiczna
-#' @export
-czy_poziomy_sa_okej <- function(tablicaPoziomow, maxLPozWyk=5, minLiczebnPozWyk=100, minOdsPozWyk=0.05){
-  
-  if(length(tablicaPoziomow) > maxLPozWyk){
-    return(FALSE)
-  }
-  
-  if(min(tablicaPoziomow) < minLiczebnPozWyk){
-    return(FALSE)
-  }
-  
-  if(min(tablicaPoziomow/sum(tablicaPoziomow)) < minOdsPozWyk){
-    return(FALSE)
-  }
-  
-  return(TRUE)
-}
-
-#' @title Zapisywanie skrócenia do bazy
-#' @description
-#' Funkcja zapisuje skrócenie do bazy.
-#' @param polaczenie tablica poziomów (patrz opis wartości zwracanej przez funkcję \code{\link{okresl_skrocenie}} )
-#' @param numerPytania numer kryterium lub pseudokryterium.
-#' @param idSkali numer skali
-#' @param czyPseudokryterium zmienna logiczna określająca czy mamy do czynienia z kryterium (FALSE) czy z pseudokryterium (TRUE)
-#' @param zrodloDanychODBC źródło danych ODBC
-#' @return funkcja nic nie zwraca
-#' @import RODBCext
-#' @export
-zapisz_skrot_do_bazy <- function(polaczenie, numerPytania, idSkali, czyPseudokryterium, zrodloDanychODBC = "EWD"){
-  
-  opisSkrotu = paste(paste(polaczenie$zmieniany, polaczenie$zastepujacy, sep=","), collapse=";")
-  
-  tryCatch(
-{
-  P = odbcConnect(zrodloDanychODBC)
-  
-  odbcSetAutoCommit(P, FALSE) # rozpocznij transakcję
-  
-  zapytanie = "insert into skroty_skal values (nextval('skroty_skal_id_skrotu_seq'), ?) returning id_skrotu"
-  idSkrotu = sqlExecute(P, zapytanie, data = data.frame(opisSkrotu), fetch = TRUE)
-  
-  zapytanie2 = "insert into skroty_skal_mapowania values (?, ?, ?)"
-  for(ir in 1:nrow(polaczenie)){
-    sqlExecute(P, zapytanie2, data = data.frame(idSkrotu, polaczenie$zmieniany[ir], polaczenie$zastepujacy[ir]), fetch = TRUE)
-  }
-  
-  zapytanie3 = paste0("update skale_elementy set id_skrotu = ?
-                      where ", ifelse(czyPseudokryterium, "id_pseudokryterium", "id_kryterium"),  "= ? and id_skali = ?")
-  
-  
-  sqlExecute(P, zapytanie3, data = data.frame(idSkrotu, numerPytania, idSkali), fetch = TRUE)
-  
-  odbcEndTran(P, TRUE) # zatwierdzamy transakcję
-  
-},
-error = stop,
-finally = odbcClose(P)
-  )
-return(invisible(NULL))
-}
-
-#' @title Zapisywanie skróceń dla części egzaminu
-#' @description
-#' Funkcja zapisuje skrócenie do bazy.
-#' @param dane tablica z danymi z części egzaminu
-#' @param idSkali numer skali
-#' @param maxLPozWyk maksymalna liczba poziomów pytania
-#' @param minLiczebnPozWyk minimalna liczebność obserwacji w każdym z poziomów
-#' @param minOdsPozWyk minimalny odsetek obserwacji, które ma zawierać każdy poziom.
-#' @param zrodloDanychODBC żródło danych
-#' @return funkcja nic nie zwraca
-#' @import RODBCext
-#' @export
-zapisz_skrocenia_do_bazy <- function(dane, idSkali, maxLPozWyk=5, minLiczebnPozWyk=100, minOdsPozWyk=0.05, zrodloDanychODBC = "EWD"){
-  
-  indPytan = which(grepl("^([[:alnum:]]+_)[[:digit:]]+", names(dane)))
-  
-  # poziomy = generuj_poziomy_pytan(dane, idSkali, zrodloDanychODBC)
-  
-  for(ind in indPytan){
-    
-    if(grepl("k_",names(dane)[ind])){
-      czyPseudokryterium = FALSE
-    } else if (grepl("p_",names(dane)[ind])){
-      czyPseudokryterium = TRUE
+    doPolaczenia1 = which.min(as.numeric(rozklad))
+    if (doPolaczenia1 == 1){
+      doPolaczenia2 = 2
+    } else if (doPolaczenia1 == length(rozklad)){
+      doPolaczenia2 = length(rozklad) -1
+    } else if (rozklad[doPolaczenia1 - 1] <= rozklad[doPolaczenia1 + 1]) {
+      doPolaczenia2 = doPolaczenia1 - 1
     } else {
-      stop("Nie można zidentyfikować rodzaju pytania o nazwie: ", names(dane)[ind])
+      doPolaczenia2 = doPolaczenia1 + 1
     }
-    
-    vec = dane[, ind]
-    poziomy = generuj_poziom_pytania(names(dane)[ind], zrodloDanychODBC)
-    skrocenie = okresl_skrocenie(vec, poziomy, maxLPozWyk, minLiczebnPozWyk, minOdsPozWyk)
-    polaczenie = attributes(skrocenie)$polaczenie
-    numerPytania = as.numeric(gsub("([[:alnum:]]+_)", "", names(dane)[ind]))
-    if(!is.null(polaczenie)){
-      zapisz_skrot_do_bazy(polaczenie, numerPytania, idSkali, czyPseudokryterium, zrodloDanychODBC)
-    }
+    rekodowanie[rekodowanie == as.numeric(names(rozklad)[doPolaczenia1])] =
+      rekodowanie[rekodowanie == as.numeric(names(rozklad)[doPolaczenia2])][1]
+    rozklad[doPolaczenia2] = rozklad[doPolaczenia2] + rozklad[doPolaczenia1]
+    rozklad = rozklad[-doPolaczenia1]
   }
-  
-  return(invisible(NULL))
+  # podaje explicite argument levels, żeby dmuchać na zimne z kolejnością
+  rekodowanie = as.numeric(factor(rekodowanie, levels=unique(rekodowanie))) - 1
+  names(rozklad) = unique(rekodowanie)
+  return(list(przedSkroceniem = mozliweWartosci,
+              poSkroceniu = rekodowanie,
+              rozkladPrzed = table(factor(x, levels=mozliweWartosci)),
+              rozkladPo = rozklad))
 }
-
-
-
-
-
-
-
-
-
+#' @title Wartosci mozliwe do przyjecia przez (pseudo)kryterium
+#' @description
+#' Funkcja pobiera z bazy i zwraca informacje o wszystkich dopuszczalnych wartościach
+#' kryteriów i/lub pseudokryteriów.
+#' @param nazwyKryteriow wektor tekstowy z nazwami postaci "k_idKryterium" lub
+#' "p_idPseudokryterium" (typowo nazwy zmiennych z data frame'a zwróconego przez
+#' funkcję \code{obierz_czesc_egzaminu()} z pakietu \code{ZPD}).
+#' @param zrodloDanychODBC opcjonalnie nazwa źródła danych ODBC, dającego dostęp do
+#' bazy (domyślnie "EWD")
+#' @return lista wektorów liczbowych
+#' @import RODBCext plyr
+#' @export
+pobierz_mozliwe_wartosci <- function(nazwyKryteriow, zrodloDanychODBC="EWD"){
+  stopifnot(is.character(nazwyKryteriow), length(nazwyKryteriow) > 0,
+            is.character(zrodloDanychODBC), length(zrodloDanychODBC) == 1)
+  maska = !grepl("^[kp]_[[:digit:]]+$", nazwyKryteriow)
+  if (any(maska)) stop("Niepoprawne nazwy (pseudo)kryteriów: ",
+                       paste(nazwyKryteriow[maska], sep=","))
+  idKryteriow       = as.numeric(gsub("^k_", "",
+                                      nazwyKryteriow[grepl("^k_", nazwyKryteriow)]))
+  idPseudokryteriow = as.numeric(gsub("^p_", "",
+                                      nazwyKryteriow[grepl("^p_", nazwyKryteriow)]))
+  if (length(idPseudokryteriow) > 0) {
+    zapytanie = "SELECT id_pseudokryterium, id_kryterium, wartosc
+    FROM pseudokryteria_oceny
+    JOIN pseudokryteria_oceny_kryteria USING (id_pseudokryterium)
+    JOIN kryteria_oceny USING (id_kryterium)
+    JOIN sl_schematy_pkt USING (schemat_pkt)
+    JOIN sl_schematy_pkt_wartosci USING (schemat_pkt)
+    WHERE id_pseudokryterium = ?"
+    tryCatch({
+      P = odbcConnect(zrodloDanychODBC)
+      pseudokryteria = sqlExecute(P, zapytanie, data = data.frame(idPseudokryteriow),
+                                  fetch = TRUE)
+    },
+    error = stop,
+    finally = odbcClose(P)
+    )
+    pseudokryteria = dlply(pseudokryteria, ~id_pseudokryterium,
+                           function(x) {
+                             x = dlply(x, ~id_kryterium, function(x) {return(x$wartosc)})
+                             return(sort(unique(rowSums(expand.grid(x)))))
+                           })
+    names(pseudokryteria) = paste0("p_", names(pseudokryteria))
+  } else {
+    pseudokryteria = NULL
+  }
+  if (length(idKryteriow) > 0) {
+    zapytanie = "SELECT id_kryterium, wartosc
+                 FROM kryteria_oceny
+                   JOIN sl_schematy_pkt USING (schemat_pkt)
+                   JOIN sl_schematy_pkt_wartosci USING (schemat_pkt)
+                 WHERE id_kryterium = ?"
+    tryCatch({
+      P = odbcConnect(zrodloDanychODBC)
+      kryteria = sqlExecute(P, zapytanie, data = data.frame(idKryteriow),
+                            fetch = TRUE)
+    },
+    error = stop,
+    finally = odbcClose(P)
+    )
+    kryteria = dlply(kryteria, ~id_kryterium, function(x) {return(x$wartosc)})
+    names(kryteria) = paste0("k_", names(kryteria))
+  } else {
+    kryteria = NULL
+  }
+  temp = unlist(list(kryteria, pseudokryteria), recursive=FALSE)
+  return(temp[nazwyKryteriow])
+  }

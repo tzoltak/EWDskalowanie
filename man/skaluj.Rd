@@ -225,7 +225,7 @@ Zakotwiczenie wartości parametrów w ramach grup można osiągnąć standardowo
 elementu \code{wartościZakotwiczone} z tym, że w kolumnie \code{typ} należy podać
 \code{mean.grNR} lub \code{variance.grNR}, gdzie \code{NR} to numer grupy.
 
-Numery grup przypisywane są w ten sposób, że najpier wybierane są wszystkie
+Numery grup przypisywane są w ten sposób, że najpierw wybierane są wszystkie
 \bold{występujące w danych} unikalne kombinacje wartości zmiennych definiujących
 grupowanie.
 Następnie układane są one w kolejności rosnącej według wartości pierwszej

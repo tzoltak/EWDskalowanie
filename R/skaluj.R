@@ -175,7 +175,7 @@
 #' elementu \code{wartościZakotwiczone} z tym, że w kolumnie \code{typ} należy podać
 #' \code{mean.grNR} lub \code{variance.grNR}, gdzie \code{NR} to numer grupy.
 #'
-#' Numery grup przypisywane są w ten sposób, że najpier wybierane są wszystkie
+#' Numery grup przypisywane są w ten sposób, że najpierw wybierane są wszystkie
 #' \bold{występujące w danych} unikalne kombinacje wartości zmiennych definiujących
 #' grupowanie.
 #' Następnie układane są one w kolejności rosnącej według wartości pierwszej
@@ -704,7 +704,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
         savedata = NULL
       }
       # zapis pliku poleceń Mplusa
-      nazwaInp = paste0(substr(tytul, 1, min(12, nchar(tytul))), "_krok_", i, "_kalibr_", j, ".inp")
+      nazwaInp = paste0(substr(tytul, 1, min(16, nchar(tytul))), "_krok_", i, "_kalibr_", j, ".inp")
       write.table(
         przygotuj_inp(title, data, variable, analysis, model, modelConstraint, output, savedata),
         nazwaInp, row.names=FALSE, col.names=FALSE, quote=FALSE

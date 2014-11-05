@@ -4,7 +4,7 @@
 #'
 #' Argumenty (poza ostatnim) muszą być listami, których elementy mają nazwy ze zbioru:
 #' \code{"gh", "gh_h", "gh_p", "gm", "gm_p", "gm_m"} i są data frame'ami zawierającymi
-#' dane z wynikami odpowiednich część egzaminu gimnazjalnego.
+#' dane z wynikami odpowiednich części egzaminu gimnazjalnego.
 #'
 #' W przypadku nowej struktury egzaminu gimnazjalnego wystarczy podać wyniki testów,
 #' dane do wyskalowania części jako całości zostaną połączone automatycznie, wewnątrz
@@ -57,9 +57,9 @@ skaluj_egz_gimn = function(daneWzorcowe, daneWszyscy, processors=2) {
     daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
     daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", "id_testu", zmienneKryteria)]
     # i dopisujemy do "id_testu" sufiks, żeby mieć szansę połączyć dane z nowej formuły
-    names(daneWzorcowe[[i]]) = sub("^id_testu$", paste0("\\1_", names(daneWzorcowe)[i]),
+    names(daneWzorcowe[[i]]) = sub("^(id_testu)$", paste0("\\1_", names(daneWzorcowe)[i]),
                                    names(daneWzorcowe[[i]]))
-    names( daneWszyscy[[i]]) = sub("^id_testu$", paste0("\\1_", names(daneWszyscy )[i]),
+    names( daneWszyscy[[i]]) = sub("^(id_testu)$", paste0("\\1_", names(daneWszyscy )[i]),
                                    names( daneWszyscy[[i]]))
   }
 
