@@ -93,7 +93,9 @@ skaluj_matura_rasch = function(daneWzorcowe, daneWszyscy, processors=2) {
   poziomy = lapply(daneWzorcowe, function(x) {return(names(x)[grep("^[kp]_", names(x))])})
   names(poziomy) = sufiksy
   daneWzorcowe = list(mat_rsch = suppressMessages(join_all(daneWzorcowe, type="full")))
+  if (any(duplicated(daneWzorcowe$id_obserwacji))) stop("Zduplikowane wartości 'id_obserwacji' w 'daneWzorcowe' (prawdopodobnie w konsekwencji sprzecznych informacji o typie szkoły pomiędzy częściami egzaminu).")
   daneWszyscy  = list(mat_rsch = suppressMessages(join_all(daneWszyscy , type="full")))
+  if (any(duplicated( daneWszyscy$id_obserwacji))) stop("Zduplikowane wartości 'id_obserwacji' w 'daneWszyscy' (prawdopodobnie w konsekwencji sprzecznych informacji o typie szkoły pomiędzy częściami egzaminu).")
   # skalowanie jako takie
   wyniki = setNames(vector(mode="list", length=length(daneWzorcowe)), names(daneWzorcowe))
   for (i in 1:length(daneWzorcowe)) {
