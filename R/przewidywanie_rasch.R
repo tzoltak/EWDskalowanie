@@ -126,7 +126,8 @@ przewidywanie_rasch = function(sumy, oszacowania, max=NULL, span=0.2) {
                  if (nrow(x) == 1) {
                     stop("W danych występuje grupa z tylko jednym wynikiem sumarycznym.")
                  } else if (nrow(x) < 5 ) {
-                   warning("W danych występuje grupa z mniej niż 5 różnymi wynikami sumarycznymi.")
+                   warning("W danych występuje grupa z mniej niż 5 różnymi wynikami sumarycznymi.",
+                           immediate. = TRUE)
                  }
                  monot = FALSE
                  spanTemp = span
@@ -140,7 +141,8 @@ przewidywanie_rasch = function(sumy, oszacowania, max=NULL, span=0.2) {
                  }
                  if (spanTemp != span) warning("Wartość parametru 'span' została zwiększona do ",
                                                spanTemp,
-                                               ", aby uzyskać monotoniczne przewidywanie.")
+                                               ", aby uzyskać monotoniczne przewidywanie.",
+                                               immediate. = TRUE)
                  # wypełnianie braków od 0
                  if (min(wynik$suma) > 0) {
                    wynik = rbind(data.frame(suma = 0:(min(wynik$suma) - 1),
