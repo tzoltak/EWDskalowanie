@@ -5,8 +5,9 @@
 \usage{
 procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = "f1",
   wartosciZakotwiczone = NULL, wartosciStartowe = NULL, rasch = FALSE,
-  wieleGrup = NULL, maskaZmienne = "^[kps]_[[:digit:]]+$", processors = 3,
-  integrPt = 20)
+  wieleGrup = NULL,
+  maskaZmienne = "^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
+  nigdyNieUsuwaj = NULL, processors = 3, integrPt = 20)
 }
 \arguments{
 \item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na
@@ -29,6 +30,9 @@ wartości oczekiwane konstruktu )}
 
 \item{maskaZmienne}{opcjonalnie wyrażenie regularne (ciąg znaków), które spełniają
 nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu}
+
+\item{nigdyNieUsuwaj}{opcjonalnie wyrażenie regularne (ciąg znaków), które identyfikuje
+te zmienne, które nie będą usuwane z modelu mimo spełnienia kryteriów usuwania}
 
 \item{processors}{opcjonalnie liczba rdzeni do wykorzystania przy estymacji}
 

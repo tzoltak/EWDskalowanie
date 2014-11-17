@@ -5,7 +5,8 @@
 \usage{
 skaluj(dane, opisProcedury, idObs, tytul = "", zmienneCiagle = NULL,
   zmienneSpecjalne = NULL, zmienneDolaczaneDoOszacowan = NULL,
-  zwrocOszacowania = TRUE, usunFWF = TRUE)
+  zwrocOszacowania = TRUE, usunFWF = TRUE,
+  bezWartosciStartowychParametrowTypu = NULL)
 }
 \arguments{
 \item{dane}{data.frame z danymi}
@@ -33,6 +34,12 @@ oszacowania natężenia badanych cech dla poszczególnych jednostek obserwacji?}
 
 \item{usunFWF}{wartość logiczna - czy usuwać pliki o stałej szerokości, w których
 zapisywane są dane dla Mplusa?}
+
+\item{bezWartosciStartowychParametrowTypu}{wyrażenie regularne definiujące typy
+parametrów, dla których wartości wyestymowane w poprzedniej kalibracji mają \bold{nie}
+być używane jako wartości startowe w ew. następnych kalibracjach (sposób na obejście
+problemu z Mplusem, który przy zadaniu wartości startowych dla thresholdów nie
+utrzymuje inwariancji pomiarowej w modelu wielogrupowym)}
 }
 \value{
 Lista, której każdy element opisuje wyniki skalowania każdego etapu procedury.

@@ -18,7 +18,8 @@
 #'   \item{\code{rzetelnoscEmpiryczna} rzetelność wyliczona na podstawie oszacowań ze
 #'         skalowania wzorcowego (jako wariancja oszacowań EAP).}
 #' }
-#' @seealso \code{\link{skaluj}}, \code{\link{procedura_1k_1w}}
+#' @seealso \code{\link{skaluj}}, \code{\link{procedura_1k_1w}},
+#' \code{\link{sprawdz_wyniki_skalowania}}
 #' @examples
 #' # chwilowo brak
 #' @export

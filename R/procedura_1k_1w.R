@@ -25,6 +25,8 @@
 #' wartości oczekiwane konstruktu )
 #' @param maskaZmienne opcjonalnie wyrażenie regularne (ciąg znaków), które spełniają
 #' nazwy tylko tych zmiennych, które mają być uwzględnione w skalowaniu
+#' @param nigdyNieUsuwaj opcjonalnie wyrażenie regularne (ciąg znaków), które identyfikuje
+#' te zmienne, które nie będą usuwane z modelu mimo spełnienia kryteriów usuwania
 #' @param processors opcjonalnie liczba rdzeni do wykorzystania przy estymacji
 #' @param integrPt opcjonalnie liczba punktów siatki do całkowania numerycznego (po
 #' rozkładzie cechy ukrytej)
@@ -36,8 +38,8 @@
 #' @export
 procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwiczone=NULL,
                            wartosciStartowe=NULL, rasch=FALSE, wieleGrup=NULL,
-                           maskaZmienne="^[kps]_[[:digit:]]+$",
-                           processors=3, integrPt=20) {
+                           maskaZmienne="^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
+                           nigdyNieUsuwaj=NULL, processors=3, integrPt=20) {
   opis = list(
     list(
       czescPomiarowa = list(
@@ -49,7 +51,7 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwi
             list(
               dyskryminacjaPonizej = 0.2,
               istotnoscPowyzej = 1,
-              nigdyNieUsuwaj = NULL
+              nigdyNieUsuwaj = nigdyNieUsuwaj
             )
           } else {NULL},
           wartosciStartowe = wartosciStartowe,

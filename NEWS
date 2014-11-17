@@ -1,4 +1,20 @@
 --------------------
+Zmiany w EWDskalowanie 0.7 (2014-11-17)
+
+- Nowe funkcje:
+  - skaluj_matura() implementuje workflow skalowania matury na potrzeby wskaźników
+    trzyletnich.
+
+- Nowe funkcjonalności:
+  - procedura_1k_1w(): nowe parametry umożliwiające oznaczenie, które zmienne nie mogą być
+    usuwane ze względu na niską dyskryminację;
+  - skaluj(): nowy parametr 'bezWartosciStartowychParametrowTypu' pozwalajacy zdefiniować
+    typy parametrów, dla których wartości wyestymowane w poprzedniej kalibracji mają nie
+    być używane jako wartości startowe w ew. następnych kalibracjach (sposób na obejście
+    problemu z Mplusem, który przy zadaniu wartości startowych dla thresholdów nie
+    utrzymuje inwariancji pomiarowej w modelu wielogrupowym).
+
+--------------------
 Zmiany w EWDskalowanie 0.6 (2014-11-05)
 
 - Nowe funkcje:

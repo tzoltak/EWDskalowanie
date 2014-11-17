@@ -43,6 +43,7 @@ funkcji.
 # chwilowo brak
 }
 \seealso{
-\code{\link{skaluj}}, \code{\link{procedura_1k_1w}}
+\code{\link{skaluj}}, \code{\link{procedura_1k_1w}},
+\code{\link{sprawdz_wyniki_skalowania}}
 }
 

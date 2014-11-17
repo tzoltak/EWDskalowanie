@@ -41,11 +41,12 @@
 #'   \item{\code{odsUtraconejWariancji} odsetek wariancji przewidywania mierzonej cechy
 #'         utracony w wyniku uśrednienia oszacowań w funkcji sumy punktów.}
 #'   \item{\code{grupy} data frame zawierający mapowanie wartości zmiennych definiujących
-#'         podział na grupy (\code{typ_szkoly} i \code{pr})na wartości technicznej
+#'         podział na grupy (\code{typ_szkoly} i \code{pr}) na wartości technicznej
 #'         zmiennej grupującej (\code{gr_tmp1}), wykorzystywanej w estymacji przez funkcję
 #'         \code{\link{skaluj}}.}
 #' }
-#' @seealso \code{\link{skaluj}}, \code{\link{procedura_1k_1w}}, \code{\link{przewidywanie_rasch}}
+#' @seealso \code{\link{skaluj}}, \code{\link{procedura_1k_1w}},
+#' \code{\link{przewidywanie_rasch}}, \code{\link{sprawdz_wyniki_skalowania}}
 #' @examples
 #' # chwilowo brak
 #' @import plyr
@@ -78,7 +79,7 @@ skaluj_matura_rasch = function(daneWzorcowe, daneWszyscy, processors=2) {
     zmienneKryteria = zmienneKryteria[[1]]
     daneWzorcowe[[i]] = daneWzorcowe[[i]][, c("id_obserwacji", "id_testu", "typ_szkoly", zmienneKryteria)]
     daneWszyscy[[i]]  =  daneWszyscy[[i]][, c("id_obserwacji", "id_testu", "typ_szkoly", zmienneKryteria)]
-    # i dopisujemy do "id_testu" sufiks, żeby mieć szansę połączyć dane z nowej formuły
+    # i dopisujemy do "id_testu" sufiks, żeby mieć szansę połączyć dane
     names(daneWzorcowe[[i]]) = sub("^(id_testu)$", paste0("\\1_", sufiksy[[names(daneWzorcowe)[i]]]),
                                    names(daneWzorcowe[[i]]))
     names( daneWszyscy[[i]]) = sub("^(id_testu)$", paste0("\\1_", sufiksy[[names(daneWszyscy )[i]]]),

@@ -19,6 +19,11 @@
 #' które mają zostać dołączone do zbioru(ów) z oszacowaniami natężania badanych cech
 #' @param usunFWF wartość logiczna - czy usuwać pliki o stałej szerokości, w których
 #' zapisywane są dane dla Mplusa?
+#' @param bezWartosciStartowychParametrowTypu wyrażenie regularne definiujące typy
+#' parametrów, dla których wartości wyestymowane w poprzedniej kalibracji mają \bold{nie}
+#' być używane jako wartości startowe w ew. następnych kalibracjach (sposób na obejście
+#' problemu z Mplusem, który przy zadaniu wartości startowych dla thresholdów nie
+#' utrzymuje inwariancji pomiarowej w modelu wielogrupowym)
 #' @details
 #' \bold{Struktura argumentu \code{opisProcedury}:}
 #'
@@ -248,7 +253,10 @@
 #' @examples
 #' # chwilowo brak
 #' @export
-skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmienneSpecjalne=NULL, zmienneDolaczaneDoOszacowan=NULL, zwrocOszacowania=TRUE, usunFWF=TRUE) {
+skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
+                  zmienneSpecjalne=NULL, zmienneDolaczaneDoOszacowan=NULL,
+                  zwrocOszacowania=TRUE, usunFWF=TRUE,
+                  bezWartosciStartowychParametrowTypu=NULL) {
   # podstawowe sprawdzenie argumentów
   message("Sprawdzanie poprawności argumentów...")
   stopifnot(
@@ -262,8 +270,10 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
     all(zmienneSpecjalne %in% names(dane)) | is.null(zmienneSpecjalne),
     zwrocOszacowania %in% c(TRUE, FALSE),
     is.character(zmienneDolaczaneDoOszacowan) | is.null(zmienneDolaczaneDoOszacowan),
-    usunFWF %in% c(TRUE, FALSE)
+    usunFWF %in% c(TRUE, FALSE),
+    is.character(bezWartosciStartowychParametrowTypu) | is.null(bezWartosciStartowychParametrowTypu)
   )
+  if (!is.null(bezWartosciStartowychParametrowTypu)) stopifnot(length(bezWartosciStartowychParametrowTypu) == 1)
   if (!all(grepl("^[[:lower:]][[:lower:][:digit:]_]*$", names(dane)))) stop("Wszystkie nazwy zmiennych muszą składać się wyłącznie z małych liter, cyfr i znaku '_', przy czym pierwszym znakiem musi być litera.")
   # wywalanie zmiennych posiadających same braki danych
   maskaSameNA = unlist(lapply(dane, function(x) return(all(is.na(x)))))
@@ -789,7 +799,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
             doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
             # z listy pozycji do usunięcia wypadają pozycje, których nazwa pasuje do maski nigdyNieUsuwaj
             if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj)) {
-              doUsuniecia = doUsuniecia[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, doUsuniecia)]
+              doUsuniecia = doUsuniecia[
+                !grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj,
+                       doUsuniecia)]
             }
             # drukowanie informacji o zadaniach do usunięcia
             if (length(doUsuniecia) > 0) {
@@ -799,7 +811,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
                   "_"="     ",
                   zadanie=pozaZakresem$zmienna2,
                   istotnosc=pozaZakresem$wartosc,
-                  "usunięte"=ifelse(pozaZakresem$zmienna2==doUsuniecia, rep("tak",nrow(pozaZakresem)), rep("",nrow(pozaZakresem))),
+                  "usunięte"=ifelse(pozaZakresem$zmienna2==doUsuniecia,
+                                    rep("tak",nrow(pozaZakresem)),
+                                    rep("",nrow(pozaZakresem))),
                   check.names=FALSE, stringsAsFactors=FALSE
                 ),
                 row.names=FALSE
@@ -809,7 +823,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
           # usuwamy najgorszą pozycję
           if (length(doUsuniecia)>0) {
             kalibrujDalej=TRUE
-            opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne=opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne[!(opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne%in%doUsuniecia)]
+            opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne =
+              opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne[
+                !(opisProcedury[[i]]$czescPomiarowa[[k]]$zmienne%in%doUsuniecia)]
           } else {
             message("    Brak zadań do usunięcia.")
           }
@@ -818,8 +834,21 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL, zmie
       # jeśli kalibrujemy dalej, to zapiszmy sobie wartości startowe
       if (kalibrujDalej) {
         for (k in 1:(length(opisProcedury[[i]]$czescPomiarowa))){  # nie przepisujemy wartości, które były zakotwiczone (co generalnie nie sprawia dużych problemów, ale odnośnie wartości oczekiwanych konstruktu w grupie odniesienia modelu wielogrupowego już tak)
-          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe = wyniki[[i]][[j]]$parametry$surowe[wyniki[[i]][[j]]$parametry$surowe$zmienna1 %in% c(names(opisProcedury[[i]]$czescPomiarowa)[k], wyniki[[i]][[j]]$parametry$surowe$zmienna2[wyniki[[i]][[j]]$parametry$surowe$typ == "by" & wyniki[[i]][[j]]$parametry$surowe$zmienna1 == names(opisProcedury[[i]]$czescPomiarowa)[k]]), ]
-          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe = opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[!is.na(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$Est..S.E.), ]
+          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
+            wyniki[[i]][[j]]$parametry$surowe[
+              wyniki[[i]][[j]]$parametry$surowe$zmienna1 %in%
+                c(names(opisProcedury[[i]]$czescPomiarowa)[k],
+                  wyniki[[i]][[j]]$parametry$surowe$zmienna2[wyniki[[i]][[j]]$parametry$surowe$typ == "by" &
+                                                               wyniki[[i]][[j]]$parametry$surowe$zmienna1 == names(opisProcedury[[i]]$czescPomiarowa)[k]]
+                  ), ]
+          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
+            opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
+              !is.na(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$Est..S.E.), ]
+          # nieUzywajWartosciStartowychDlaParametrowTypu
+          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
+            opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
+              !grepl(bezWartosciStartowychParametrowTypu,
+                     opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$typ), ]
         }
       }
       # inkrementacja na koniec iteracji

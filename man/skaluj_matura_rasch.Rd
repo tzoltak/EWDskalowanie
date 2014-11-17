@@ -31,7 +31,7 @@ w danych) i składa się z elementów:
   \item{\code{odsUtraconejWariancji} odsetek wariancji przewidywania mierzonej cechy
         utracony w wyniku uśrednienia oszacowań w funkcji sumy punktów.}
   \item{\code{grupy} data frame zawierający mapowanie wartości zmiennych definiujących
-        podział na grupy (\code{typ_szkoly} i \code{pr})na wartości technicznej
+        podział na grupy (\code{typ_szkoly} i \code{pr}) na wartości technicznej
         zmiennej grupującej (\code{gr_tmp1}), wykorzystywanej w estymacji przez funkcję
         \code{\link{skaluj}}.}
 }
@@ -62,6 +62,7 @@ rozszerzonego.
 # chwilowo brak
 }
 \seealso{
-\code{\link{skaluj}}, \code{\link{procedura_1k_1w}}, \code{\link{przewidywanie_rasch}}
+\code{\link{skaluj}}, \code{\link{procedura_1k_1w}},
+\code{\link{przewidywanie_rasch}}, \code{\link{sprawdz_wyniki_skalowania}}
 }
 
