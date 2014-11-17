@@ -229,7 +229,7 @@ skaluj_matura = function(daneWzorcowe, daneWszyscy, czesciEgzaminu=NULL, sufiksy
     grupy = unique(mWzorcowe[[1]][[length(mWzorcowe[[1]])]]$zapis[, c("gr_tmp1", zmGrupujace)])
     grupy = grupy[order(grupy$gr_tmp1), ]
 
-    daneWszyscy[[i]] = subset(daneWszyscy[[i]], !apply(is.na(daneWszyscy[[i]][, zmGrupujace]), 1, any))
+    daneWszyscy[[i]] = subset(daneWszyscy[[i]], !apply(is.na(daneWszyscy[[i]][, zmGrupujace, drop=FALSE]), 1, any))
     opisWszyscy  = procedura_1k_1w(zmienneKryteriaPoUsuwaniu, names(daneWzorcowe)[i],
                                    wartosciZakotwiczone, wieleGrup = zmGrupujace, processors=processors)
     mWszyscy     = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul = tytulWszyscy,
