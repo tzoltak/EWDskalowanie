@@ -57,13 +57,13 @@ skaluj_matura = function(daneWzorcowe, daneWszyscy, czesciEgzaminu=NULL, sufiksy
   if (!is.null(czesciEgzaminu)) stopifnot(all(unlist(lapply(czesciEgzaminu, is.character))))
   if (is.null(czesciEgzaminu)) {
     czesciEgzaminu = list(
+      mp = paste(rep("j. polski", 2), c("podstawowa", "rozszerzona")),
+      mm = paste(rep("matematyka", 2), c("podstawowa", "rozszerzona")),
       mh = paste(rep(c("j. polski", "historia", "WOS"), each=2),
                  c("podstawowa", "rozszerzona")),
       mmp = paste(rep(c("matematyka", "biologia", "chemia", "fizyka", "geografia",
                         "informatyka"), each=2),
-                  c("podstawowa", "rozszerzona")),
-      mp = paste(rep("j. polski", 2), c("podstawowa", "rozszerzona")),
-      mm = paste(rep("matematyka", 2), c("podstawowa", "rozszerzona"))
+                  c("podstawowa", "rozszerzona"))
     )
   }
   stopifnot(!is.null(names(daneWzorcowe)), !is.null(names(daneWszyscy)))
@@ -235,7 +235,8 @@ skaluj_matura = function(daneWzorcowe, daneWszyscy, czesciEgzaminu=NULL, sufiksy
     mWszyscy     = skaluj(daneWszyscy[[i]] , opisWszyscy , "id_obserwacji", tytul = tytulWszyscy,
                           zmienneDolaczaneDoOszacowan = names(daneWszyscy[[i]])[grepl("^id_testu", names(daneWszyscy[[i]]))])
 
-    wyniki[[i]] = setNames(as.list(oszacowania), sort(unique(daneWzorcowe[[i]]$typ_szkoly)))
+    wyniki[[i]] = vector(mode="list", length=length(unique(daneWzorcowe[[i]]$typ_szkoly)))
+    names(wyniki[[i]]) = sort(unique(daneWzorcowe[[i]]$typ_szkoly))
     for (j in 1:length(wyniki[[i]])) {
       oszacowania = mWszyscy[[1]][[length(mWszyscy[[1]])]]$zapis
       oszacowania = subset(oszacowania, get("typ_szkoly") == names(wyniki[[i]])[j])
