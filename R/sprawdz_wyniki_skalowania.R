@@ -92,7 +92,7 @@ sprawdz_wyniki_skalowania = function(model, nazwa="") {
   }
   h = hist(model$oszacowania, seq(zakresX[1] - 0.05, zakresX[2] + 0.05, length.out=100),
        xlim = zakresX, col=2,
-       main = paste0("rozkład oszacowań\nn = ",
+       main = paste0("rozkład oszacowań (wszyscy zdający, bez wykluczeń)\nn = ",
                      prettyNum(length(model$oszacowania), width=6, big.mark="'")),
        xlab="oszacowania poziomu umiejętności",
        ylab="liczebność")
@@ -158,7 +158,7 @@ sprawdz_wyniki_skalowania = function(model, nazwa="") {
               xlim = c(0, max(model$mapowanie$suma)),#range(suma),
               ylim = range(oszacowania),
               main = paste0(nazwa, "\nmapowanie sum punktów na oszacowania IRT (Rasch)"),
-              xlab = "procent punktów", ylab = "oszacowania"))
+              xlab = "suma punktów", ylab = "oszacowania"))
     grid(col=grey(0.5))
     for (i in 1:length(grupy)) {
       with(grupy[[i]], lines(suma, oszacowania, lwd=2, col=i))
