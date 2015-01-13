@@ -10,7 +10,7 @@ Pakiet nie jest wypchnięty na CRAN-a, więc instalować trzeba ze źródeł.
 
 Ponieważ jednak zawiera jedynie kod w R, nie ma potrzeby zaopatrywać się w kompilatory, itp.
 
-Instalacja możliwa jest w dwóch wariantach (aby zaktualizować pakiet do najnowszej wersji należy zrobić dokładnie to samo):
+Instalacja możliwa jest w dwóch wariantach **(aby zaktualizować pakiet do najnowszej wersji należy zrobić dokładnie to samo)**:
 
 1) Z użyciem pakietu devtools:
 ```r
