@@ -1,6 +1,8 @@
 # EWDskalowanie
 
-Funkcje służące do skalowania wyników egzaminów na potrzeby wyliczania wskaźników EWD. Przedewszystkim nakładka pozwalająca automatyzować użycie Mplusa.
+Pakiet zawiera funkcje automatyzujące proces skalowania IRT z użyciem progamu Mplus. Przede wszystkim na potrzeby uzyskiwania oszacowań poziomu umiejętności uczniów na podstawie wyników egzaminów zewnętrznych, do dalszego wykorzystania przy wyliczaniu wskaźników EWD. Wtórnie do wszelkich innych celów.
+Używanie pakietu koncentruje się wokół funkcji skaluj().
+W przyszłości, o ile będzie czas i chęci, planowane jest sporotowanie funkcji skaluj() również na R-owy pakiet mirt. 
 
 ## Instalacja
 
