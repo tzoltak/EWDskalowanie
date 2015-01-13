@@ -4,13 +4,13 @@ Pakiet zawiera funkcje automatyzujące proces skalowania IRT z użyciem progamu 
 Używanie pakietu koncentruje się wokół funkcji skaluj().
 W przyszłości, o ile będzie czas i chęci, planowane jest sporotowanie funkcji skaluj() również na R-owy pakiet mirt. 
 
-## Instalacja
+## Instalacja / aktualizacja
 
 Pakiet nie jest wypchnięty na CRAN-a, więc instalować trzeba ze źródeł.
 
 Ponieważ jednak zawiera jedynie kod w R, nie ma potrzeby zaopatrywać się w kompilatory, itp.
 
-Instalacja możliwa jest w dwóch wariantach:
+Instalacja możliwa jest w dwóch wariantach (aby zaktualizować pakiet do najnowszej wersji należy zrobić dokładnie to samo):
 
 1) Z użyciem pakietu devtools:
 ```r
