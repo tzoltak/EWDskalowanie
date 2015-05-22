@@ -1,4 +1,20 @@
 --------------------
+Zmiany w EWDskalowanie 0.8 (2015-5-22)
+
+- Funkcje odpowiedzialne za tworzenie i przekształcanie skal testów zostały przeniesione
+  do nowego pakietu EWDskale:
+  - kryteria_z_nazw();
+  - lacz_kryteria_zadan();
+  - pobierz_mozliwe_wartosci();
+  - pobierz_wiazki_pytania_kryteria();
+  - polacz_kryteria_mirt();
+  - przygotuj_parametry_IRT();
+  - skalowanieWieluCzesci();
+  - skaluj_laczenie_mirt();
+  - skaluj_polichorycznie();
+  - skroc_skale().
+
+--------------------
 Zmiany w EWDskalowanie 0.7 (2014-11-17)
 
 - Nowe funkcje:
