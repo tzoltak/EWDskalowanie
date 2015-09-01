@@ -1,13 +1,14 @@
 --------------------
-Zmiany w EWDskalowanie 0.8 (2015-09-01)
+Zmiany w EWDskalowanie 0.9 (2015-09-01)
 
 - Funkcje "wysokiego poziomu" automatyzujące skalowanie egzaminów zostały
   przeniesione do pakietu EWDskale:
-  - skaluj_egz_gimn(),
-  - skaluj_egz_gimn_rasch(),
-  - skaluj_matura(),
-  - skaluj_matura_rasch(),
-  - skaluj_sprawdzian().
+  - skaluj_egz_gimn();
+  - skaluj_egz_gimn_rasch();
+  - skaluj_matura();
+  - skaluj_matura_rasch();
+  - skaluj_sprawdzian();
+  - sprawdz_wyniki_skalowania().
 
 --------------------
 Zmiany w EWDskalowanie 0.8 (2015-05-22)
