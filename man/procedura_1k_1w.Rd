@@ -49,8 +49,7 @@ Procedura skalowania "jeden krok, jeden wymiar".
 Funkcja przygotowuje opis bardzo prostej procedury skalowania (do użycia przez funkcję
 \code{\link{skaluj}}), zawierającej tylko jeden krok, w ramach którego skalowany jest
 jednowymiarowy konstrukt. Świetnie nadaje się do wykorzystania przy skalowaniu
-sprawdzianu (p. \code{\link{skaluj_spr}}) i egzaminu gimnazjalnego
-(p. \code{\link{skaluj_egz_gimn}}), które prowadzone są właśnie w taki prosty sposób.
+sprawdzianu i egzaminu gimnazjalnego, które prowadzone są właśnie w taki prosty sposób.
 
 Jeśli nie podano argumentu \code{wartosciZakotwiczone}, to zastosowane zostanie
 kryterium usuwania zadań \code{dyskryminacjaPonizej = 0.2}. Jeśli został on podany, to
