@@ -1,8 +1,19 @@
 --------------------
-Zmiany w EWDskalowanie 0.8 (2015-5-22)
+Zmiany w EWDskalowanie 0.8 (2015-09-01)
 
-- Funkcje odpowiedzialne za tworzenie i przekształcanie skal testów zostały przeniesione
-  do nowego pakietu EWDskale:
+- Funkcje "wysokiego poziomu" automatyzujące skalowanie egzaminów zostały
+  przeniesione do pakietu EWDskale:
+  - skaluj_egz_gimn(),
+  - skaluj_egz_gimn_rasch(),
+  - skaluj_matura(),
+  - skaluj_matura_rasch(),
+  - skaluj_sprawdzian().
+
+--------------------
+Zmiany w EWDskalowanie 0.8 (2015-05-22)
+
+- Funkcje odpowiedzialne za tworzenie i przekształcanie skal testów zostały
+  przeniesione do nowego pakietu EWDskale:
   - kryteria_z_nazw();
   - lacz_kryteria_zadan();
   - pobierz_mozliwe_wartosci();
@@ -18,39 +29,40 @@ Zmiany w EWDskalowanie 0.8 (2015-5-22)
 Zmiany w EWDskalowanie 0.7 (2014-11-17)
 
 - Nowe funkcje:
-  - skaluj_matura() implementuje workflow skalowania matury na potrzeby wskaźników
-    trzyletnich.
+  - skaluj_matura() implementuje workflow skalowania matury na potrzeby
+    wskaźników trzyletnich.
 
 - Nowe funkcjonalności:
-  - procedura_1k_1w(): nowe parametry umożliwiające oznaczenie, które zmienne nie mogą być
-    usuwane ze względu na niską dyskryminację;
-  - skaluj(): nowy parametr 'bezWartosciStartowychParametrowTypu' pozwalajacy zdefiniować
-    typy parametrów, dla których wartości wyestymowane w poprzedniej kalibracji mają nie
-    być używane jako wartości startowe w ew. następnych kalibracjach (sposób na obejście
-    problemu z Mplusem, który przy zadaniu wartości startowych dla thresholdów nie
-    utrzymuje inwariancji pomiarowej w modelu wielogrupowym).
+  - procedura_1k_1w(): nowe parametry umożliwiające oznaczenie, które zmienne
+    nie mogą być usuwane ze względu na niską dyskryminację;
+  - skaluj(): nowy parametr 'bezWartosciStartowychParametrowTypu' pozwalajacy
+    zdefiniować typy parametrów, dla których wartości wyestymowane w poprzedniej
+    kalibracji mają nie być używane jako wartości startowe w ew. następnych
+    kalibracjach (sposób na obejście problemu z Mplusem, który przy zadaniu
+    wartości startowych dla thresholdów nie utrzymuje inwariancji pomiarowej
+    w modelu wielogrupowym).
 
 --------------------
 Zmiany w EWDskalowanie 0.6 (2014-11-05)
 
 - Nowe funkcje:
-  - skaluj_egz_gimn_rasch() implementuje workflow skalowania egz. gimn. (dokładnie części
-    mat.-przyr.) na potrzeby Kalkulatora maturalnego;
-  - skaluj_matura_rasch() implementuje workflow skalowania matury z matematyki (poziomy
-    podstawowy i rozszerzony), na potrzeby Kalkulatora maturalnego;
-  - przewidywanie_rasch() generuje, poprzez uśrednianie, mapowanie sumy punktów na
-    oszacowania poziomu umiejętności z modeli Rascha wyestymowanych na danych
-    zawierających zadania o wielu (więcej niż dwóch) poziomach wykonania; wykorzystywana
-    przez dwie powyższe funkcje;
-  - lacz_kryteria_zadan() łączy kryteria w pseudokryteria na podstawie informacji
-    o powiązaniach kryteriów z zadaniami (z arkusza),
+  - skaluj_egz_gimn_rasch() implementuje workflow skalowania egz. gimn.
+    (dokładnie części mat.-przyr.) na potrzeby Kalkulatora maturalnego;
+  - skaluj_matura_rasch() implementuje workflow skalowania matury z matematyki
+    (poziomy podstawowy i rozszerzony), na potrzeby Kalkulatora maturalnego;
+  - przewidywanie_rasch() generuje, poprzez uśrednianie, mapowanie sumy punktów
+    na oszacowania poziomu umiejętności z modeli Rascha wyestymowanych na danych
+    zawierających zadania o wielu (więcej niż dwóch) poziomach wykonania;
+    wykorzystywana przez dwie powyższe funkcje;
+  - lacz_kryteria_zadan() łączy kryteria w pseudokryteria na podstawie
+    informacji o powiązaniach kryteriów z zadaniami (z arkusza),
   - skracanie_poziomow() skraca skale oceny (pseudo)kryteriów;
-  - sprawdz_wyniki_skalowania() wyrysowuje zestaw wykresów diagnostycznych pozwalających
-    przyjrzeć się wynikom uzyskanym z modelu skalowania.
+  - sprawdz_wyniki_skalowania() wyrysowuje zestaw wykresów diagnostycznych
+    pozwalających przyjrzeć się wynikom uzyskanym z modelu skalowania.
 
 - Nowe funkcjonalności:
-  - procedura_1k_1w() nowe parametry umożliwiające estymację modelu Rascha i/lub
-    modeli wielogrupowych.
+  - procedura_1k_1w() nowe parametry umożliwiające estymację modelu Rascha
+    i/lub modeli wielogrupowych.
 
 - Usunięte funkcje:
   - pobierz_parametry_skalowania() - przeniesiona do pakietu EWDdane;
@@ -66,8 +78,8 @@ Zmiany w EWDskalowanie 0.5 (2014-10-08)
     wykorzystywana przez ww. funkcje.
 
 - Naprawione błędy:
-  - Nazwy zmiennych definiujących id obserwacji nie były dobrze zapisywane do sekcji
-    'NAMES' pliku .inp Mplusa, jeśli trzeba było skrócić ich nazwy.
+  - Nazwy zmiennych definiujących id obserwacji nie były dobrze zapisywane do
+    sekcji 'NAMES' pliku .inp Mplusa, jeśli trzeba było skrócić ich nazwy.
 
 - Usunięte funkcje:
   - procedura_eg();
@@ -77,17 +89,17 @@ Zmiany w EWDskalowanie 0.5 (2014-10-08)
 Zmiany w EWDskalowanie 0.4.2 (2014-10-04)
 
 - Naprawione błędy:
-  - W modelach wielogrupowych funkcja skaluj() teraz już dołącza do pliku z ocenami
-    czynnikowymi zmienne definiujące podział na grupy (a nie tylko tymczasową zmienną
-    wygenerowaną dla Mplusa).
+  - W modelach wielogrupowych funkcja skaluj() teraz już dołącza do pliku
+    z ocenami czynnikowymi zmienne definiujące podział na grupy (a nie tylko
+    tymczasową zmienną wygenerowaną dla Mplusa).
 
 --------------------
 Zmiany w EWDskalowanie 0.4.1 (2014-09-26)
 
 - Naprawione błędy:
-  - Funkcja skaluj() po wprowadzeniu wielogrupowości zaczęła uwalniać wartość oczekiwaną
-    konstruktu począwszy od drugiej kalibracji w ramach kroku (przepisując 0 jako wartość
-    startową). Teraz już tego nie robi.
+  - Funkcja skaluj() po wprowadzeniu wielogrupowości zaczęła uwalniać wartość
+    oczekiwaną konstruktu począwszy od drugiej kalibracji w ramach kroku
+    (przepisując 0 jako wartość startową). Teraz już tego nie robi.
 
 --------------------
 Zmiany w EWDskalowanie 0.4 (2014-09-14)
@@ -97,15 +109,15 @@ Zmiany w EWDskalowanie 0.4 (2014-09-14)
 
 - Nowe funkcjonalności:
   - funkcja skaluj():
-    - https://mantis.ibe.edu.pl/view.php?id=922 - dodano obsługę modeli wielogrupowych;
-      z założenia przede wszystkim zachowujących inwariancję pomiarową (istnieje
-      możliwość estymacji modeli łamiących to założenie, ale nie jest dobrze
-      przetestowana).
-    - Dodano obsługę automatycznego dodawania ograniczeń wartości parametrów dla modeli
-      o grupami równych sumach dyskryminacji (co pozwala na realizację szalonych marzeń
-      maturalnych).
-    - W końcu uzupełniona została dokumentacja funkcji (przede wszystkim o opis struktury
-      opisu procedury, ale nie tylko).
+    - https://mantis.ibe.edu.pl/view.php?id=922 - dodano obsługę modeli
+      wielogrupowych; z założenia przede wszystkim zachowujących inwariancję
+      pomiarową (istnieje możliwość estymacji modeli łamiących to założenie, ale
+      nie jest dobrze przetestowana).
+    - Dodano obsługę automatycznego dodawania ograniczeń wartości parametrów dla
+      modeli o grupami równych sumach dyskryminacji (co pozwala na realizację
+      szalonych marzeń maturalnych).
+    - W końcu uzupełniona została dokumentacja funkcji (przede wszystkim o opis
+      struktury opisu procedury, ale nie tylko).
 
 --------------------
 Zmiany w EWDskalowanie 0.3 (2014-05-29)
@@ -118,39 +130,43 @@ Zmiany w EWDskalowanie 0.3 (2014-05-29)
   - skroc_nazwy_zmiennych() - jak mówi nazwa.
   - czy_sie_nie_powtarza() [nieeksportowana] - wykorzystywana przez
     skroc_nazwy_zmiennych().
-  - zmien_nazwy_w_kroku_procedury() [nieeksportowana] - wykorzystywana do zmiany nazw
-    zmiennych tuż przed przekazaniem kopii opisu procedury (kroku skalowania) do funkcji
-    przygotuj_model().
+  - zmien_nazwy_w_kroku_procedury() [nieeksportowana] - wykorzystywana do zmiany
+    nazw zmiennych tuż przed przekazaniem kopii opisu procedury (kroku
+    skalowania) do funkcji przygotuj_model().
 
 - Nowe funkcjonalności:
   - funkcja skaluj():
-    - https://mantis.ibe.edu.pl/view.php?id=878 - argument 'idObs' może zawierać kilka
-      nazw zmiennych, z kombinacji wartości których utworzone zostanie identyfikator
-      obserwacji. Do zwracanych wyników (oszacowań natężenia cech ukrytych) dołączone
-      będą wszystkie te zmienne (id powstałe przez połączenie w jedną zmienną używane
-      jest tylko wewnętrznie, przy odpalaniu Mplusa).
+    - https://mantis.ibe.edu.pl/view.php?id=878 - argument 'idObs' może zawierać
+      kilka nazw zmiennych, z kombinacji wartości których utworzone zostanie
+      identyfikator obserwacji. Do zwracanych wyników (oszacowań natężenia cech
+      ukrytych) dołączone będą wszystkie te zmienne (id powstałe przez
+      połączenie w jedną zmienną używane jest tylko wewnętrznie, przy odpalaniu
+      Mplusa).
     - https://mantis.ibe.edu.pl/view.php?id=879 - nowy argument
-      'zmienneDolaczaneDoOszacowan' pozwala na zdefiniowanie zmiennych występujących
-      w argumencie 'dane', które mają zostać dołączone do zbioru z oszacowaniami
-      natężenia cech ukrytych (oczywiście o ile takowy ma być zapisany).
-    - https://mantis.ibe.edu.pl/view.php?id=880 - funkcja skaluj() wewnętrznie obsługuje
-      skracanie nazw zmiennych do maksimum 8 znaków i, co więcej, w zwracanych wynikach
-      i ew. zapisywanym zbiorze z oszacowaniami natężenia cech ukrytych zamienia je
-      z powrotem na pierwotne (długie) nazwy zmiennych.
-      w związku z tym dopasowano funkcję procedura_eg() do sytuacji, gdy z nazw kryteriów
-      nie zostały usunięte niektóre znaki '_'.
+      'zmienneDolaczaneDoOszacowan' pozwala na zdefiniowanie zmiennych
+      występujących w argumencie 'dane', które mają zostać dołączone do zbioru
+      z oszacowaniami natężenia cech ukrytych (oczywiście o ile takowy ma być
+      zapisany).
+    - https://mantis.ibe.edu.pl/view.php?id=880 - funkcja skaluj() wewnętrznie
+      obsługuje skracanie nazw zmiennych do maksimum 8 znaków i, co więcej,
+      w zwracanych wynikach i ew. zapisywanym zbiorze z oszacowaniami natężenia
+      cech ukrytych zamienia je z powrotem na pierwotne (długie) nazwy zmiennych;
+      w związku z tym dopasowano funkcję procedura_eg() do sytuacji, gdy z nazw
+      kryteriów nie zostały usunięte niektóre znaki '_'.
 
 --------------------
 Zmiany w EWDskalowanie 0.2 (2014-04-27)
 
 - Nowe funkcjonalności:
   - Możliwość definiowania "equality constraints" na parametrach modelu:
-    W definicji procedury, w definicji konstruktu dodałem możliwość zdefiniowania
-    elementu 'ograniczeniaWartosci', który musi mieć strukturę analogiczną do tej
-    elementów 'wartosciStartowe' czy 'wartosciZakotwiczone', z tym wyjątkiem, że kolumna
-    'wartosc' musi być typu character, zamiast numeric. Pozwala to przypisać "equality
-    constraint" dowolnym parametrom, o ile są one wprost zdefiniowane w modelu.
-  - W funkcji procedura_matura_m_rasch() dopisane zostało uwzględnenie parametru selekcji.
+    W definicji procedury, w definicji konstruktu dodałem możliwość
+    zdefiniowania elementu 'ograniczeniaWartosci', który musi mieć strukturę
+    analogiczną do tej elementów 'wartosciStartowe' czy 'wartosciZakotwiczone',
+    z tym wyjątkiem, że kolumna 'wartosc' musi być typu character, zamiast
+    numeric. Pozwala to przypisać "equality constraint" dowolnym parametrom,
+    o ile są one wprost zdefiniowane w modelu.
+  - W funkcji procedura_matura_m_rasch() dopisane zostało uwzględnenie parametru
+    selekcji.
 
 --------------------
 Publikacja EWDskalowanie 0.1 (2014-03-28)
