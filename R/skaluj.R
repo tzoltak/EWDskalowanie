@@ -520,7 +520,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
     dane = merge(dane, idObsMapowanie)
     idObs = "id_temp"
   } else if (length(idObs) == 1) {
-    if (length(unique(dane[, idObs])) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
+    if (nrow(unique(dane[, idObs, drop = FALSE])) < nrow(dane)) stop("Podany identyfikator obserwacji nie jest unikalny.")
   }
   # zapis pliku z danymi w formie stałoszerokościowej
   message("Zapis danych do pliku tekstowego o stałej szerokości kolumn...")
