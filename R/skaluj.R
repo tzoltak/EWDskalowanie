@@ -845,10 +845,12 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
             opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
               !is.na(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$Est..S.E.), ]
           # nieUzywajWartosciStartowychDlaParametrowTypu
-          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
-            opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
-              !grepl(bezWartosciStartowychParametrowTypu,
-                     opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$typ), ]
+          if (!is.null(bezWartosciStartowychParametrowTypu)) {
+            opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
+              opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
+                !grepl(bezWartosciStartowychParametrowTypu,
+                       opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$typ), ]
+          }
         }
       }
       # inkrementacja na koniec iteracji
