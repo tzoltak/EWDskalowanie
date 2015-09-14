@@ -549,8 +549,8 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
     nazwySkrocone = nazwyPierwotne
   }
 
-  nazwyPierwotne = as.list(tolower(unique(c(nazwyPierwotne, nazwyKonstruktow))))
-  nazwySkrocone  = as.list(tolower(unique(c(nazwySkrocone , nazwyKonstruktowSkrocone))))
+  nazwyPierwotne = as.list(unique(tolower(c(nazwyPierwotne, nazwyKonstruktow))))
+  nazwySkrocone  = as.list(unique(tolower(c(nazwySkrocone , nazwyKonstruktowSkrocone))))
   names(nazwySkrocone)  = nazwyPierwotne
   names(nazwyPierwotne) = nazwySkrocone
   # zamiana zmiennych na ciągi znaków o stałej długości
