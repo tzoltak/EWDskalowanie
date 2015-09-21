@@ -1,4 +1,10 @@
 --------------------
+Zmiany w EWDskalowanie 0.9.3 (2015-09-21)
+
+Funkcje przeniesione gdzie indziej:
+- przeiwdywanie_rasch() do pakietu EWDskale.
+
+--------------------
 Zmiany w EWDskalowanie 0.9.2 (2015-09-14)
 
 Naprawione błędy:
