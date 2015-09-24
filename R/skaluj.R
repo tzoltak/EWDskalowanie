@@ -212,7 +212,7 @@
 #'
 #' Drugie rozwiązanie jest bardzo specyficzne i odnosi się do sytuacji, w której chcemy,
 #' aby sumy wartości parametrów w ramach pewnych bloków zadań były sobie równe (taki
-#' nieco szalony pomysł na skolowanie matury). Można je zastosować podając jako wartość
+#' nieco szalony pomysł na skalowanie matury). Można je zastosować podając jako wartość
 #' \code{opisProcedury$czescPomiarowa$ograniczeniaWartosci} wektor wyrażeń regularnych,
 #' z których każde wskazuje na nazwy zmiennych należących do jednej z ww. grup. Od strony
 #' technicznej wykorzystuje ono pierwszy mechaniz, tyle że odpowiednia data frame jest
