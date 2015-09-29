@@ -341,7 +341,7 @@ przygotuj_inp = function(title="", data, variable, analysis=list(), model, model
   )
   if ("useobservations" %in% names(variable)) kod = c(kod, "USEOBSERVATIONS ARE", lam_wiersze(variable$useobservations))
   if ("classes" %in% names(variable)) kod = c(kod, paste0("CLASSES ARE gr_tmp (", variable$classes, ");"))
-  if ("knownclass" %in% names(variable)) kod = c(kod, paste0("KNOWNCLASS ARE gr_tmp (", paste0(variable$knownclass, collapse=" ") , ");"))
+  if ("knownclass" %in% names(variable)) kod = c(kod, "KNOWNCLASS ARE", lam_wiersze(c("gr_tmp (", variable$knownclass, ");"), srednikNaKoncu = FALSE))
   kod = c(kod,
           "",
           "ANALYSIS:"

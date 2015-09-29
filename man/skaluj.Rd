@@ -55,11 +55,13 @@ wyniki estymacji kalibracji są listami, składającymi sie z następujących el
         data framie nie jest całkiem przyjazny (zanim coś z tym zrobisz, sprawdź,
         jak to wygląda).}
   \item{\code{parametry} lista składająca się z elementów: \code{surowe},
-        \code{stdyx}, \code{stdy}, \code{std} i \code{r2}, zawierająca wyestymowane
+        \code{stdyx}, \code{stdy}, \code{std} i \code{r2} zawierająca wyestymowane
         parametry modelu, odpowiednio: surowe, standaryzowane ze względu zarówno na
         zmienną zależną jak i zmienną niezależną, standaryzowane tylko ze względu na
         zmienną zależną, nie pamiętam co to za standaryzacja - sprawdź w dokumentacji
-        Mplusa i statystyki R-kwadrat.}
+        Mplusa i statystyki R-kwadrat. W przypadku modeli wielogrupwych zawiera
+        dodatkowo element code{grupyMapowanie}, w którym opisane jest mapowanie
+        kobinacji wartośc zmiennych grupujących na numery grup.}
   \item{\code{zapis} data frame zawierający wyliczone oszacowania (co do zasady EAP)
         wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe
         (z wyjątkiem modeli wielogrupowych, bo Mplus nie zwraca dla nich obecnie

@@ -1,6 +1,14 @@
 --------------------
 Zmiany w EWDskalowanie 0.9.3 (2015-09-21)
 
+Nowe funkcjonalności:
+- W modelach wielogrupowych skaluj() zwraca mapowanie zmiennych grupujących na
+  numery grup jako element 'grupyMapowanie' elementu 'parametry'.
+
+Naprawione błędy:
+- Pakiet radzi sobie ze zdefiniowaniem dużej liczby grup, poprawnie łamiąc kod
+  poleceń w przygotowywanym pliku .inp.
+
 Funkcje przeniesione gdzie indziej:
 - przeiwdywanie_rasch() do pakietu EWDskale.
 

@@ -31,7 +31,8 @@
 #' rozkładzie cechy ukrytej)
 #' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
 #' \code{\link{skaluj}}
-#' @seealso \code{\link{skaluj}}, \code{\link{skaluj_spr}}, \code{\link{skaluj_egz_gimn}}
+#' @seealso \code{\link{skaluj}}, \code{\link[EWDskale]{skaluj_spr}},
+#' \code{\link[EWDskale]{skaluj_egz_gimn}}
 #' @examples
 #' # chwilowo brak
 #' @export

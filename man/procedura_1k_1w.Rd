@@ -60,6 +60,7 @@ i wariancja konstruktu.
 # chwilowo brak
 }
 \seealso{
-\code{\link{skaluj}}, \code{\link{skaluj_spr}}, \code{\link{skaluj_egz_gimn}}
+\code{\link{skaluj}}, \code{\link[EWDskale]{skaluj_spr}},
+\code{\link[EWDskale]{skaluj_egz_gimn}}
 }
 
