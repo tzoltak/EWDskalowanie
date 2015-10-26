@@ -1,12 +1,12 @@
 --------------------
-Zmiany w EWDskalowanie 0.9.4 (2015-09-21)
+Zmiany w EWDskalowanie 0.9.4 (2015-10-26)
 
 Nowe funkcjonalności:
 - Funkcje skaluj() i procedura_1k_1w() umożliwiają usuwanie wielu zadań
   niespełniających kryterium do usuwania w jednym kroku skalowania.
 
 --------------------
-Zmiany w EWDskalowanie 0.9.4 (2015-09-21)
+Zmiany w EWDskalowanie 0.9.3 (2015-09-21)
 
 Nowe funkcjonalności:
 - W modelach wielogrupowych skaluj() zwraca mapowanie zmiennych grupujących na
