@@ -131,6 +131,11 @@ składającą się z następujących elementów:
                   \item{\code{nigdyNieUsuwaj} wyrażenie regularne (ciąg znaków)
                         identyfikujące nazwy zmiennych, które nigdy nie są usuwane
                         (przydatne np. dla parametrów selekcji).}
+                  \item{\code{usunWieleNaraz} wartość logiczna - gdy wiele zadań
+                        spełnia kryterium usuwania, to czy usuwać je wszystkie
+                        w jednym kroku? Jeśli nie podany, przyjmuje się, że nie
+                        (w każdym kroku usuwane będzie tylko jedno, \emph{najgorsze}
+                        zadanie.}
                 }}
           \item{\code{wartosciStartowe} data.frame zawierający ew. wartości startowe
                 dla (przynajmniej niektórych) parametrów modelu. Musi składać się
@@ -209,10 +214,12 @@ procedury ponawiane będą tak długo, aż we wszystkich konstruktach (w któryc
 zdefiniowane zostały kryteria usuwania) nie będzie już zadań (zmiennych
 obserwowalnych) kwalifikujących się do usunięcia.
 
-Po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności zadania
-z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
+Domyślnie po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności
+zadania z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
 dyskryminacji, to zadania z najwyższą wartością istotności dla parametru
-dyskryminacji.
+dyskryminacji. Jeśli w definicji kryteriów usuwania podany został element
+\code{usunWieleNaraz = TRUE}, to wszystkie zadania niespełniające kryterium
+(dyskryminacji lub istosności) będą usuwane jednocześnie.
 
 \bold{\emph{Symboliczne} definiowanie konstruktów:}
 

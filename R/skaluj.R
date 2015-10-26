@@ -76,6 +76,11 @@
 #'                   \item{\code{nigdyNieUsuwaj} wyrażenie regularne (ciąg znaków)
 #'                         identyfikujące nazwy zmiennych, które nigdy nie są usuwane
 #'                         (przydatne np. dla parametrów selekcji).}
+#'                   \item{\code{usunWieleNaraz} wartość logiczna - gdy wiele zadań
+#'                         spełnia kryterium usuwania, to czy usuwać je wszystkie
+#'                         w jednym kroku? Jeśli nie podany, przyjmuje się, że nie
+#'                         (w każdym kroku usuwane będzie tylko jedno, \emph{najgorsze}
+#'                         zadanie.}
 #'                 }}
 #'           \item{\code{wartosciStartowe} data.frame zawierający ew. wartości startowe
 #'                 dla (przynajmniej niektórych) parametrów modelu. Musi składać się
@@ -154,10 +159,12 @@
 #' zdefiniowane zostały kryteria usuwania) nie będzie już zadań (zmiennych
 #' obserwowalnych) kwalifikujących się do usunięcia.
 #'
-#' Po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności zadania
-#' z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
+#' Domyślnie po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności
+#' zadania z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
 #' dyskryminacji, to zadania z najwyższą wartością istotności dla parametru
-#' dyskryminacji.
+#' dyskryminacji. Jeśli w definicji kryteriów usuwania podany został element
+#' \code{usunWieleNaraz = TRUE}, to wszystkie zadania niespełniające kryterium
+#' (dyskryminacji lub istosności) będą usuwane jednocześnie.
 #'
 #' \bold{\emph{Symboliczne} definiowanie konstruktów:}
 #'
@@ -324,7 +331,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
   dozwoloneElementy = list(
     krok             = c("czescPomiarowa", "wieleGrup", "parametry"),
     konstrukt        = c("zmienne", "var1", "rasch", "kryteriaUsuwania", "wartosciStartowe", "wartosciZakotwiczone", "ograniczeniaWartosci"),
-    kryteriaUsuwania = c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj"),
+    kryteriaUsuwania = c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj", "usunWieleNaraz"),
     parametry        = c("estimator", "processors", "integration", "fscores"),
     wartosci         = c("typ", "zmienna1", "zmienna2", "wartosc"),  # akurat te w roli niezbędnych, a nie dozwolonych
     wieleGrup        = c("zmienneGrupujace", "uwolnijWartosciOczekiwane", "uwolnijWariancje")
@@ -381,6 +388,11 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
       if (!is.null(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj)) {
         if (!is.character(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj)       | length(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj)       != 1 | any("try_error" %in% try(grepl(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj, "")))) {
           stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], "\nkryterium usuwania zadań 'nigdyNieUsuwaj' musi być zdefiniowane jako jednoelementowy wektor tekstowy, będący poprawnym składniowo wyrażeniem regularnym.\n"))
+        }
+      }
+      if (!is.null(konstrukt$kryteriaUsuwania$usunWieleNaraz)) {
+        if (!is.logical(konstrukt$kryteriaUsuwania$usunWieleNaraz)         | length(konstrukt$kryteriaUsuwania$usunWieleNaraz)       != 1 ) {
+          stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], "\nkryterium usuwania zadań 'usunWieleNaraz' musi być podany jako pojedyncza wartość logiczna.\n"))
         }
       }
       # sprawdzanie poprawności komponentu 'wartosciStartowe'
@@ -783,7 +795,15 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
               pozaZakresem = pozaZakresem[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, pozaZakresem$zmienna2), ]
             }
             # wybór zadania do usunięcia i drukowanie informacji
-            doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+            if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz)) {
+              if (opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz) {
+                doUsuniecia = pozaZakresem$zmienna2
+              } else {
+                doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+              }
+            } else  {
+              doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+            }
             if (length(doUsuniecia) > 0) {
               message("    Zadania o dyskryminacji poniżej ", kryteria$dyskryminacjaPonizej, ":")
               print(
@@ -801,14 +821,20 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
           # jeśli nic nie wykluczono na podstawie ww. kryterium, ale zdefiniowano kryterium 'istotnoscPowyzej'
           if (length(doUsuniecia) == 0 & "istotnoscPowyzej" %in% names(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania)) {
             pozaZakresem = parametry[parametry$"P-Value" > kryteria$istotnoscPowyzej, ]
-            doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
             # z listy pozycji do usunięcia wypadają pozycje, których nazwa pasuje do maski nigdyNieUsuwaj
             if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj)) {
-              doUsuniecia = doUsuniecia[
-                !grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj,
-                       doUsuniecia)]
+              pozaZakresem = pozaZakresem[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, pozaZakresem$zmienna2), ]
             }
-            # drukowanie informacji o zadaniach do usunięcia
+            # wybór zadania do usunięcia i drukowanie informacji
+            if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz)) {
+              if (opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz) {
+                doUsuniecia = pozaZakresem$zmienna2
+              } else {
+                doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
+              }
+            } else  {
+              doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
+            }
             if (length(doUsuniecia) > 0) {
               message("    Zadania o istotności powyżej ", kryteria$istotnoscPowyzej, ":")
               print(

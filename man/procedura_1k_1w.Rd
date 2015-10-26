@@ -8,7 +8,8 @@ procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = "f1",
   wartosciZakotwiczone = NULL, wartosciStartowe = NULL, rasch = FALSE,
   wieleGrup = NULL,
   maskaZmienne = "^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
-  nigdyNieUsuwaj = NULL, processors = 3, integrPt = 20)
+  nigdyNieUsuwaj = NULL, processors = 3, integrPt = 20,
+  usunWieleNaraz = FALSE)
 }
 \arguments{
 \item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na
@@ -39,6 +40,10 @@ te zmienne, które nie będą usuwane z modelu mimo spełnienia kryteriów usuwa
 
 \item{integrPt}{opcjonalnie liczba punktów siatki do całkowania numerycznego (po
 rozkładzie cechy ukrytej)}
+
+\item{usunWieleNaraz}{opcjonalnie wartość logiczna - jeśli wiele zadań nie spełnia
+kryterium \code{dyskryminacjaPonizej = 0.2}, to czy usuwać je wszystkie w jednym
+kroku?}
 }
 \value{
 lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
