@@ -29,16 +29,21 @@
 #' @param processors opcjonalnie liczba rdzeni do wykorzystania przy estymacji
 #' @param integrPt opcjonalnie liczba punktów siatki do całkowania numerycznego (po
 #' rozkładzie cechy ukrytej)
+#' @param usunWieleNaraz opcjonalnie wartość logiczna - jeśli wiele zadań nie spełnia
+#' kryterium \code{dyskryminacjaPonizej = 0.2}, to czy usuwać je wszystkie w jednym
+#' kroku?
 #' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
 #' \code{\link{skaluj}}
-#' @seealso \code{\link{skaluj}}, \code{\link{skaluj_spr}}, \code{\link{skaluj_egz_gimn}}
+#' @seealso \code{\link{skaluj}}, \code{\link[EWDskale]{skaluj_spr}},
+#' \code{\link[EWDskale]{skaluj_egz_gimn}}
 #' @examples
 #' # chwilowo brak
 #' @export
 procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwiczone=NULL,
                            wartosciStartowe=NULL, rasch=FALSE, wieleGrup=NULL,
                            maskaZmienne="^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
-                           nigdyNieUsuwaj=NULL, processors=3, integrPt=20) {
+                           nigdyNieUsuwaj=NULL, processors=3, integrPt=20,
+                           usunWieleNaraz=FALSE) {
   opis = list(
     list(
       czescPomiarowa = list(
@@ -50,7 +55,8 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwi
             list(
               dyskryminacjaPonizej = 0.2,
               istotnoscPowyzej = 1,
-              nigdyNieUsuwaj = nigdyNieUsuwaj
+              nigdyNieUsuwaj = nigdyNieUsuwaj,
+              usunWieleNaraz = usunWieleNaraz
             )
           } else {NULL},
           wartosciStartowe = wartosciStartowe,

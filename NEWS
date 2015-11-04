@@ -1,4 +1,41 @@
 --------------------
+Zmiany w EWDskalowanie 0.9.5 (2015-11-04)
+
+Naprawione błędy:
+- Funkcje skaluj() poprawnie obsługuje usuwanie ze zbioru (i opisu procedury
+  skalowania) zmiennych, które zawierają same braki danych.
+
+--------------------
+Zmiany w EWDskalowanie 0.9.4 (2015-10-26)
+
+Nowe funkcjonalności:
+- Funkcje skaluj() i procedura_1k_1w() umożliwiają usuwanie wielu zadań
+  niespełniających kryterium do usuwania w jednym kroku skalowania.
+
+--------------------
+Zmiany w EWDskalowanie 0.9.3 (2015-09-21)
+
+Nowe funkcjonalności:
+- W modelach wielogrupowych skaluj() zwraca mapowanie zmiennych grupujących na
+  numery grup jako element 'grupyMapowanie' elementu 'parametry'.
+
+Naprawione błędy:
+- Pakiet radzi sobie ze zdefiniowaniem dużej liczby grup, poprawnie łamiąc kod
+  poleceń w przygotowywanym pliku .inp.
+
+Funkcje przeniesione gdzie indziej:
+- przewidywanie_rasch() do pakietu EWDskale.
+
+--------------------
+Zmiany w EWDskalowanie 0.9.2 (2015-09-14)
+
+Naprawione błędy:
+- Drobna (choć ważna dla poprawnego działania) poprawka, związana z tym, że
+  grepl() przestał akceptować NULL jako wyrażenie regularne.
+- Przy obróbce nazw zmiennych najpierw dajemy tolower(), a potem unique(),
+  nie na odwrót.
+
+--------------------
 Zmiany w EWDskalowanie 0.9.1 (2015-09-05)
 
 - Nowe funkcjonalności:

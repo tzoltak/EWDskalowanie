@@ -76,6 +76,11 @@
 #'                   \item{\code{nigdyNieUsuwaj} wyrażenie regularne (ciąg znaków)
 #'                         identyfikujące nazwy zmiennych, które nigdy nie są usuwane
 #'                         (przydatne np. dla parametrów selekcji).}
+#'                   \item{\code{usunWieleNaraz} wartość logiczna - gdy wiele zadań
+#'                         spełnia kryterium usuwania, to czy usuwać je wszystkie
+#'                         w jednym kroku? Jeśli nie podany, przyjmuje się, że nie
+#'                         (w każdym kroku usuwane będzie tylko jedno, \emph{najgorsze}
+#'                         zadanie.}
 #'                 }}
 #'           \item{\code{wartosciStartowe} data.frame zawierający ew. wartości startowe
 #'                 dla (przynajmniej niektórych) parametrów modelu. Musi składać się
@@ -154,10 +159,12 @@
 #' zdefiniowane zostały kryteria usuwania) nie będzie już zadań (zmiennych
 #' obserwowalnych) kwalifikujących się do usunięcia.
 #'
-#' Po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności zadania
-#' z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
+#' Domyślnie po każdej kalibracji usuwane jest jedno zadanie - w pierwszej kolejności
+#' zadania z najniższą dyskryminacją, a gdy nie ma już zadań podpadających pod kryterium
 #' dyskryminacji, to zadania z najwyższą wartością istotności dla parametru
-#' dyskryminacji.
+#' dyskryminacji. Jeśli w definicji kryteriów usuwania podany został element
+#' \code{usunWieleNaraz = TRUE}, to wszystkie zadania niespełniające kryterium
+#' (dyskryminacji lub istosności) będą usuwane jednocześnie.
 #'
 #' \bold{\emph{Symboliczne} definiowanie konstruktów:}
 #'
@@ -212,7 +219,7 @@
 #'
 #' Drugie rozwiązanie jest bardzo specyficzne i odnosi się do sytuacji, w której chcemy,
 #' aby sumy wartości parametrów w ramach pewnych bloków zadań były sobie równe (taki
-#' nieco szalony pomysł na skolowanie matury). Można je zastosować podając jako wartość
+#' nieco szalony pomysł na skalowanie matury). Można je zastosować podając jako wartość
 #' \code{opisProcedury$czescPomiarowa$ograniczeniaWartosci} wektor wyrażeń regularnych,
 #' z których każde wskazuje na nazwy zmiennych należących do jednej z ww. grup. Od strony
 #' technicznej wykorzystuje ono pierwszy mechaniz, tyle że odpowiednia data frame jest
@@ -233,11 +240,13 @@
 #'         data framie nie jest całkiem przyjazny (zanim coś z tym zrobisz, sprawdź,
 #'         jak to wygląda).}
 #'   \item{\code{parametry} lista składająca się z elementów: \code{surowe},
-#'         \code{stdyx}, \code{stdy}, \code{std} i \code{r2}, zawierająca wyestymowane
+#'         \code{stdyx}, \code{stdy}, \code{std} i \code{r2} zawierająca wyestymowane
 #'         parametry modelu, odpowiednio: surowe, standaryzowane ze względu zarówno na
 #'         zmienną zależną jak i zmienną niezależną, standaryzowane tylko ze względu na
 #'         zmienną zależną, nie pamiętam co to za standaryzacja - sprawdź w dokumentacji
-#'         Mplusa i statystyki R-kwadrat.}
+#'         Mplusa i statystyki R-kwadrat. W przypadku modeli wielogrupwych zawiera
+#'         dodatkowo element code{grupyMapowanie}, w którym opisane jest mapowanie
+#'         kobinacji wartośc zmiennych grupujących na numery grup.}
 #'   \item{\code{zapis} data frame zawierający wyliczone oszacowania (co do zasady EAP)
 #'         wartości cech ukrytych dla poszczególnych obserwacji i ich błędy standardowe
 #'         (z wyjątkiem modeli wielogrupowych, bo Mplus nie zwraca dla nich obecnie
@@ -277,9 +286,10 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
   if (!all(grepl("^[[:lower:]][[:lower:][:digit:]_]*$", names(dane)))) stop("Wszystkie nazwy zmiennych muszą składać się wyłącznie z małych liter, cyfr i znaku '_', przy czym pierwszym znakiem musi być litera.")
   # wywalanie zmiennych posiadających same braki danych
   maskaSameNA = unlist(lapply(dane, function(x) return(all(is.na(x)))))
+  maskaSameNA = maskaSameNA & !(names(dane) %in% zmienneDolaczaneDoOszacowan)
   if (any(maskaSameNA)) {
-    warning(paste0("Z danych usunięto zmienne, które przyjmowały wyłącznie wartości 'brak danych':\n - ", paste0(names(dane)[maskaSameNA], collapse="\n  - "), "\n"), immediate.=TRUE)
-    opisProcesury = lapply(opisProcedury,
+    warning(paste0("Z danych usunięto zmienne, które przyjmowały wyłącznie wartości 'brak danych':\n  - ", paste0(names(dane)[maskaSameNA], collapse="\n  - "), "\n"), immediate.=TRUE)
+    opisProcedury = lapply(opisProcedury,
                            function(x, zmienneSameNA) {
                              x$czescPomiarowa = lapply(x$czescPomiarowa,
                                                        function(x, zmienneSameNA) {
@@ -297,7 +307,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
   maskaWariancja0 = unlist(lapply(dane, function(x) return(length(unique(na.omit(x))) == 1)))
   maskaWariancja0 = maskaWariancja0 & !(names(dane) %in% zmienneDolaczaneDoOszacowan)
   if (any(maskaWariancja0)) {
-    warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n - ", paste0(names(dane)[maskaWariancja0], collapse="\n  - "), "\n"), immediate.=TRUE)
+    warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n  - ", paste0(names(dane)[maskaWariancja0], collapse="\n  - "), "\n"), immediate.=TRUE)
     opisProcedury = lapply(opisProcedury,
                            function(x, zmienneWariancja0) {
                              x$czescPomiarowa = lapply(x$czescPomiarowa,
@@ -322,7 +332,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
   dozwoloneElementy = list(
     krok             = c("czescPomiarowa", "wieleGrup", "parametry"),
     konstrukt        = c("zmienne", "var1", "rasch", "kryteriaUsuwania", "wartosciStartowe", "wartosciZakotwiczone", "ograniczeniaWartosci"),
-    kryteriaUsuwania = c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj"),
+    kryteriaUsuwania = c("dyskryminacjaPonizej", "istotnoscPowyzej", "nigdyNieUsuwaj", "usunWieleNaraz"),
     parametry        = c("estimator", "processors", "integration", "fscores"),
     wartosci         = c("typ", "zmienna1", "zmienna2", "wartosc"),  # akurat te w roli niezbędnych, a nie dozwolonych
     wieleGrup        = c("zmienneGrupujace", "uwolnijWartosciOczekiwane", "uwolnijWariancje")
@@ -379,6 +389,11 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
       if (!is.null(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj)) {
         if (!is.character(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj)       | length(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj)       != 1 | any("try_error" %in% try(grepl(konstrukt$kryteriaUsuwania$nigdyNieUsuwaj, "")))) {
           stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], "\nkryterium usuwania zadań 'nigdyNieUsuwaj' musi być zdefiniowane jako jednoelementowy wektor tekstowy, będący poprawnym składniowo wyrażeniem regularnym.\n"))
+        }
+      }
+      if (!is.null(konstrukt$kryteriaUsuwania$usunWieleNaraz)) {
+        if (!is.logical(konstrukt$kryteriaUsuwania$usunWieleNaraz)         | length(konstrukt$kryteriaUsuwania$usunWieleNaraz)       != 1 ) {
+          stop(paste0("W opisie kroku ", i, ".: ", names(opisProcedury)[i], ", w konstrukcie: ", names(krok$czescPomiarowa)[j], "\nkryterium usuwania zadań 'usunWieleNaraz' musi być podany jako pojedyncza wartość logiczna.\n"))
         }
       }
       # sprawdzanie poprawności komponentu 'wartosciStartowe'
@@ -549,8 +564,8 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
     nazwySkrocone = nazwyPierwotne
   }
 
-  nazwyPierwotne = as.list(tolower(unique(c(nazwyPierwotne, nazwyKonstruktow))))
-  nazwySkrocone  = as.list(tolower(unique(c(nazwySkrocone , nazwyKonstruktowSkrocone))))
+  nazwyPierwotne = as.list(unique(tolower(c(nazwyPierwotne, nazwyKonstruktow))))
+  nazwySkrocone  = as.list(unique(tolower(c(nazwySkrocone , nazwyKonstruktowSkrocone))))
   names(nazwySkrocone)  = nazwyPierwotne
   names(nazwyPierwotne) = nazwySkrocone
   # zamiana zmiennych na ciągi znaków o stałej długości
@@ -699,7 +714,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
       if (!is.null(krok$wieleGrup)) {
         wartosciZmGrupujacej = unique(dane[, paste0("gr_tmp", i)])
         variable$classes = krok$wieleGrup$liczbaGrup = length(wartosciZmGrupujacej)
-        variable$knownclass = paste0(paste0("gr_tmp", i), " = ", wartosciZmGrupujacej)
+        variable$knownclass = paste0(paste0("gr_tmp", i), "=", wartosciZmGrupujacej)
         analysis$type = "MIXTURE"
         analysis$algorithm = "INTEGRATION"
       }
@@ -726,6 +741,9 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
       if ("brak_zbieznosci" %in% names(wyniki[[i]][[j]])) {
         message("   ###################################\n    Nie osiągnięto zbieżności!\n   ###################################")
         return(list(wyniki=wyniki, tenKrok=krok))
+      }
+      if (!is.null(krok$wieleGrup)) {
+        wyniki[[i]][[j]]$parametry$grupyMapowanie = grupyMapowanie[[i]]
       }
       # zapis ocen czynnikowych do bardziej zwartej i łatwiej dostępnej postaci
       if (!is.null(wyniki[[i]][[j]]$zapis)) {
@@ -778,7 +796,15 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
               pozaZakresem = pozaZakresem[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, pozaZakresem$zmienna2), ]
             }
             # wybór zadania do usunięcia i drukowanie informacji
-            doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+            if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz)) {
+              if (opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz) {
+                doUsuniecia = pozaZakresem$zmienna2
+              } else {
+                doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+              }
+            } else  {
+              doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+            }
             if (length(doUsuniecia) > 0) {
               message("    Zadania o dyskryminacji poniżej ", kryteria$dyskryminacjaPonizej, ":")
               print(
@@ -796,14 +822,20 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
           # jeśli nic nie wykluczono na podstawie ww. kryterium, ale zdefiniowano kryterium 'istotnoscPowyzej'
           if (length(doUsuniecia) == 0 & "istotnoscPowyzej" %in% names(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania)) {
             pozaZakresem = parametry[parametry$"P-Value" > kryteria$istotnoscPowyzej, ]
-            doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
             # z listy pozycji do usunięcia wypadają pozycje, których nazwa pasuje do maski nigdyNieUsuwaj
             if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj)) {
-              doUsuniecia = doUsuniecia[
-                !grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj,
-                       doUsuniecia)]
+              pozaZakresem = pozaZakresem[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, pozaZakresem$zmienna2), ]
             }
-            # drukowanie informacji o zadaniach do usunięcia
+            # wybór zadania do usunięcia i drukowanie informacji
+            if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz)) {
+              if (opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz) {
+                doUsuniecia = pozaZakresem$zmienna2
+              } else {
+                doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
+              }
+            } else  {
+              doUsuniecia = pozaZakresem$zmienna2[which.max(pozaZakresem$"P-Value" - kryteria$istotnoscPowyzej)]
+            }
             if (length(doUsuniecia) > 0) {
               message("    Zadania o istotności powyżej ", kryteria$istotnoscPowyzej, ":")
               print(
@@ -845,10 +877,12 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
             opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
               !is.na(opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$Est..S.E.), ]
           # nieUzywajWartosciStartowychDlaParametrowTypu
-          opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
-            opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
-              !grepl(bezWartosciStartowychParametrowTypu,
-                     opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$typ), ]
+          if (!is.null(bezWartosciStartowychParametrowTypu)) {
+            opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe =
+              opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe[
+                !grepl(bezWartosciStartowychParametrowTypu,
+                       opisProcedury[[i]]$czescPomiarowa[[k]]$wartosciStartowe$typ), ]
+          }
         }
       }
       # inkrementacja na koniec iteracji
