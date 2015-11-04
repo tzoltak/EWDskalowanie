@@ -1,4 +1,11 @@
 --------------------
+Zmiany w EWDskalowanie 0.9.5 (2015-11-04)
+
+Naprawione błędy:
+- Funkcje skaluj() poprawnie obsługuje usuwanie ze zbioru (i opisu procedury
+  skalowania) zmiennych, które zawierają same braki danych.
+
+--------------------
 Zmiany w EWDskalowanie 0.9.4 (2015-10-26)
 
 Nowe funkcjonalności:

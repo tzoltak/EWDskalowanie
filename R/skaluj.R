@@ -286,9 +286,10 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
   if (!all(grepl("^[[:lower:]][[:lower:][:digit:]_]*$", names(dane)))) stop("Wszystkie nazwy zmiennych muszą składać się wyłącznie z małych liter, cyfr i znaku '_', przy czym pierwszym znakiem musi być litera.")
   # wywalanie zmiennych posiadających same braki danych
   maskaSameNA = unlist(lapply(dane, function(x) return(all(is.na(x)))))
+  maskaSameNA = maskaSameNA & !(names(dane) %in% zmienneDolaczaneDoOszacowan)
   if (any(maskaSameNA)) {
-    warning(paste0("Z danych usunięto zmienne, które przyjmowały wyłącznie wartości 'brak danych':\n - ", paste0(names(dane)[maskaSameNA], collapse="\n  - "), "\n"), immediate.=TRUE)
-    opisProcesury = lapply(opisProcedury,
+    warning(paste0("Z danych usunięto zmienne, które przyjmowały wyłącznie wartości 'brak danych':\n  - ", paste0(names(dane)[maskaSameNA], collapse="\n  - "), "\n"), immediate.=TRUE)
+    opisProcedury = lapply(opisProcedury,
                            function(x, zmienneSameNA) {
                              x$czescPomiarowa = lapply(x$czescPomiarowa,
                                                        function(x, zmienneSameNA) {
@@ -306,7 +307,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
   maskaWariancja0 = unlist(lapply(dane, function(x) return(length(unique(na.omit(x))) == 1)))
   maskaWariancja0 = maskaWariancja0 & !(names(dane) %in% zmienneDolaczaneDoOszacowan)
   if (any(maskaWariancja0)) {
-    warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n - ", paste0(names(dane)[maskaWariancja0], collapse="\n  - "), "\n"), immediate.=TRUE)
+    warning(paste0("Z danych usunięto zmienne, które miały zerową wariancję (tj. przyjmowały tylko jedną wartość):\n  - ", paste0(names(dane)[maskaWariancja0], collapse="\n  - "), "\n"), immediate.=TRUE)
     opisProcedury = lapply(opisProcedury,
                            function(x, zmienneWariancja0) {
                              x$czescPomiarowa = lapply(x$czescPomiarowa,

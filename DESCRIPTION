@@ -1,6 +1,6 @@
 Encoding: UTF-8
 Package: EWDskalowanie
-Version: 0.9.4
+Version: 0.9.5
 Title: Functions to assist IRT calibrations developed while working on Polish
     Educational Value-Added indicators
 Author: Tomasz Zoltak <tomek@zozlak.org>
@@ -12,3 +12,4 @@ Depends:
 License: MIT + file LICENSE
 Language: pl
 NeedsCompilation: no
+RoxygenNote: 5.0.0
