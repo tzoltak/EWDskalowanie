@@ -9,7 +9,7 @@ procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = "f1",
   wieleGrup = NULL,
   maskaZmienne = "^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
   nigdyNieUsuwaj = NULL, processors = 3, integrPt = 20,
-  usunWieleNaraz = FALSE)
+  usunWieleNaraz = FALSE, usunMimoKotwicy = FALSE)
 }
 \arguments{
 \item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na
@@ -44,6 +44,10 @@ rozkładzie cechy ukrytej)}
 \item{usunWieleNaraz}{opcjonalnie wartość logiczna - jeśli wiele zadań nie spełnia
 kryterium \code{dyskryminacjaPonizej = 0.2}, to czy usuwać je wszystkie w jednym
 kroku?}
+
+\item{usunMimoKotwicy}{opcjonalnie wartość logiczna - jeśli podano wartości
+zakotwiczone, to czy mimo to stosować kryteria usuwania zadań (przydaje się przy
+maturze 2015-2016, gdy jednocześnie skalowana jest "stara" i "nowa" formuła)}
 }
 \value{
 lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
