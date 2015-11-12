@@ -32,6 +32,9 @@
 #' @param usunWieleNaraz opcjonalnie wartość logiczna - jeśli wiele zadań nie spełnia
 #' kryterium \code{dyskryminacjaPonizej = 0.2}, to czy usuwać je wszystkie w jednym
 #' kroku?
+#' @param usunMimoKotwicy opcjonalnie wartość logiczna - jeśli podano wartości
+#' zakotwiczone, to czy mimo to stosować kryteria usuwania zadań (przydaje się przy
+#' maturze 2015-2016, gdy jednocześnie skalowana jest "stara" i "nowa" formuła)
 #' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
 #' \code{\link{skaluj}}
 #' @seealso \code{\link{skaluj}}, \code{\link[EWDskale]{skaluj_spr}},
@@ -43,7 +46,7 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwi
                            wartosciStartowe=NULL, rasch=FALSE, wieleGrup=NULL,
                            maskaZmienne="^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
                            nigdyNieUsuwaj=NULL, processors=3, integrPt=20,
-                           usunWieleNaraz=FALSE) {
+                           usunWieleNaraz=FALSE, usunMimoKotwicy=FALSE) {
   opis = list(
     list(
       czescPomiarowa = list(
@@ -51,7 +54,7 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwi
           zmienne = nazwyZmiennych[grep(maskaZmienne, nazwyZmiennych)],
           var1 = ifelse(is.null(wartosciZakotwiczone), TRUE, FALSE),
           rasch = ifelse(is.null(wartosciZakotwiczone), rasch, FALSE),
-          kryteriaUsuwania = if(is.null(wartosciZakotwiczone)) {
+          kryteriaUsuwania = if (is.null(wartosciZakotwiczone) | usunMimoKotwicy) {
             list(
               dyskryminacjaPonizej = 0.2,
               istotnoscPowyzej = 1,
