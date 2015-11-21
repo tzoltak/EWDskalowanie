@@ -7,7 +7,7 @@
 skaluj(dane, opisProcedury, idObs, tytul = "", zmienneCiagle = NULL,
   zmienneSpecjalne = NULL, zmienneDolaczaneDoOszacowan = NULL,
   zwrocOszacowania = TRUE, usunFWF = TRUE,
-  bezWartosciStartowychParametrowTypu = NULL)
+  bezWartosciStartowychParametrowTypu = NULL, nieEstymuj = FALSE)
 }
 \arguments{
 \item{dane}{data.frame z danymi}
@@ -41,6 +41,12 @@ parametrów, dla których wartości wyestymowane w poprzedniej kalibracji mają 
 być używane jako wartości startowe w ew. następnych kalibracjach (sposób na obejście
 problemu z Mplusem, który przy zadaniu wartości startowych dla thresholdów nie
 utrzymuje inwariancji pomiarowej w modelu wielogrupowym)}
+
+\item{nieEstymuj}{wartość logiczna - jeśli na dysku zapisany jest już plik \code{.out}
+o nazwie takiej, jak plik \code{.inp}, który właśnie ma być przetwarzany w Mplusie,
+to czy zamiast uruchamiania Mplusa po prostu wczytać wyniki z tego pliku? opcja
+przydatna przy debugowaniu funkcji skalujących wyższego rzędu, z pakietu
+\code{EWDskale}}
 }
 \value{
 Lista, której każdy element opisuje wyniki skalowania każdego etapu procedury.

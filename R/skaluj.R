@@ -24,6 +24,11 @@
 #' być używane jako wartości startowe w ew. następnych kalibracjach (sposób na obejście
 #' problemu z Mplusem, który przy zadaniu wartości startowych dla thresholdów nie
 #' utrzymuje inwariancji pomiarowej w modelu wielogrupowym)
+#' @param nieEstymuj wartość logiczna - jeśli na dysku zapisany jest już plik \code{.out}
+#' o nazwie takiej, jak plik \code{.inp}, który właśnie ma być przetwarzany w Mplusie,
+#' to czy zamiast uruchamiania Mplusa po prostu wczytać wyniki z tego pliku? opcja
+#' przydatna przy debugowaniu funkcji skalujących wyższego rzędu, z pakietu
+#' \code{EWDskale}
 #' @details
 #' \bold{Struktura argumentu \code{opisProcedury}:}
 #'
@@ -265,7 +270,7 @@
 skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
                   zmienneSpecjalne=NULL, zmienneDolaczaneDoOszacowan=NULL,
                   zwrocOszacowania=TRUE, usunFWF=TRUE,
-                  bezWartosciStartowychParametrowTypu=NULL) {
+                  bezWartosciStartowychParametrowTypu=NULL, nieEstymuj= FALSE) {
   # podstawowe sprawdzenie argumentów
   message("Sprawdzanie poprawności argumentów...")
   stopifnot(
@@ -277,10 +282,11 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
     all(zmienneCiagle %in% names(dane)) | is.null(zmienneCiagle),
     is.list(zmienneSpecjalne) | is.null(zmienneSpecjalne),
     all(zmienneSpecjalne %in% names(dane)) | is.null(zmienneSpecjalne),
-    zwrocOszacowania %in% c(TRUE, FALSE),
+    zwrocOszacowania %in% c(TRUE, FALSE), length(zwrocOszacowania) == 1,
     is.character(zmienneDolaczaneDoOszacowan) | is.null(zmienneDolaczaneDoOszacowan),
-    usunFWF %in% c(TRUE, FALSE),
-    is.character(bezWartosciStartowychParametrowTypu) | is.null(bezWartosciStartowychParametrowTypu)
+    usunFWF %in% c(TRUE, FALSE), length(usunFWF) == 1,
+    is.character(bezWartosciStartowychParametrowTypu) | is.null(bezWartosciStartowychParametrowTypu),
+    nieEstymuj %in% c(TRUE, FALSE), length(nieEstymuj) == 1
   )
   if (!is.null(bezWartosciStartowychParametrowTypu)) stopifnot(length(bezWartosciStartowychParametrowTypu) == 1)
   if (!all(grepl("^[[:lower:]][[:lower:][:digit:]_]*$", names(dane)))) stop("Wszystkie nazwy zmiennych muszą składać się wyłącznie z małych liter, cyfr i znaku '_', przy czym pierwszym znakiem musi być litera.")
@@ -735,7 +741,11 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
         nazwaInp, row.names=FALSE, col.names=FALSE, quote=FALSE
       )
       # kalibracja w Mplusie
-      mplus = system2("mplus", paste0('"', nazwaInp, '"'))
+      if (!nieEstymuj | !file.exists(sub("[.]inp$", ".out", nazwaInp))) {
+        mplus = system2("mplus", paste0('"', nazwaInp, '"'))
+      } else {
+        mplus = 0
+      }
       if (mplus == 1) return(list(wyniki=wyniki, tenKrok=krok))
       wyniki[[i]][[j]] = obrob_out(readLines(sub("[.]inp$", ".out", nazwaInp)), nazwyPierwotne)
       if ("brak_zbieznosci" %in% names(wyniki[[i]][[j]])) {
@@ -747,36 +757,43 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
       }
       # zapis ocen czynnikowych do bardziej zwartej i łatwiej dostępnej postaci
       if (!is.null(wyniki[[i]][[j]]$zapis)) {
-        ocCzyn = wczytaj_fwf(savedata$file, wyniki[[i]][[j]]$zapis$szerokosc, wyniki[[i]][[j]]$zapis$zmienna)
-        ocCzyn = ocCzyn[, grepl(
-          paste0(
-            "^", tolower(idObs), "$|^gr_tmp|^(",
-            paste0(unique(wyniki[[i]][[j]]$parametry$surowe$zmienna1[wyniki[[i]][[j]]$parametry$surowe$typ == "by"]), collapse="|"),
-            ")(|_se)$"
-          ),
-          names(ocCzyn)
-        )]
-        # dopisanie do pliku z ocenami czynnikowymi kolumn tworzących id obserwacji - jeśli było ich więcej niż jedna
-        if (idObs == "id_temp") {
-          ocCzyn = merge(idObsMapowanie, ocCzyn)
-          ocCzyn = ocCzyn[, names(ocCzyn) != "id_temp"]
+        if (!nieEstymuj | !file.exists(sub("[.]inp$", ".out", nazwaInp))) {
+          ocCzyn = wczytaj_fwf(savedata$file, wyniki[[i]][[j]]$zapis$szerokosc, wyniki[[i]][[j]]$zapis$zmienna)
+          ocCzyn = ocCzyn[, grepl(
+            paste0(
+              "^", tolower(idObs), "$|^gr_tmp|^(",
+              paste0(unique(wyniki[[i]][[j]]$parametry$surowe$zmienna1[wyniki[[i]][[j]]$parametry$surowe$typ == "by"]), collapse="|"),
+              ")(|_se)$"
+            ),
+            names(ocCzyn)
+          )]
+          # dopisanie do pliku z ocenami czynnikowymi kolumn tworzących id obserwacji - jeśli było ich więcej niż jedna
+          if (idObs == "id_temp") {
+            ocCzyn = merge(idObsMapowanie, ocCzyn)
+            ocCzyn = ocCzyn[, names(ocCzyn) != "id_temp"]
+          }
+          # dopisanie do pliku z ocenami czynnikowymi zmiennych definiujących grupowanie
+          if (!is.null(krok$wieleGrup)) {
+            ocCzyn = merge(ocCzyn, zmGrupujace[[i]])
+          }
+          # dopisanie do pliku z ocenami czynnikowymi innych zmiennych, o które prosił użytkownik
+          if (!is.null(zmienneDolaczaneDoOszacowan)) {
+            ocCzyn = merge(ocCzyn, daneDolaczaneDoOszacowan)
+          }
+          # zapis na dysk
+          tryCatch(
+            write.csv2(ocCzyn, sub("[.]inp$", ".csv", nazwaInp), row.names=FALSE, na=""),
+            error = function(e) {stop("Nie udało się zapisać pliku z ocenami czynnikowymi!")}
+          )
+          unlink(savedata$file)
+        } else {
+         ocCzyn = read.csv2(sub("[.]inp$", ".csv", nazwaInp))
         }
-        # dopisanie do pliku z ocenami czynnikowymi zmiennych definiujących grupowanie
-        if (!is.null(krok$wieleGrup)) {
-          ocCzyn = merge(ocCzyn, zmGrupujace[[i]])
+        if (zwrocOszacowania) {
+          wyniki[[i]][[j]]$zapis = ocCzyn
+        } else {
+          wyniki[[i]][[j]]$zapis = sub("[.]inp$", ".csv", nazwaInp)
         }
-        # dopisanie do pliku z ocenami czynnikowymi innych zmiennych, o które prosił użytkownik
-        if (!is.null(zmienneDolaczaneDoOszacowan)) {
-          ocCzyn = merge(ocCzyn, daneDolaczaneDoOszacowan)
-        }
-        # zapis na dysk
-        tryCatch(
-          write.csv2(ocCzyn, sub("[.]inp$", ".csv", nazwaInp), row.names=FALSE, na=""),
-          error = function(e) {stop("Nie udało się zapisać pliku z ocenami czynnikowymi!")}
-        )
-        unlink(savedata$file)
-        if (zwrocOszacowania) wyniki[[i]][[j]]$zapis = ocCzyn
-        else wyniki[[i]][[j]]$zapis = sub("[.]inp$", ".csv", nazwaInp)
       }
       # ew. usuwanie zadań nie spełniających kryteriów
       kalibrujDalej = FALSE
