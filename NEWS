@@ -1,4 +1,13 @@
 --------------------
+Zmiany w EWDskalowanie 0.9.7 (2015-11-20)
+
+Nowe funkcjonalności:
+- skaluj() otrzymała nowy argument 'nieEstymuj', pozwalający nie odpalać
+  estymacji w Mplusie, jeśli istnieją jużnadysku zapisane pliki .out (zostaną
+  one po prostu wczytane) - jest to opcja przydatna przy debugingu funkcji
+  skalujących wysokiego poziomu, z pakietu EWDskale, a zwłaszcza skaluj_matura().
+
+--------------------
 Zmiany w EWDskalowanie 0.9.6 (2015-11-12)
 
 Nowe funkcjonalności:
