@@ -807,7 +807,8 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
           doUsuniecia = c()
           # jeśli zdefiniowano kryterium 'dyskryminacjaPonizej'
           if ("dyskryminacjaPonizej" %in% names(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania)) {
-            pozaZakresem = parametry[parametry$wartosc < kryteria$dyskryminacjaPonizej, ]
+            pozaZakresem = parametry[parametry$wartosc < kryteria$dyskryminacjaPonizej | is.na(parametry$wartosc), ]
+            pozaZakresem$wartosc[is.na(pozaZakresem$wartosc)] = -Inf
             # z listy pozycji do usunięcia wypadają pozycje, których nazwa pasuje do maski nigdyNieUsuwaj
             if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj)) {
               pozaZakresem = pozaZakresem[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, pozaZakresem$zmienna2), ]
@@ -817,10 +818,10 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
               if (opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$usunWieleNaraz) {
                 doUsuniecia = pozaZakresem$zmienna2
               } else {
-                doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+                doUsuniecia = pozaZakresem$zmienna2[which.min(pozaZakresem$wartosc)]
               }
             } else  {
-              doUsuniecia = pozaZakresem$zmienna2[which.max(kryteria$dyskryminacjaPonizej-pozaZakresem$wartosc)]
+              doUsuniecia = pozaZakresem$zmienna2[which.min(pozaZakresem$wartosc)]
             }
             if (length(doUsuniecia) > 0) {
               message("    Zadania o dyskryminacji poniżej ", kryteria$dyskryminacjaPonizej, ":")
@@ -829,7 +830,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
                   "_"="     ",
                   zadanie=pozaZakresem$zmienna2,
                   dyskryminacja=pozaZakresem$wartosc,
-                  "usunięte"=ifelse(pozaZakresem$zmienna2 == doUsuniecia, rep("tak", nrow(pozaZakresem)), rep("",nrow(pozaZakresem))),
+                  "usunięte"=ifelse(pozaZakresem$zmienna2 %in% doUsuniecia, rep("tak", nrow(pozaZakresem)), rep("", nrow(pozaZakresem))),
                   check.names=FALSE, stringsAsFactors=FALSE
                 ),
                 row.names=FALSE
@@ -860,15 +861,37 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
                   "_"="     ",
                   zadanie=pozaZakresem$zmienna2,
                   istotnosc=pozaZakresem$wartosc,
-                  "usunięte"=ifelse(pozaZakresem$zmienna2==doUsuniecia,
-                                    rep("tak",nrow(pozaZakresem)),
-                                    rep("",nrow(pozaZakresem))),
+                  "usunięte"=ifelse(pozaZakresem$zmienna2 %in% doUsuniecia,
+                                    rep("tak", nrow(pozaZakresem)),
+                                    rep("", nrow(pozaZakresem))),
                   check.names=FALSE, stringsAsFactors=FALSE
                 ),
                 row.names=FALSE
               )
             }
           }
+          # usuwanie zadań, które mają absurdalnie wysoką/niską dyskryminację (co do zasady w związku z tym, że mało kto je rozwiązywał)
+          pozaZakresem = parametry[abs(parametry$wartosc) > (10 * mean(abs(parametry$wartosc), na.rm = TRUE)) & !is.na(parametry$wartosc), ]
+          # z listy pozycji do usunięcia wypadają pozycje, których nazwa pasuje do maski nigdyNieUsuwaj
+          if (!is.null(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj)) {
+            pozaZakresem = pozaZakresem[!grepl(opisProcedury[[i]]$czescPomiarowa[[k]]$kryteriaUsuwania$nigdyNieUsuwaj, pozaZakresem$zmienna2), ]
+          }
+          # drukowanie informacji
+          doUsuniecia2 = pozaZakresem$zmienna2
+          if (length(doUsuniecia2) > 0) {
+            message("    Zadania o dyskryminacji większej niż 10-krotność średniej dyskryminacji:")
+            print(
+              data.frame(
+                "_"="     ",
+                zadanie=pozaZakresem$zmienna2,
+                dyskryminacja=pozaZakresem$wartosc,
+                "usunięte"=ifelse(pozaZakresem$zmienna2 %in% doUsuniecia2, rep("tak", nrow(pozaZakresem)), rep("",nrow(pozaZakresem))),
+                check.names=FALSE, stringsAsFactors=FALSE
+              ),
+              row.names=FALSE
+            )
+          }
+          doUsuniecia = c(doUsuniecia, doUsuniecia2)
           # usuwamy najgorszą pozycję
           if (length(doUsuniecia)>0) {
             kalibrujDalej=TRUE
