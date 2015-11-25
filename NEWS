@@ -1,4 +1,12 @@
 --------------------
+Zmiany w EWDskalowanie 0.9.8 (2015-11-25)
+
+Naprawione błędy/nowe funkcjonalności:
+- skaluj() lepiej radzi sobie w sytuacji, gdy w modelu pojawiają się absurdalnie
+  wysokie dyskryminacje (w tym tak duże, że się "wygwiazdkowują" w outpucie).
+  Należy pod tym rozumieć, że takie zadania usuwa (i elegancko o tym informuje).
+
+--------------------
 Zmiany w EWDskalowanie 0.9.7 (2015-11-20)
 
 Nowe funkcjonalności:

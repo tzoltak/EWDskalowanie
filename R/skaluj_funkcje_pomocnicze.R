@@ -492,6 +492,13 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
 																									 	return(x)
 																									 }
 												)
+												# zamiana wygwiazdkowań na NA
+                        if ("Estimate" %in% names(x)) {
+                          if (is.factor(x$Estimate)) {
+                            levels(x$Estimate)[grep("[*]+", levels(x$Estimate))] = NA
+                            x$Estimate = as.numeric(levels(x$Estimate))[x$Estimate]
+                          }
+                        }
 												# obsługa wielogrupowaości
 												wieleGrup = grep("Class", x$Variable)
 												if (length(wieleGrup) > 0) {
