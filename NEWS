@@ -1,4 +1,13 @@
 --------------------
+Zmiany w EWDskalowanie 0.9.9 (2015-12-06)
+
+Naprawione błędy:
+- skaluj() poprawnie obsługuje przetwarzanie ocen czynnikowych w sytuacji, gdy
+  argument 'nieEstymuj' ma wartość TRUE, ale poza już zapisanymi wykonywane
+  są jeszcze jakieś kolejne kalibracje w ramach kroku.
+
+
+--------------------
 Zmiany w EWDskalowanie 0.9.8 (2015-11-25)
 
 Naprawione błędy/nowe funkcjonalności:

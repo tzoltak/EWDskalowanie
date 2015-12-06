@@ -757,7 +757,7 @@ skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
       }
       # zapis ocen czynnikowych do bardziej zwartej i łatwiej dostępnej postaci
       if (!is.null(wyniki[[i]][[j]]$zapis)) {
-        if (!nieEstymuj | !file.exists(sub("[.]inp$", ".out", nazwaInp))) {
+        if (!nieEstymuj | !file.exists(sub("[.]inp$", ".csv", nazwaInp))) {
           ocCzyn = wczytaj_fwf(savedata$file, wyniki[[i]][[j]]$zapis$szerokosc, wyniki[[i]][[j]]$zapis$zmienna)
           ocCzyn = ocCzyn[, grepl(
             paste0(
