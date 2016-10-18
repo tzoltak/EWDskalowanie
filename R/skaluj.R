@@ -266,6 +266,8 @@
 #' }
 #' @examples
 #' # chwilowo brak
+#' @importFrom utils write.table write.csv2 read.csv2
+#' @importFrom stats na.omit
 #' @export
 skaluj = function(dane, opisProcedury, idObs, tytul="", zmienneCiagle=NULL,
                   zmienneSpecjalne=NULL, zmienneDolaczaneDoOszacowan=NULL,

@@ -98,6 +98,7 @@ lam_wiersze = function(x, wciecie=2, maxDl=90, srednikNaKoncu=TRUE, sep=" ", lam
 #' @return lista wektorów tekstowych
 #' @details
 #' Warto pamiętać, że ustawienia opisywane elementami 'rasch', 'var1' i 'e0' są nadpisywane przez wpisy z elementu wartosciZakotwiczone.
+#' @importFrom stats setNames
 przygotuj_model = function(opisModelu) {
   if (!("wieleGrup" %in% names(opisModelu))) {
     opisModelu$wieleGrup = ""
@@ -391,6 +392,8 @@ przygotuj_inp = function(title="", data, variable, analysis=list(), model, model
 #' \item \code{zapis} - .
 #' \item \code{czas} - .
 #' }
+#' @importFrom stats runif
+#' @importFrom utils read.csv
 obrob_out = function(output, nazwyDoZmiany=NULL) {
   # wydzielanie części outputu z informacjami ogólnymi i ustawianiami
   podsumowanie = output[(grep("^SUMMARY OF ANALYSIS$", output)):(grep("^Input data file", output)-1)]
