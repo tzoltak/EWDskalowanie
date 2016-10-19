@@ -44,7 +44,7 @@
 #' @export
 procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwiczone=NULL,
                            wartosciStartowe=NULL, rasch=FALSE, wieleGrup=NULL,
-                           maskaZmienne="^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)_[[:alpha:]_]+)$",
+                           maskaZmienne="^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)(nf|)_[[:alpha:]_]+)$",
                            nigdyNieUsuwaj=NULL, processors=3, integrPt=20,
                            usunWieleNaraz=FALSE, usunMimoKotwicy=FALSE) {
   opis = list(

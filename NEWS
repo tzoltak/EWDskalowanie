@@ -1,8 +1,10 @@
 --------------------
-Zmiany w EWDskalowanie 1.0.0 (2016-10-18)
+Zmiany w EWDskalowanie 1.0.0 (2016-10-19)
 
-Zmiany:
-- Dodana informacja o sponsorze w pliku README.md.
+Naprawione błędy:
+- procedura_1k_1w() zmieniono domyślną wartość argumentu 'maskaZmienne', tak aby
+  nie powodował on odrzucania zmiennych opisujących wybór przedmiotów i tematów
+  wypracowań w "nowej formule" matury w 2015 r.
 
 --------------------
 Zmiany w EWDskalowanie 0.9.9 (2015-12-06)
