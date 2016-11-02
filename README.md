@@ -27,5 +27,10 @@ devtools::install_github('tzoltak/EWDskalowanie')
    * W konsoli wywołać:
 ```r
 git clone https://github.com/tzoltak/EWDskalowanie.git
-R CMD INSTALL ZPD
+R CMD INSTALL EWDskalowanie
 ```
+
+## Sponsorzy
+
+Pakiet został opracowany w ramach projektu systemowego *Rozwój metody edukacyjnej wartości dodanej na potrzeby wzmocnienia ewaluacyjnej funkcji egzaminów zewnętrznych* (UDA-POKL.03.02.00-00-001/13-00) współfinansowanego przez Unię Europejską ze środków Europejskiego Funduszu społecznego, realizowanych przez Instytut Badań Edukacyjnych.
+![KL+IBE+EFS](inst/logo-IBE-EWD.png)

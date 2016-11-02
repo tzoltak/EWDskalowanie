@@ -1,11 +1,18 @@
 --------------------
+Zmiany w EWDskalowanie 1.0.0 (2016-10-19)
+
+Naprawione błędy:
+- procedura_1k_1w() zmieniono domyślną wartość argumentu 'maskaZmienne', tak aby
+  nie powodował on odrzucania zmiennych opisujących wybór przedmiotów i tematów
+  wypracowań w "nowej formule" matury w 2015 r.
+
+--------------------
 Zmiany w EWDskalowanie 0.9.9 (2015-12-06)
 
 Naprawione błędy:
 - skaluj() poprawnie obsługuje przetwarzanie ocen czynnikowych w sytuacji, gdy
   argument 'nieEstymuj' ma wartość TRUE, ale poza już zapisanymi wykonywane
   są jeszcze jakieś kolejne kalibracje w ramach kroku.
-
 
 --------------------
 Zmiany w EWDskalowanie 0.9.8 (2015-11-25)
