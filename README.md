@@ -27,7 +27,7 @@ devtools::install_github('tzoltak/EWDskalowanie')
    * W konsoli wywołać:
 ```r
 git clone https://github.com/tzoltak/EWDskalowanie.git
-R CMD INSTALL ZPD
+R CMD INSTALL EWDskalowanie
 ```
 
 ## Sponsorzy
