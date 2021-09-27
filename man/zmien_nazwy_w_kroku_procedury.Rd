@@ -17,4 +17,3 @@ wektor
 \description{
 Funkcja przechodzi przez elementy \code{zmienne}, \code{wartosciStartowe}, \code{wartosciZakotwoczone}, \code{ograniczeniWartosci} kroku procedury i zamienia w nich nazwy zmiennych (typowo na skrócone).
 }
-

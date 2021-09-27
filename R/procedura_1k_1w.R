@@ -35,6 +35,8 @@
 #' @param usunMimoKotwicy opcjonalnie wartość logiczna - jeśli podano wartości
 #' zakotwiczone, to czy mimo to stosować kryteria usuwania zadań (przydaje się przy
 #' maturze 2015-2016, gdy jednocześnie skalowana jest "stara" i "nowa" formuła)
+#' @param usunDyskrPonizej opcjonalnie wartość liczbowa - próg wartości dyskryminacji
+#' zadania, poniżej którego będą one usuwane z modelu skalowania
 #' @return lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
 #' \code{\link{skaluj}}
 #' @seealso \code{\link{skaluj}}, \code{\link[EWDskale]{skaluj_spr}},
@@ -46,7 +48,8 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwi
                            wartosciStartowe=NULL, rasch=FALSE, wieleGrup=NULL,
                            maskaZmienne="^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)(nf|)_[[:alpha:]_]+)$",
                            nigdyNieUsuwaj=NULL, processors=3, integrPt=20,
-                           usunWieleNaraz=FALSE, usunMimoKotwicy=FALSE) {
+                           usunWieleNaraz=FALSE, usunMimoKotwicy=FALSE,
+                           usunDyskrPonizej=0.2) {
   opis = list(
     list(
       czescPomiarowa = list(
@@ -56,7 +59,7 @@ procedura_1k_1w = function(nazwyZmiennych, nazwaKonstruktu="f1", wartosciZakotwi
           rasch = ifelse(is.null(wartosciZakotwiczone), rasch, FALSE),
           kryteriaUsuwania = if (is.null(wartosciZakotwiczone) | usunMimoKotwicy) {
             list(
-              dyskryminacjaPonizej = 0.2,
+              dyskryminacjaPonizej = usunDyskrPonizej,
               istotnoscPowyzej = 1,
               nigdyNieUsuwaj = nigdyNieUsuwaj,
               usunWieleNaraz = usunWieleNaraz

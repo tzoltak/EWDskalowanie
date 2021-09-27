@@ -28,4 +28,3 @@ Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\l
 \seealso{
 \code{\link{skaluj}}
 }
-

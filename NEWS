@@ -1,4 +1,12 @@
 --------------------
+Zmiany w EWDskalowanie 1.0.1 (2021-09-27)
+
+Nowe funkcjonalności:
+- procedura_1k_1w() otrzymała nowy argument 'usunDyskrPonizej', pozwalający
+  określić próg dla minimalnej wartości dyskryminacji zadań (wcześniej był on
+  na sztywno ustawiony w 0,2, co zostało wartością domyślną).
+
+--------------------
 Zmiany w EWDskalowanie 1.0.0 (2016-10-19)
 
 Naprawione błędy:

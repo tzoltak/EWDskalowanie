@@ -4,8 +4,12 @@
 \alias{procedura_eg_sf_matura}
 \title{Procedury skalowania egzaminow.}
 \usage{
-procedura_eg_sf_matura(nazwyZmiennych, parametryGH = NULL,
-  parametryGMP = NULL, processors = 3)
+procedura_eg_sf_matura(
+  nazwyZmiennych,
+  parametryGH = NULL,
+  parametryGMP = NULL,
+  processors = 3
+)
 }
 \arguments{
 \item{nazwyZmiennych}{nazwy zmiennych z data.frame'a z danymi, na których ma być prowadzona estymacja}
@@ -29,4 +33,3 @@ Funkcja przygotowuj opis procedury skalowania do użycia przez funkcję \code{\l
 \seealso{
 \code{\link{skaluj}}
 }
-

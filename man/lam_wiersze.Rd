@@ -4,8 +4,14 @@
 \alias{lam_wiersze}
 \title{Funkcja lamie dluzsze ciagi znakow na wiersze.}
 \usage{
-lam_wiersze(x, wciecie = 2, maxDl = 90, srednikNaKoncu = TRUE,
-  sep = " ", lamNaNawiasachOkraglych = TRUE)
+lam_wiersze(
+  x,
+  wciecie = 2,
+  maxDl = 90,
+  srednikNaKoncu = TRUE,
+  sep = " ",
+  lamNaNawiasachOkraglych = TRUE
+)
 }
 \arguments{
 \item{x}{wektor tekstowy do pocięcia}
@@ -35,4 +41,3 @@ write(lam_wiersze(x, wciecie=4, maxDl=30), "")
 \seealso{
 \code{\link[base]{strwrap}}
 }
-
