@@ -4,9 +4,16 @@
 \alias{przygotuj_inp}
 \title{Przygotowywanie polecen Mplusa.}
 \usage{
-przygotuj_inp(title = "", data, variable, analysis = list(), model,
-  modelConstraint = NULL, output = list("STANDARDIZED", "TECH4", "TECH8"),
-  savedata = list())
+przygotuj_inp(
+  title = "",
+  data,
+  variable,
+  analysis = list(),
+  model,
+  modelConstraint = NULL,
+  output = list("STANDARDIZED", "TECH4", "TECH8"),
+  savedata = list()
+)
 }
 \arguments{
 \item{title}{tytuł pliku poleceń - tekst}
@@ -34,4 +41,3 @@ Funkcja przygotowuje plik poleceń .inp Mplusa.
 \details{
 Elementy poszczególnych list, będących parametrami tej funkcji, są dosyć bezpośrednio wklejane do poleceń Mplusa. Jeśli chcesz zrozumieć, co to się dzieje, pewnie będziesz musiał posiłkować się manualem do Mplusa.
 }
-

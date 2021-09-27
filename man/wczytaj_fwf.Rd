@@ -25,4 +25,3 @@ Funkcja działa względnie szybko, bo nie próbuje rozpoznawać typów kolumn, t
 \seealso{
 \code{\link[utils]{read.fwf}}
 }
-

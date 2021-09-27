@@ -27,4 +27,3 @@ W elementach zwracanej listy znajdują się:
 \item \code{czas} - .
 }
 }
-

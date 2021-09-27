@@ -20,4 +20,3 @@ Funkcja stara się względnie inteligentnie skrócić podane nazwy do zadanej d�
 \details{
 Funkcja ma zaimplementowanych na sztywno kilka tłumaczeń-mapowań, następnie stara się usunąć "_" i "-", następnie usunąć samogłoski, ostatecznie nadaje nazwy "kolejne" bez związku z wcześniejszą nazwą.
 }
-

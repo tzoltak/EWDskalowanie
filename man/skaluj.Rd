@@ -4,10 +4,19 @@
 \alias{skaluj}
 \title{Skalowanie modeli IRT.}
 \usage{
-skaluj(dane, opisProcedury, idObs, tytul = "", zmienneCiagle = NULL,
-  zmienneSpecjalne = NULL, zmienneDolaczaneDoOszacowan = NULL,
-  zwrocOszacowania = TRUE, usunFWF = TRUE,
-  bezWartosciStartowychParametrowTypu = NULL, nieEstymuj = FALSE)
+skaluj(
+  dane,
+  opisProcedury,
+  idObs,
+  tytul = "",
+  zmienneCiagle = NULL,
+  zmienneSpecjalne = NULL,
+  zmienneDolaczaneDoOszacowan = NULL,
+  zwrocOszacowania = TRUE,
+  usunFWF = TRUE,
+  bezWartosciStartowychParametrowTypu = NULL,
+  nieEstymuj = FALSE
+)
 }
 \arguments{
 \item{dane}{data.frame z danymi}
@@ -292,4 +301,3 @@ prawdopodobne, by dało się też sensowenie wykorzystać w modelach wielogrupow
 \examples{
 # chwilowo brak
 }
-

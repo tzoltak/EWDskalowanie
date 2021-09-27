@@ -4,12 +4,21 @@
 \alias{procedura_1k_1w}
 \title{Procedury skalowania egzaminow.}
 \usage{
-procedura_1k_1w(nazwyZmiennych, nazwaKonstruktu = "f1",
-  wartosciZakotwiczone = NULL, wartosciStartowe = NULL, rasch = FALSE,
+procedura_1k_1w(
+  nazwyZmiennych,
+  nazwaKonstruktu = "f1",
+  wartosciZakotwiczone = NULL,
+  wartosciStartowe = NULL,
+  rasch = FALSE,
   wieleGrup = NULL,
   maskaZmienne = "^([kp]_[[:digit:]]+|(s|t[[:digit:]]+)(nf|)_[[:alpha:]_]+)$",
-  nigdyNieUsuwaj = NULL, processors = 3, integrPt = 20,
-  usunWieleNaraz = FALSE, usunMimoKotwicy = FALSE)
+  nigdyNieUsuwaj = NULL,
+  processors = 3,
+  integrPt = 20,
+  usunWieleNaraz = FALSE,
+  usunMimoKotwicy = FALSE,
+  usunDyskrPonizej = 0.2
+)
 }
 \arguments{
 \item{nazwyZmiennych}{wektor tekstowy z nazwami zmiennych z data frame'a z danymi, na
@@ -48,6 +57,9 @@ kroku?}
 \item{usunMimoKotwicy}{opcjonalnie wartość logiczna - jeśli podano wartości
 zakotwiczone, to czy mimo to stosować kryteria usuwania zadań (przydaje się przy
 maturze 2015-2016, gdy jednocześnie skalowana jest "stara" i "nowa" formuła)}
+
+\item{usunDyskrPonizej}{opcjonalnie wartość liczbowa - próg wartości dyskryminacji
+zadania, poniżej którego będą one usuwane z modelu skalowania}
 }
 \value{
 lista, która zostanie użyta jako argument \code{opisProcedury} funkcji
@@ -72,4 +84,3 @@ i wariancja konstruktu.
 \code{\link{skaluj}}, \code{\link[EWDskale]{skaluj_spr}},
 \code{\link[EWDskale]{skaluj_egz_gimn}}
 }
-

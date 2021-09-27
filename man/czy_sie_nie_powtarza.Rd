@@ -17,4 +17,3 @@ wektor
 \description{
 Funkcja sprawdza, czy w pierwszym wektorze nie występują duplikaty. Jeśli występują, to podmienia je (zarówno pierwsze wystąpienie jak i powtórzenia) odpowiednimi wartościami z drugiego wektora.
 }
-
