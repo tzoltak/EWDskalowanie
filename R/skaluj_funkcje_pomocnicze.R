@@ -441,7 +441,7 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     temp = output[(grep("^MODEL RESULTS$", output) + 1):(grep("^(QUALITY OF NUMERICAL RESULTS|MODEL COMMAND WITH FINAL ESTIMATES USED AS STARTING VALUES)$", output)[1] - 1)]
     temp = temp[!grepl("^$|^STANDARDIZED MODEL RESULTS$|[ ]+Two-Tailed$", temp)]
     parametry = list()
-    tnij = grep("Standardization|Categorical Latent Variables|R-SQUARE|IRT PARAMETERIZATION", temp)
+    tnij = grep("Standardization|Categorical Latent Variables|R-SQUARE|IRT PARAMETERIZATION|RESULTS IN PROBABILITY SCALE", temp)
     while (length(tnij) > 0) {
       parametry[[length(parametry) + 1]] = temp[1:(tnij[1] - 1)]
       temp = temp[tnij[1]:length(temp)]
@@ -452,16 +452,17 @@ obrob_out = function(output, nazwyDoZmiany=NULL) {
     names(parametry) = tolower(unlist(lapply(parametry,
                                              function(x) {
                                                return(sub("Categorical Latent Variables", "grupy",
-                                               					sub("^.*IRT PARAMETERIZATION.*$", "irt",
-                                                          sub(" Standardization", "",
-                                                              sub("[-]SQUARE", "2",
-                                                                  sub("^[ ]+Estimate.+$", "SUROWE", x[1])
-                                               )))))
+                                                          sub("^.*RESULTS IN PROBABILITY SCALE.*$", "probscale",
+                                                              sub("^.*IRT PARAMETERIZATION.*$", "irt",
+                                                                  sub(" Standardization", "",
+                                                                      sub("[-]SQUARE", "2",
+                                                                          sub("^[ ]+Estimate.+$", "SUROWE", x[1])
+                                                                      ))))))
                                              }
     )))
     # wstawka do usunięcia nikomu niepotrzebnych wyników w parametryzacji IRT, które Mplus wrzuca tylko wtedy, gdy model jest jednowymiarowy, a zadania są tylko 0-1
     # oraz częstości grup, jeśli model był wielogrupowy
-    parametry = parametry[!(names(parametry) %in% c("irt", "grupy"))]
+    parametry = parametry[!(names(parametry) %in% c("irt", "grupy", "probscale"))]
     # i przerabianie go na listę data.frame'ów
     parametry = lapply(parametry,
                        function(x) {

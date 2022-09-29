@@ -1,4 +1,12 @@
 --------------------
+Zmiany w EWDskalowanie 1.1.0 (2022-09-29)
+
+Aktualizacje:
+- obrob_out() radzi sobie z plikami outputu zawierającymi sekcję "RESULTS IN
+  PROBABILITY SCALE", zwracaną w przypadku niektórych modeli przez nowsze
+  wersje Mplusa.
+
+--------------------
 Zmiany w EWDskalowanie 1.0.1 (2021-09-27)
 
 Nowe funkcjonalności:
